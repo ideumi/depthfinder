@@ -1,0 +1,309 @@
+#!/usr/bin/chippy
+#
+# depthfinder - config.chh
+#
+
+#@ <GetConfigPath(configFile)>
+#@ Returns the path to ''configFile''.
+
+func GetConfigPath(configFile)
+{
+	var home = getenv("HOME");
+
+	if iserr(home) { return err; }
+
+	return JoinPath(home, configFile);
+}
+
+#@ <LoadBookmarks()>
+#@ Loads bookmarks.
+
+func LoadBookmarks()
+{
+	var bookmarks = [];
+	var path = GetConfigPath(CONFIGFILEBOOKMARKS);
+
+	if iserr(path) { return err; }
+
+	if not IsFile(path) { return err; }
+
+	# ---
+
+	var lines = ReadLines(path);
+
+	if iserr(lines) { return err; }
+
+	for i = 1 to len(lines)
+	{
+		var line = Trim(lines[i]);
+
+		if line == "" { continue; }
+
+		var parts = split(line, ";");
+
+		if len(parts) >= 2
+		{
+			var name = Trim(parts[1]);
+			var bmPath = Trim(parts[2]);
+
+			if name != "" and bmPath != ""
+			{
+				var bookmark = m[
+					"name": name,
+					"path": bmPath
+				];
+
+				bookmarks = append(bookmarks, bookmark);
+			}
+		}
+	}
+
+	return bookmarks;
+}
+
+#@ <SaveBookmarks(bookmarks)>
+#@ Saves bookmarks list.
+
+func SaveBookmarks(bookmarks)
+{
+	var path = GetConfigPath(CONFIGFILEBOOKMARKS);
+
+	if iserr(path) { return err; }
+
+	if not IsFile(path) { return err; }
+
+	# ---
+
+	var lines = [];
+
+	for i = 1 to len(bookmarks)
+	{
+		var bm = bookmarks[i];
+		var name = bm["name"];
+		var bmPath = bm["path"];
+
+		if not iserr(name) and not iserr(bmPath)
+		{
+			name = replace(name, ";", "");
+			bmPath = replace(bmPath, ";", "");
+
+			lines = append(lines, name + ";" + bmPath);
+		}
+	}
+
+	return WriteLines(path, lines, true);
+}
+
+#@ <AddBookmark(bookmarks, name, path)>
+#@ Adds a new bookmark and saves.
+
+func AddBookmark(bookmarks, name, path)
+{
+	var bookmark = m[
+		"name": name,
+		"path": path
+	];
+
+	bookmarks = append(bookmarks, bookmark);
+
+	var result = SaveBookmarks(bookmarks);
+
+	if iserr(result) { return err; }
+
+	return bookmarks;
+}
+
+#@ <RemoveBookmark(bookmarks, index)>
+#@ Removes a bookmark at ''index'' and saves.
+
+func RemoveBookmark(bookmarks, index)
+{
+	if index < 1 or index > len(bookmarks) { return err; }
+
+	bookmarks = bookmarks - index;
+
+	var result = SaveBookmarks(bookmarks);
+
+	if iserr(result) { return err; }
+
+	return bookmarks;
+}
+
+#@ <LoadFileAssoc()>
+#@ Loads file associations.
+
+func LoadFileAssoc()
+{
+	var assoc = m[];
+	var path = GetConfigPath(CONFIGFILEASSOC);
+
+	if iserr(path) { return err; }
+
+	if not IsFile(path) { return err; }
+
+	# ---
+
+	var lines = ReadLines(path);
+
+	if iserr(lines) { return err; }
+
+	for i = 1 to len(lines)
+	{
+		var line = Trim(lines[i]);
+
+		if line == "" { continue; }
+
+		var parts = split(line, ";");
+
+		if len(parts) >= 2
+		{
+			var ext = lower(Trim(parts[1]));
+			var cmd = Trim(parts[2]);
+
+			if ext != "" and cmd != ""
+			{
+				assoc = assoc[ext] = cmd;
+			}
+		}
+	}
+
+	return assoc;
+}
+
+#@ <GetAssocCommand(fileAssoc, extension)>
+#@ Looks up the command for a file ''extension''.
+
+func GetAssocCommand(fileAssoc, extension)
+{
+	var ext = lower(extension);
+
+	return fileAssoc[ext];
+}
+
+#@ <CreateDefaultBookmarks()>
+#@ Creates default bookmarks file if it doesn't exist.
+
+func CreateDefaultBookmarks()
+{
+	var path = GetConfigPath(CONFIGFILEBOOKMARKS);
+
+	if iserr(path) { return err; }
+
+	if IsFile(path) { return ok; }
+
+	var home = getenv("HOME");
+
+	var lines = [];
+	lines = append(lines, "Home;" + home);
+	lines = append(lines, "Documents;" + JoinPath(home, "Documents"));
+	lines = append(lines, "Downloads;" + JoinPath(home, "Downloads"));
+
+	return WriteLines(path, lines, true);
+}
+
+#@ <CreateDefaultFileAssoc()>
+#@ Creates default file associations if file doesn't exist.
+
+func CreateDefaultFileAssoc()
+{
+	var path = GetConfigPath(CONFIGFILEASSOC);
+
+	if iserr(path) { return err; }
+
+	if IsFile(path) { return ok; }
+
+	return WriteFile(path, "", true, true);
+}
+
+#@ <CreateDefaultTerminal()>
+#@ Creates default terminal config if it doesn't exist.
+
+func CreateDefaultTerminal()
+{
+	var path = GetConfigPath(CONFIGFILETERMINAL);
+
+	if iserr(path) { return err; }
+
+	if IsFile(path) { return ok; }
+
+	return WriteFile(path, "", true, true);
+}
+
+#@ <CreateDefaultLastDir()>
+#@ Creates default last directory file if it doesn't exist.
+
+func CreateDefaultLastDir()
+{
+	var path = GetConfigPath(CONFIGFILELASTDIR);
+
+	if iserr(path) { return err; }
+
+	if IsFile(path) { return ok; }
+
+	return WriteFile(path, "", true, true);
+}
+
+#@ <LoadTerminal()>
+#@ Loads terminal command from ''~/.dfn-terminal''.
+
+# NOTE: I know of no way to solve this via XDG without some ugly hacks. So just
+# let the user decide what terminal they'd like.
+
+func LoadTerminal()
+{
+	var path = GetConfigPath(CONFIGFILETERMINAL);
+
+	if iserr(path) { return err; }
+
+	if not IsFile(path) { return err; }
+
+	var content = ReadFile(path, true);
+
+	if iserr(content) { return err; }
+
+	var trimmed = Trim(content);
+
+	if trimmed == "" { return err; }
+
+	return trimmed;
+}
+
+#@ <SaveLastDir(path)>
+#@ Saves the current directory ''path''.
+
+func SaveLastDir(path)
+{
+	var filePath = GetConfigPath(CONFIGFILELASTDIR);
+
+	if iserr(filePath) { return err; }
+
+	return WriteFile(filePath, path, true, true);
+}
+
+#@ <LoadLastDir()>
+#@ Loads the last visited directory from the config.
+
+func LoadLastDir()
+{
+	var filePath = GetConfigPath(CONFIGFILELASTDIR);
+
+	if iserr(filePath) { return err; }
+
+	if not IsFile(filePath) { return err; }
+
+	# ---
+
+	var content = ReadFile(filePath, true);
+
+	if iserr(content) { return err; }
+
+	# ---
+
+	var path = Trim(content);
+
+	if path == "" { return err; }
+
+	if not IsDir(path) { return err; }
+
+	return path;
+}

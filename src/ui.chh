@@ -1,0 +1,536 @@
+#!/usr/bin/chippy
+#
+# depthfinder - ui.chh
+#
+
+#@ <SetFileTypeColor(isSymlink, isDir, isExecutable)>
+#@ Sets text color based on file type.
+
+func SetFileTypeColor(isSymlink, isDir, isExecutable)
+{
+	if isSymlink
+	{
+		SetAttribute(COLORBOLD);
+		SetAttribute(COLORYELLOW);
+	}
+	elseif isDir
+	{
+		SetAttribute(COLORBOLD);
+		SetAttribute(COLORCYAN);
+	}
+	elseif isExecutable
+	{
+		SetAttribute(COLORBOLD);
+		SetAttribute(COLORMAGENTA);
+	}
+}
+
+#@ <FormatCompactDate(timestamp)>
+#@ Formats a unix ''timestamp'' as a compact date string.
+
+func FormatCompactDate(timestamp)
+{
+	if timestamp == 0
+	{
+		return "";
+	}
+
+	var now = time();
+	var sixMonthsAgo = now - SIXMONTHSSECONDS;
+
+	var parts = GregorianParseTime(timestamp);
+
+	if iserr(parts)
+	{
+		return "";
+	}
+
+	var months = SHORTMONTHNAMES;
+
+	var year = parts[1];
+	var month = parts[2];
+	var day = parts[3];
+	var hour = parts[4];
+	var minute = parts[5];
+
+	var monthStr = months[month];
+	var dayStr = str(day);
+	var hourStr = str(hour);
+	var minStr = str(minute);
+
+	if day < 10 { dayStr = " " + dayStr; }
+	if hour < 10 { hourStr = "0" + hourStr; }
+	if minute < 10 { minStr = "0" + minStr; }
+
+	if timestamp >= sixMonthsAgo
+	{
+		return monthStr + " " + dayStr + " " + hourStr + ":" + minStr;
+	}
+	else
+	{
+		return monthStr + " " + dayStr + " " + str(year);
+	}
+}
+
+#@ <DrawSidebar(x, y, width, height, bookmarks, selected, hasFocus, isMoving)>
+#@ Draws the sidebar with bookmarks list at position ''x'' and ''y''.
+
+func DrawSidebar(x, y, width, height, bookmarks, selected, hasFocus, isMoving)
+{
+	var title = upper(PROGRAMNAME);
+	title = BFClipText(title, width - 1);
+	title = BFPadText(title, width - 1, BFALIGNCENTER);
+
+	SetAttribute(COLORBOLD);
+	BFDrawText(x, y, title);
+	SetAttribute(COLORRESET);
+
+	var contentY = y + 2;
+	var contentHeight = height - 2;
+
+	for row = 1 to contentHeight
+	{
+		var idx = row;
+
+		if idx <= len(bookmarks)
+		{
+			var bm = bookmarks[idx];
+			var name = bm["name"];
+
+			var indicator = "  ";
+
+			if idx == selected and hasFocus
+			{
+				if isMoving
+				{
+					indicator = "* ";
+				}
+				else
+				{
+					indicator = "> ";
+				}
+			}
+
+			var nameText = indicator + str(name);
+
+			nameText = BFClipText(nameText, width - 4);
+			nameText = BFPadText(nameText, width - 4, BFALIGNLEFT);
+
+			if idx <= 9
+			{
+				SetAttribute(COLORBOLD);
+				BFDrawText(x, contentY + row - 1, str(idx));
+				SetAttribute(COLORRESET);
+			}
+			else
+			{
+				BFDrawText(x, contentY + row - 1, " ");
+			}
+
+			if idx == selected and hasFocus
+			{
+				SetAttribute(COLORBGWHITE);
+				SetAttribute(COLORBOLD);
+				SetAttribute(COLORBLACK);
+			}
+
+			BFDrawText(x + 2, contentY + row - 1, nameText);
+
+			if idx == selected and hasFocus
+			{
+				SetAttribute(COLORRESET);
+			}
+		}
+		else
+		{
+			BFClearRegion(x, contentY + row - 1, width - 1, 1);
+		}
+	}
+}
+
+#@ <FormatSortIndicator(mode, direction)>
+#@ Returns a string indicating current sort ''mode'' and ''direction''.
+
+func FormatSortIndicator(mode, direction)
+{
+	var arrow = "↑";
+	if direction == SORTDESC { arrow = "↓"; }
+
+	if mode == SORTNAME { return "[Name" + arrow + "]"; }
+	if mode == SORTSIZE { return "[Size" + arrow + "]"; }
+	if mode == SORTMTIME { return "[Date" + arrow + "]"; }
+
+	return "[Name" + arrow + "]";
+}
+
+#@ <DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, markedCount, clipboardMode, showHidden, sortMode, sortDirection)>
+#@ Draws the file browser panel.
+
+func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, markedCount, clipboardMode, showHidden, sortMode, sortDirection)
+{
+	var status = FormatSortIndicator(sortMode, sortDirection) + " ";
+
+	if showHidden
+	{
+		status = status + "[HIDDEN] ";
+	}
+
+	if markedCount > 0
+	{
+		status = status + "[" + str(markedCount) + " marked] ";
+	}
+
+	if clipboardMode == CLIPBOARDCOPY
+	{
+		status = status + "[COPY] ";
+	}
+	elseif clipboardMode == CLIPBOARDCUT
+	{
+		status = status + "[CUT] ";
+	}
+
+	BFClearRegion(x, y, width, 1);
+
+	var titleWidth = width - lenv(status) - 1;
+
+	var title = BFTruncateMiddle(path, titleWidth);
+
+	if hasFocus
+	{
+		SetAttribute(COLORBOLD);
+	}
+
+	BFDrawText(x, y, title);
+
+	if hasFocus
+	{
+		SetAttribute(COLORRESET);
+	}
+
+	# Draw status on right
+	if status != ""
+	{
+		var statusX = x + width - lenv(status);
+
+		BFDrawText(statusX, y, status);
+	}
+
+	# File list below path with one blank line after path
+	var contentY = y + 2;
+	var contentHeight = height - 2;
+	var contentWidth = width;
+
+	var sizeColWidth = 10;
+	var dateColWidth = 13;
+
+	var nameColWidth = contentWidth - sizeColWidth - dateColWidth - 2;
+
+	# Calculate how many files can fit
+	var visibleFiles = int(contentHeight / FILEROWHEIGHT);
+
+	for fileRow = 1 to visibleFiles
+	{
+		var idx = offset + fileRow - 1;
+		var baseY = contentY + (fileRow - 1) * FILEROWHEIGHT;
+
+		var isSelected = idx == selected and hasFocus;
+		var isMarked = false;
+
+		if idx <= len(files)
+		{
+			isMarked = files[idx]["marked"];
+		}
+
+		var emptyRow = BFPadText("", contentWidth, BFALIGNLEFT);
+
+		if isSelected
+		{
+			SetAttribute(COLORBLACK);
+			SetAttribute(COLORBOLD);
+			SetAttribute(COLORBGWHITE);
+		}
+		elseif isMarked
+		{
+			SetAttribute(COLORWHITE);
+			SetAttribute(COLORBOLD);
+			SetAttribute(COLORBGBLUE);
+		}
+
+		if idx <= len(files)
+		{
+			var entry = files[idx];
+			var name = entry["name"];
+			var rawName = name;
+			var size = entry["size"];
+			var isDir = entry["isDir"];
+			var isSymlink = entry["isSymlink"];
+			var isExecutable = entry["isExecutable"];
+			var mtime = entry["mtime"];
+
+			if not isSelected and not isMarked and rawName != ".."
+			{
+				SetFileTypeColor(isSymlink, isDir, isExecutable);
+			}
+
+			# Format name with prefix
+			var prefix = "  ";
+
+			if isMarked
+			{
+				prefix = "> ";
+			}
+
+			if isDir
+			{
+				if isSymlink
+				{
+					name = "~" + str(name) + "/";
+				}
+				else
+				{
+					name = str(name) + "/";
+				}
+			}
+			elseif isSymlink
+			{
+				name = "~" + str(name);
+			}
+
+			var displayName = prefix + str(name);
+			displayName = BFClipText(displayName, nameColWidth);
+			var displayNameText = displayName;
+			displayName = BFPadText(displayName, nameColWidth, BFALIGNLEFT);
+
+			# Format date
+			var dateStr = "";
+
+			if rawName != ".."
+			{
+				dateStr = FormatCompactDate(mtime);
+			}
+
+			dateStr = BFPadText(dateStr, dateColWidth, BFALIGNRIGHT);
+
+			# Format size
+			var sizeStr = "";
+
+			if isDir
+			{
+				sizeStr = "<DIR>";
+			}
+			else
+			{
+				sizeStr = SizeToString(size);
+			}
+
+			sizeStr = BFPadText(sizeStr, sizeColWidth, BFALIGNRIGHT);
+
+			var rowText = displayName + " " + dateStr + " " + sizeStr;
+
+			# Content
+			if not isSelected and not isMarked and rawName != ".." and (isSymlink or isDir or isExecutable)
+			{
+				var nameText = slice(displayNameText, 3, len(displayNameText));
+				BFDrawText(x, baseY, prefix);
+				SetAttribute(COLORUNDERLINE);
+				BFDrawText(x + 2, baseY, nameText);
+				SetAttribute(COLORUNDERLINEOFF);
+				BFDrawText(x + lenv(displayNameText), baseY, BFPadText("", nameColWidth - lenv(displayNameText), BFALIGNLEFT) + " " + dateStr + " " + sizeStr);
+			}
+			else
+			{
+				BFDrawText(x, baseY, rowText);
+			}
+
+			# Spacing
+			BFDrawText(x, baseY + 1, emptyRow);
+		}
+		else
+		{
+			BFDrawText(x, baseY, emptyRow);
+			BFDrawText(x, baseY + 1, emptyRow);
+		}
+
+		SetAttribute(COLORRESET);
+	}
+}
+
+#@ <DrawVerticalSeparator(x, y, height)>
+#@ Draws a vertical line separator.
+
+func DrawVerticalSeparator(x, y, height)
+{
+	BFDrawVLine(x, y, height, "│");
+}
+
+#@ <KeybindWidth(key, action)>
+#@ Returns the width of a keybind entry.
+
+func KeybindWidth(key, action)
+{
+	return lenv(key) + 1 + lenv(action) + 3;
+}
+
+#@ <DrawKeybind(x, y, key, action)>
+#@ Draws a single keybind with bold ''key''. Returns x position after drawing.
+
+func DrawKeybind(x, y, key, action)
+{
+	SetAttribute(COLORBOLD);
+	BFDrawText(x, y, key);
+	SetAttribute(COLORRESET);
+	SetAttribute(COLORBLACK);
+	SetAttribute(COLORBGWHITE);
+
+	var actionX = x + lenv(key);
+
+	BFDrawText(actionX, y, " " + action + "   ");
+
+	return actionX + lenv(action) + 4;
+}
+
+#@ <DrawKeybindsBar(y, width, focusPanel)>
+#@ Draws the keybinds help bar at the bottom of the screen.
+
+func DrawKeybindsBar(y, width, focusPanel)
+{
+	SetAttribute(COLORBLACK);
+	SetAttribute(COLORBGWHITE);
+
+	BFDrawText(1, y - 2, BFPadText("", width, BFALIGNLEFT));
+	BFDrawText(1, y - 1, BFPadText("", width, BFALIGNLEFT));
+	BFDrawText(1, y, BFPadText("", width, BFALIGNLEFT));
+
+	var xpos = 2;
+
+	if focusPanel == FOCUSSIDEBAR
+	{
+		# Single centered row for sidebar
+		var lineWidth = KeybindWidth("Up/Down", "Navigate") +
+						KeybindWidth("Enter", "Go") +
+						KeybindWidth("Space", "Move") +
+						KeybindWidth("Del", "Remove") +
+						KeybindWidth("Tab", "Browser") +
+						KeybindWidth("1-9", "Jump") +
+						KeybindWidth("Esc", "Quit");
+
+		xpos = int((width - lineWidth) / 2) + 1;
+
+		xpos = DrawKeybind(xpos, y - 1, "Up/Down", "Navigate");
+		xpos = DrawKeybind(xpos, y - 1, "Enter", "Go");
+		xpos = DrawKeybind(xpos, y - 1, "Space", "Move");
+		xpos = DrawKeybind(xpos, y - 1, "Del", "Remove");
+		xpos = DrawKeybind(xpos, y - 1, "Tab", "Browser");
+		xpos = DrawKeybind(xpos, y - 1, "1-9", "Jump");
+		xpos = DrawKeybind(xpos, y - 1, "Esc", "Quit");
+	}
+	else
+	{
+		# Row 1
+		var line1Width = KeybindWidth("↑↓←→", "Navigate") +
+						 KeybindWidth("Alt+←", "Back") +
+						 KeybindWidth("Enter", "Open") +
+						 KeybindWidth("Tab", "Sidebar") +
+						 KeybindWidth("Space", "Mark") +
+						 KeybindWidth("a", "All") +
+						 KeybindWidth("s", "Search") +
+						 KeybindWidth("r", "Refresh") +
+						 KeybindWidth("Esc", "Quit");
+
+		xpos = int((width - line1Width) / 2) + 1;
+
+		xpos = DrawKeybind(xpos, y - 2, "↑↓←→", "Navigate");
+		xpos = DrawKeybind(xpos, y - 2, "Alt+←", "Back");
+		xpos = DrawKeybind(xpos, y - 2, "Enter", "Open");
+		xpos = DrawKeybind(xpos, y - 2, "Tab", "Sidebar");
+		xpos = DrawKeybind(xpos, y - 2, "Space", "Mark");
+		xpos = DrawKeybind(xpos, y - 2, "a", "All");
+		xpos = DrawKeybind(xpos, y - 2, "s", "Search");
+		xpos = DrawKeybind(xpos, y - 2, "r", "Refresh");
+		xpos = DrawKeybind(xpos, y - 2, "Esc", "Quit");
+
+		# Row 2
+		var line2Width = KeybindWidth("Ctrl+C", "Copy") +
+						 KeybindWidth("Ctrl+X", "Cut") +
+						 KeybindWidth("Ctrl+V", "Paste") +
+						 KeybindWidth("Del", "Delete") +
+						 KeybindWidth("F2", "Rename") +
+						 KeybindWidth("o", "Open") +
+						 KeybindWidth("n", "New") +
+						 KeybindWidth("d", "Mkdir");
+
+		xpos = int((width - line2Width) / 2) + 1;
+
+		xpos = DrawKeybind(xpos, y - 1, "Ctrl+C", "Copy");
+		xpos = DrawKeybind(xpos, y - 1, "Ctrl+X", "Cut");
+		xpos = DrawKeybind(xpos, y - 1, "Ctrl+V", "Paste");
+		xpos = DrawKeybind(xpos, y - 1, "Del", "Delete");
+		xpos = DrawKeybind(xpos, y - 1, "F2", "Rename");
+		xpos = DrawKeybind(xpos, y - 1, "o", "Open");
+		xpos = DrawKeybind(xpos, y - 1, "n", "New");
+		xpos = DrawKeybind(xpos, y - 1, "d", "Mkdir");
+
+		# Row 3
+		var line3Width = KeybindWidth("F1", "Term") +
+						 KeybindWidth("#", "Run") +
+						 KeybindWidth("h", "Hidden") +
+						 KeybindWidth("i", "Info") +
+						 KeybindWidth("c", "Compress") +
+						 KeybindWidth("t", "Sort") +
+						 KeybindWidth("p", "Path") +
+						 KeybindWidth("b", "Bookmark");
+
+		xpos = int((width - line3Width) / 2) + 1;
+
+		xpos = DrawKeybind(xpos, y, "F1", "Term");
+		xpos = DrawKeybind(xpos, y, "#", "Run");
+		xpos = DrawKeybind(xpos, y, "h", "Hidden");
+		xpos = DrawKeybind(xpos, y, "i", "Info");
+		xpos = DrawKeybind(xpos, y, "c", "Compress");
+		xpos = DrawKeybind(xpos, y, "t", "Sort");
+		xpos = DrawKeybind(xpos, y, "p", "Path");
+		xpos = DrawKeybind(xpos, y, "b", "Bookmark");
+	}
+
+	SetAttribute(COLORRESET);
+}
+
+#@ <DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, files, selectedFile, fileOffset, currentPath, focusPanel, markedCount, clipboardMode, showHidden, movingBookmark, sortMode, sortDirection)>
+#@ Draws the complete screen.
+
+func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, files, selectedFile, fileOffset, currentPath, focusPanel, markedCount, clipboardMode, showHidden, movingBookmark, sortMode, sortDirection)
+{
+	var sidebarWidth = SIDEBARWIDTH;
+	var separatorX = sidebarWidth;
+	var browserX = sidebarWidth + 2;
+	var browserWidth = screenWidth - sidebarWidth - 2;
+	var contentHeight = screenHeight - KEYBINDSBARHEIGHT;
+
+	DrawSidebar(1,
+				1,
+				sidebarWidth,
+				contentHeight,
+				bookmarks,
+				selectedBookmark,
+				focusPanel == FOCUSSIDEBAR,
+				movingBookmark);
+
+	DrawVerticalSeparator(separatorX, 1, contentHeight);
+
+	DrawBrowser(browserX,
+				1,
+				browserWidth,
+				contentHeight,
+				files,
+				selectedFile,
+				fileOffset,
+				currentPath,
+				focusPanel == FOCUSBROWSER,
+				markedCount,
+				clipboardMode,
+				showHidden,
+				sortMode,
+				sortDirection);
+
+	DrawKeybindsBar(screenHeight, screenWidth, focusPanel);
+}

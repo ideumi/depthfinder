@@ -1,0 +1,9 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Name=depthfinder
+Comment=Terminal file manager
+Exec=kitty -e dfn
+Icon=system-file-manager
+Terminal=false
+Type=Application
+Categories=System;FileManager;

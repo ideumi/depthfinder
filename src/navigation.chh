@@ -1,0 +1,253 @@
+#!/usr/bin/chippy
+#
+# depthfinder - navigation.chh
+#
+
+#@ <GetParentPath(path)>
+#@ Returns the parent directory path.
+
+func GetParentPath(path)
+{
+	if path == "/" { return "/"; }
+
+	return Dirname(path);
+}
+
+#@ <UpdateTitle()>
+#@ Updates the terminal title to reflect the current directory.
+
+func UpdateTitle()
+{
+	var dirName = Basename(currentPath);
+
+	if dirName == "" { dirName = "/"; }
+
+	SetTitle(dirName + " - " + PROGRAMNAME);
+}
+
+#@ <RefreshDirectory()>
+#@ Reloads the current directory contents.
+
+func RefreshDirectory()
+{
+	var loadResult = LoadDirectory(currentPath, showHidden, sortMode, sortDirection);
+
+	if iserr(loadResult)
+	{
+		files = [];
+
+		ShowError(screenWidth, screenHeight, "Cannot read directory: " + currentPath);
+	}
+	else
+	{
+		files = loadResult;
+	}
+
+	# Out of bounds reset
+	if selectedIndex > len(files) and len(files) > 0
+	{
+		selectedIndex = len(files);
+	}
+
+	if selectedIndex < 1 and len(files) > 0
+	{
+		selectedIndex = 1;
+	}
+
+	AdjustScrollOffset();
+}
+
+#@ <NavigateTo(path)>
+#@ Changes to the specified directory.
+
+func NavigateTo(path)
+{
+	if path == "" { path = "/"; }
+
+	if not IsDir(path) { return; }
+
+	# Push current path to history before navigating away
+	if not navigatingBack and currentPath != ""
+	{
+		dirHistory = append(dirHistory, currentPath);
+
+		if len(dirHistory) > DIRHISTORYMAX
+		{
+			dirHistory = dirHistory - 1;
+		}
+	}
+
+	chdir(path);
+	currentPath = path;
+	SaveLastDir(path);
+
+	RefreshDirectory();
+
+	if path != "/" and len(files) > 1
+	{
+		selectedIndex = 2;
+	}
+	else
+	{
+		selectedIndex = 1;
+	}
+
+	scrollOffset = 1;
+
+	UpdateTitle();
+}
+
+#@ <NavigateUp()>
+#@ Navigates to the parent directory.
+
+func NavigateUp()
+{
+	var parent = GetParentPath(currentPath);
+
+	if parent != currentPath
+	{
+		var oldName = Basename(currentPath);
+
+		NavigateTo(parent);
+
+		# Try to select the directory we came from
+		for i = 1 to len(files)
+		{
+			if files[i]["name"] == oldName
+			{
+				selectedIndex = i;
+
+				AdjustScrollOffset();
+
+				break;
+			}
+		}
+	}
+}
+
+#@ <NavigateInto()>
+#@ Enters the selected directory or opens the selected file(s).
+
+func NavigateInto()
+{
+	if len(files) == 0 { return; }
+
+	if selectedIndex < 1 or selectedIndex > len(files) { return; }
+
+	var selectedFiles = GetMarkedFiles(files, currentPath);
+
+	if len(selectedFiles) > 1
+	{
+		for i = 1 to len(selectedFiles)
+		{
+			OpenFile(selectedFiles[i]);
+		}
+
+		files = ClearAllMarks(files);
+
+		return;
+	}
+
+	var entry = files[selectedIndex];
+	var name = entry["name"];
+	var isDir = entry["isDir"];
+
+	if name == ".."
+	{
+		NavigateUp();
+
+		return;
+	}
+
+	var fullPath = JoinPath(currentPath, name);
+
+	if isDir
+	{
+		NavigateTo(fullPath);
+	}
+	else
+	{
+		OpenFile(fullPath);
+
+		if entry["marked"]
+		{
+			files = ToggleFileMark(files, selectedIndex);
+		}
+	}
+}
+
+#@ <GetVisibleFileCount()>
+#@ Returns how many files can be displayed at once.
+
+func GetVisibleFileCount()
+{
+	var contentHeight = screenHeight - KEYBINDSBARHEIGHT - 2;
+
+	return int(contentHeight / FILEROWHEIGHT);
+}
+
+#@ <AdjustScrollOffset()>
+#@ Adjusts scroll offset to keep selection visible.
+
+func AdjustScrollOffset()
+{
+	var visibleFiles = GetVisibleFileCount();
+
+	if selectedIndex < scrollOffset
+	{
+		scrollOffset = selectedIndex;
+	}
+
+	if selectedIndex >= scrollOffset + visibleFiles
+	{
+		scrollOffset = selectedIndex - visibleFiles + 1;
+	}
+
+	if scrollOffset < 1
+	{
+		scrollOffset = 1;
+	}
+}
+
+#@ <NavigateToBookmark(bmIndex)>
+#@ Navigates to the bookmark at ''bmIndex'' if valid.
+
+func NavigateToBookmark(bmIndex)
+{
+	if bmIndex >= 1 and bmIndex <= len(bookmarks)
+	{
+		var bm = bookmarks[bmIndex];
+		var path = bm["path"];
+
+		if IsDir(path)
+		{
+			selectedBookmark = bmIndex;
+			NavigateTo(path);
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+#@ <NavigateBack()>
+#@ Navigates to the previous directory in history.
+
+func NavigateBack()
+{
+	while len(dirHistory) > 0
+	{
+		var prevPath = dirHistory[len(dirHistory)];
+		dirHistory = dirHistory - len(dirHistory);
+
+		if IsDir(prevPath)
+		{
+			navigatingBack = true;
+			NavigateTo(prevPath);
+			navigatingBack = false;
+
+			return;
+		}
+	}
+}

@@ -1,0 +1,779 @@
+#!/usr/bin/chippy
+#
+# depthfinder - depthfinder.chh
+#
+
+# Set timezone offset in libtime.chh
+TIMEZONEOFFSET = CalculateTimezone();
+
+var currentPath = "";
+var files = [];
+
+var selectedIndex = 1;
+var scrollOffset = 1;
+
+var showHidden = false;
+var movingBookmark = false;
+
+var sortMode = SORTNAME;
+var sortDirection = SORTASC;
+
+var clipboard = [];
+var clipboardMode = CLIPBOARDNONE;
+
+var focusPanel = FOCUSBROWSER;
+
+var bookmarks = [];
+var selectedBookmark = 1;
+
+var fileAssoc = [];
+
+var terminal = "";
+
+var screenWidth = MINTERMWIDTH;
+var screenHeight = MINTERMHEIGHT;
+
+var dirHistory = [];
+var navigatingBack = false;
+
+var winsizeHandle = err;
+
+var inDialog = false;
+
+#@ <ConfirmExit()>
+#@ The exit confirmation dialog.
+
+func ConfirmExit()
+{
+	var confirmed = ShowConfirm(screenWidth, screenHeight, "Do you really want to exit?");
+
+	return not iserr(confirmed) and confirmed;
+}
+
+#@ <HandleSidebarInput(key)>
+#@ Handles key input when sidebar has focus.
+
+func HandleSidebarInput(key)
+{
+	# ESC
+	if key == BFKEYESC
+	{
+		if movingBookmark
+		{
+			movingBookmark = false;
+			SaveBookmarks(bookmarks);
+		}
+		elseif len(clipboard) > 0
+		{
+			clipboard = [];
+			clipboardMode = CLIPBOARDNONE;
+		}
+		else
+		{
+			if ConfirmExit() { return false; }
+		}
+	}
+	# TAB
+	elseif key == BFKEYTAB
+	{
+		if movingBookmark
+		{
+			movingBookmark = false;
+			SaveBookmarks(bookmarks);
+		}
+
+		focusPanel = FOCUSBROWSER;
+	}
+	# Up Arrow
+	elseif key == BFKEYUP
+	{
+		if movingBookmark and selectedBookmark > 1
+		{
+			# Swap bookmark with one above
+			var temp = bookmarks[selectedBookmark];
+
+			bookmarks = bookmarks[selectedBookmark] = bookmarks[selectedBookmark - 1];
+			bookmarks = bookmarks[selectedBookmark - 1] = temp;
+
+			selectedBookmark = selectedBookmark - 1;
+		}
+		elseif selectedBookmark > 1
+		{
+			selectedBookmark = selectedBookmark - 1;
+		}
+	}
+	# Down arrow
+	elseif key == BFKEYDOWN
+	{
+		if movingBookmark and selectedBookmark < len(bookmarks)
+		{
+			# Swap bookmark with one below
+			var temp = bookmarks[selectedBookmark];
+
+			bookmarks = bookmarks[selectedBookmark] = bookmarks[selectedBookmark + 1];
+			bookmarks = bookmarks[selectedBookmark + 1] = temp;
+
+			selectedBookmark = selectedBookmark + 1;
+		}
+		elseif selectedBookmark < len(bookmarks)
+		{
+			selectedBookmark = selectedBookmark + 1;
+		}
+	}
+	# Space
+	elseif key == KEYSPACE
+	{
+		if selectedBookmark >= 1 and selectedBookmark <= len(bookmarks)
+		{
+			if movingBookmark
+			{
+				movingBookmark = false;
+
+				SaveBookmarks(bookmarks);
+			}
+			else
+			{
+				movingBookmark = true;
+			}
+		}
+	}
+	# Enter, Right Arrow
+	elseif key == BFKEYENTER or key == BFKEYRIGHT
+	{
+		if selectedBookmark >= 1 and selectedBookmark <= len(bookmarks)
+		{
+			var bm = bookmarks[selectedBookmark];
+			var path = bm["path"];
+
+			if IsDir(path)
+			{
+				NavigateTo(path);
+				focusPanel = FOCUSBROWSER;
+			}
+			else
+			{
+				ShowError(screenWidth, screenHeight, "Directory not found: " + path);
+			}
+		}
+	}
+	# Home
+	elseif key == BFKEYHOME or key == BFKEYPAGEUP
+	{
+		if len(bookmarks) > 0 { selectedBookmark = 1; }
+	}
+	# End
+	elseif key == BFKEYEND or key == BFKEYPAGEDOWN
+	{
+		if len(bookmarks) > 0 { selectedBookmark = len(bookmarks); }
+	}
+	# Del
+	elseif key == BFKEYDELETE
+	{
+		if selectedBookmark >= 1 and selectedBookmark <= len(bookmarks)
+		{
+			var bm = bookmarks[selectedBookmark];
+			var bmName = bm["name"];
+
+			var confirmed = ShowConfirm(screenWidth, screenHeight, "Remove bookmark '" + bmName + "'?");
+
+			if not iserr(confirmed) and confirmed
+			{
+				var result = RemoveBookmark(bookmarks, selectedBookmark);
+
+				if not iserr(result)
+				{
+					bookmarks = result;
+
+					if selectedBookmark > len(bookmarks) and len(bookmarks) > 0
+					{
+						selectedBookmark = len(bookmarks);
+					}
+
+					if selectedBookmark < 1 and len(bookmarks) > 0
+					{
+						selectedBookmark = 1;
+					}
+				}
+				else
+				{
+					ShowError(screenWidth, screenHeight, "Failed to remove bookmark");
+				}
+			}
+		}
+	}
+	# 1-9 keys
+	elseif type(key) == "bytes" and len(key) == 1 and key[1] >= 49 and key[1] <= 57
+	{
+		var bmIndex = key[1] - 48;
+
+		if NavigateToBookmark(bmIndex)
+		{
+			focusPanel = FOCUSBROWSER;
+		}
+	}
+
+	return true;
+}
+
+#@ <HandleBrowserInput(key)>
+#@ Handles key input when browser has focus.
+
+func HandleBrowserInput(key)
+{
+	# ESC
+	if key == BFKEYESC
+	{
+		if CountMarkedFiles(files) > 0
+		{
+			files = ClearAllMarks(files);
+		}
+		elseif len(clipboard) > 0
+		{
+			clipboard = [];
+			clipboardMode = CLIPBOARDNONE;
+		}
+		else
+		{
+			if ConfirmExit() { return false; }
+		}
+	}
+	# TAB
+	elseif key == BFKEYTAB
+	{
+		focusPanel = FOCUSSIDEBAR;
+	}
+	elseif key == BFKEYUP
+	{
+		if selectedIndex > 1
+		{
+			selectedIndex = selectedIndex - 1;
+
+			AdjustScrollOffset();
+		}
+	}
+	# Down Arrow
+	elseif key == BFKEYDOWN
+	{
+		if selectedIndex < len(files)
+		{
+			selectedIndex = selectedIndex + 1;
+
+			AdjustScrollOffset();
+		}
+	}
+	# PgUp
+	elseif key == BFKEYPAGEUP
+	{
+		var pageSize = GetVisibleFileCount();
+
+		selectedIndex = selectedIndex - pageSize;
+
+		if selectedIndex < 1
+		{
+			selectedIndex = 1;
+		}
+
+		AdjustScrollOffset();
+	}
+	# PgDown
+	elseif key == BFKEYPAGEDOWN
+	{
+		var pageSize = GetVisibleFileCount();
+
+		selectedIndex = selectedIndex + pageSize;
+
+		if selectedIndex > len(files)
+		{
+			selectedIndex = len(files);
+		}
+
+		AdjustScrollOffset();
+	}
+	# Home
+	elseif key == BFKEYHOME
+	{
+		selectedIndex = 1;
+		scrollOffset = 1;
+	}
+	# End
+	elseif key == BFKEYEND
+	{
+		selectedIndex = len(files);
+
+		AdjustScrollOffset();
+	}
+	# Enter, Right Arrow
+	elseif key == BFKEYENTER or key == BFKEYRIGHT
+	{
+		NavigateInto();
+	}
+	# Alt + Left Arrow
+	elseif key == KEYALTLEFT
+	{
+		NavigateBack();
+	}
+	# Left Arrow
+	elseif key == BFKEYLEFT
+	{
+		NavigateUp();
+	}
+	# Space
+	elseif key == KEYSPACE
+	{
+		if selectedIndex >= 1 and selectedIndex <= len(files)
+		{
+			var name = files[selectedIndex]["name"];
+
+			if name != ".."
+			{
+				files = ToggleFileMark(files, selectedIndex);
+			}
+		}
+	}
+	# a or A
+	elseif key == KEYA or key == KEYAA
+	{
+		files = ToggleSelectAll(files);
+	}
+	# s or S
+	elseif key == KEYS or key == KEYSS
+	{
+		var browserWidth = screenWidth - SIDEBARWIDTH - 2;
+		var browserHeight = screenHeight - KEYBINDSBARHEIGHT - 2;
+
+		var searchWidth = int(browserWidth * 80 / 100);
+		var searchHeight = int(browserHeight * 80 / 100);
+
+		var searchX = SIDEBARWIDTH + 2 + int((browserWidth - searchWidth) / 2);
+		var searchY = 1 + int((browserHeight - searchHeight) / 2);
+
+		var result = SearchMode(searchX, searchY, searchWidth, searchHeight, files);
+
+		if not iserr(result)
+		{
+			selectedIndex = result;
+
+			AdjustScrollOffset();
+		}
+	}
+	# r or R
+	elseif key == KEYR or key == KEYRR
+	{
+		ClearScreen();
+		RefreshDirectory();
+	}
+	# h or H
+	elseif key == KEYH or key == KEYHH
+	{
+		showHidden = not showHidden;
+
+		RefreshDirectory();
+	}
+	# Ctrl + C
+	elseif key == KEYCTRLC
+	{
+		var selected = GetSelectedFiles(files, currentPath, selectedIndex);
+
+		if len(selected) > 0
+		{
+			clipboard = selected;
+			clipboardMode = CLIPBOARDCOPY;
+
+			files = ClearAllMarks(files);
+		}
+	}
+	# Ctrl + X
+	elseif key == KEYCTRLX
+	{
+		var selected = GetSelectedFiles(files, currentPath, selectedIndex);
+
+		if len(selected) > 0
+		{
+			clipboard = selected;
+			clipboardMode = CLIPBOARDCUT;
+
+			files = ClearAllMarks(files);
+		}
+	}
+	# Ctrl + V
+	elseif key == KEYCTRLV
+	{
+		ActionPaste();
+	}
+	# Del
+	elseif key == BFKEYDELETE
+	{
+		var selected = GetSelectedFiles(files, currentPath, selectedIndex);
+
+		if len(selected) > 0
+		{
+			var result = DeleteFiles(selected, screenWidth, screenHeight);
+
+			if isok(result)
+			{
+				files = ClearAllMarks(files);
+			}
+
+			RefreshDirectory();
+		}
+	}
+	# Ctrl + N
+	elseif key == KEYCTRLN
+	{
+		OpenNewWindow();
+	}
+	# F1
+	elseif key == KEYF1
+	{
+		OpenTerminal();
+	}
+	# F2
+	elseif key == KEYF2
+	{
+		ActionRename();
+	}
+	# o or O
+	elseif key == KEYO or key == KEYOO
+	{
+		ActionOpenWith();
+	}
+	# n or N
+	elseif key == KEYN or key == KEYNN
+	{
+		ActionNewFile();
+	}
+	# d or D
+	elseif key == KEYD or key == KEYDD
+	{
+		ActionNewDir();
+	}
+	# i or I
+	elseif key == KEYI or key == KEYII
+	{
+		if selectedIndex >= 1 and selectedIndex <= len(files)
+		{
+			var entry = files[selectedIndex];
+			var name = entry["name"];
+
+			if name != ".."
+			{
+				var fullPath = JoinPath(currentPath, name);
+
+				ShowFileInfo(screenWidth, screenHeight, fullPath);
+			}
+		}
+	}
+	# Hash
+	elseif key == KEYHASH
+	{
+		ActionRunCommand();
+	}
+	# p or P
+	elseif key == KEYP or key == KEYPP
+	{
+		var newPath = ShowInput(screenWidth, screenHeight, "Go To", "Path: ", currentPath);
+
+		if not iserr(newPath) and newPath != ""
+		{
+			if IsDir(newPath)
+			{
+				NavigateTo(newPath);
+			}
+			else
+			{
+				ShowError(screenWidth, screenHeight, "Not a directory: " + newPath);
+			}
+		}
+	}
+	# b or B
+	elseif key == KEYB or key == KEYBB
+	{
+		ActionAddBookmark();
+	}
+	# t or T
+	elseif key == KEYT or key == KEYTT
+	{
+		ActionSort();
+	}
+	# c or C
+	elseif key == KEYC or key == KEYCC
+	{
+		ActionCompress();
+	}
+	# 1-9 keys
+	elseif type(key) == "bytes" and len(key) == 1 and key[1] >= 49 and key[1] <= 57
+	{
+		var bmIndex = key[1] - 48;
+
+		NavigateToBookmark(bmIndex);
+	}
+
+	return true;
+}
+
+#@ <CurrentState()>
+#@ Packs the render-relevant globals into a single map so the winsize actor can
+#@ repaint with up-to-date state.
+
+func CurrentState()
+{
+	return m[
+		"bookmarks": bookmarks,
+		"selectedBookmark": selectedBookmark,
+		"files": files,
+		"selectedIndex": selectedIndex,
+		"scrollOffset": scrollOffset,
+		"currentPath": currentPath,
+		"focusPanel": focusPanel,
+		"clipboardMode": clipboardMode,
+		"showHidden": showHidden,
+		"movingBookmark": movingBookmark,
+		"sortMode": sortMode,
+		"sortDirection": sortDirection,
+		"inDialog": inDialog
+	];
+}
+
+#@ <EnterDialog()>
+#@ Sets the in-dialog flag and tells the winsize actor to suppress repaints
+#@ until the dialog returns.
+
+func EnterDialog()
+{
+	inDialog = true;
+
+	if not iserr(winsizeHandle)
+	{
+		send(winsizeHandle, CurrentState());
+	}
+}
+
+#@ <ExitDialog()>
+#@ Clears the in-dialog flag.
+
+func ExitDialog()
+{
+	inDialog = false;
+
+	if not iserr(winsizeHandle)
+	{
+		send(winsizeHandle, CurrentState());
+	}
+}
+
+#@ <WinChangeActor()>
+#@ Actor for detecting and acting :D on window size changes
+
+func WinChActor()
+{
+	sigcatch([SIGWINCH]);
+
+	var state = m[];
+
+	while true
+	{
+		signal();
+
+		var msgs = receive(false);
+
+		if len(msgs) > 0
+		{
+			state = msgs[len(msgs)];
+		}
+
+		if len(state) == 0 { continue; }
+
+		if state["inDialog"] { continue; }
+
+		var size = winsize();
+
+		if iserr(size) { continue; }
+
+		var height = size[1];
+		var width = size[2];
+
+		if width < MINTERMWIDTH or height < MINTERMHEIGHT { continue; }
+
+		ClearScreen();
+
+		DrawScreen(width,
+				   height,
+				   state["bookmarks"],
+				   state["selectedBookmark"],
+				   state["files"],
+				   state["selectedIndex"],
+				   state["scrollOffset"],
+				   state["currentPath"],
+				   state["focusPanel"],
+				   CountMarkedFiles(state["files"]),
+				   state["clipboardMode"],
+				   state["showHidden"],
+				   state["movingBookmark"],
+				   state["sortMode"],
+				   state["sortDirection"]);
+	}
+}
+
+#@ <MainLoop()>
+#@ Main event loop.
+
+func MainLoop()
+{
+	var running = true;
+
+	while running
+	{
+		inDialog = false;
+
+		var termSize = winsize();
+
+		if not iserr(termSize)
+		{
+			screenHeight = termSize[1];
+			screenWidth = termSize[2];
+		}
+
+		# Do not render when it is expected that rendering causes broken elements
+		# on the screen.
+		if screenWidth < MINTERMWIDTH or screenHeight < MINTERMHEIGHT
+		{
+			ClearScreen();
+			CursorTo(1, 1);
+
+			Print("Terminal too small");
+			getch();
+
+			continue;
+		}
+
+		var markedCount = CountMarkedFiles(files);
+
+		DrawScreen(screenWidth,
+				   screenHeight,
+				   bookmarks,
+				   selectedBookmark,
+				   files,
+				   selectedIndex,
+				   scrollOffset,
+				   currentPath,
+				   focusPanel,
+				   markedCount,
+				   clipboardMode,
+				   showHidden,
+				   movingBookmark,
+				   sortMode,
+				   sortDirection);
+
+		send(winsizeHandle, CurrentState());
+
+		var key = getch();
+
+		var postSize = winsize();
+
+		if not iserr(postSize)
+		{
+			screenHeight = postSize[1];
+			screenWidth = postSize[2];
+		}
+
+		if focusPanel == FOCUSSIDEBAR
+		{
+			running = HandleSidebarInput(key);
+		}
+		else
+		{
+			running = HandleBrowserInput(key);
+		}
+	}
+}
+
+#@ <Init()>
+#@ Initializes the application by creating (if needed) and loading all config
+#@ files and determining starting directory. It also spawns the window-resize
+#@ detection actor.
+
+func Init()
+{
+	CreateDefaultBookmarks();
+	CreateDefaultFileAssoc();
+	CreateDefaultTerminal();
+	CreateDefaultLastDir();
+
+	# Load configs
+
+	var loadedBookmarks = LoadBookmarks();
+
+	if iserr(loadedBookmarks) { bookmarks = []; }
+	else { bookmarks = loadedBookmarks; }
+
+	var loadedAssoc = LoadFileAssoc();
+
+	if iserr(loadedAssoc) { fileAssoc = m[]; }
+	else { fileAssoc = loadedAssoc; }
+
+	var loadedTerminal = LoadTerminal();
+	if not iserr(loadedTerminal) { terminal = loadedTerminal; }
+
+	# Determine starting directory
+	var startPath = LoadLastDir();
+
+	if iserr(startPath)
+	{
+		startPath = getenv("HOME");
+
+		if iserr(startPath)
+		{
+			startPath = "/";
+		}
+	}
+
+	# If we have a CLI arg and it is a directory, move to it
+	var cmdArgs = args();
+
+	if not iserr(cmdArgs) and len(cmdArgs) >= 1
+	{
+		var argPath = cmdArgs[1];
+
+		if IsDir(argPath)
+		{
+			startPath = AbsolutePath(argPath);
+		}
+	}
+
+	NavigateTo(startPath);
+
+	# Spawn the window resize detector
+	winsizeHandle = actor(WinChActor);
+}
+
+#@ <Cleanup()>
+#@ Cleanup before exit.
+
+func Cleanup()
+{
+	ShowCursor();
+	ClearScreen();
+}
+
+#@ <Main()>
+#@ Entry point.
+
+func Main()
+{
+	SetTitle(PROGRAMNAME + " V-" + VERSION);
+
+	ClearScreen();
+	HideCursor();
+
+	Init();
+	MainLoop();
+
+	# The WinChActor has no explicit exit path, signal() is blocking so there is
+	# no way to just send it an exit command, makes no difference. Practical dead-
+	# lock.
+	# wait(winsizeHandle);
+
+	Cleanup();
+}
+
+Main();

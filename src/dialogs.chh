@@ -1,0 +1,572 @@
+#!/usr/bin/chippy
+#
+# depthfinder - dialogs.chh
+#
+
+#@ <GetUsernameByUID(uid)>
+#@ Looks up username from ''/etc/passwd'' by ''uid''. Returns ''uid'' as string
+#@ if not found.
+
+func GetUsernameByUID(uid)
+{
+	var content = ReadFile("/etc/passwd", true);
+
+	if iserr(content) { return str(uid); }
+
+	var lines = split(content, "\n");
+
+	for i = 1 to len(lines)
+	{
+		var line = lines[i];
+
+		if line == "" { continue; }
+
+		var parts = split(line, ":");
+
+		if len(parts) >= 3 and parts[3] == str(uid)
+		{
+			return parts[1];
+		}
+	}
+
+	return str(uid);
+}
+
+#@ <ShowProgress(screenWidth, screenHeight, title, current, total)>
+#@ Displays a centered progress dialog.
+
+func ShowProgress(screenWidth, screenHeight, title, current, total)
+{
+	EnterDialog();
+
+	var width = DIALOGWIDTH;
+	var height = 8;
+
+	var x = CenterDialogX(screenWidth, width);
+	var y = CenterDialogY(screenHeight, height);
+
+	BFClearRegion(x, y, width, height);
+	BFDrawFrame(x, y, width, height, title, BFBOXROUNDED);
+
+	var contentX = x + 2;
+	var contentWidth = width - 4;
+	var barY = y + 3;
+
+	BFDrawProgressBar(contentX, barY, contentWidth, current, total, BFBOXROUNDED);
+
+	var percent = 0;
+
+	if total > 0
+	{
+		percent = int((current / total) * 100);
+	}
+
+	var percentText = str(percent) +
+					  "% (" + str(int(current)) + "/" + str(int(total)) + ")";
+
+	percentText = BFPadText(percentText, contentWidth, BFALIGNCENTER);
+
+	BFDrawText(contentX, barY + 1, percentText);
+}
+
+#@ <ShowConfirm(screenWidth, screenHeight, message)>
+#@ Shows a centered confirmation dialog with Yes/No buttons.
+
+func ShowConfirm(screenWidth, screenHeight, message)
+{
+	EnterDialog();
+
+	var width = DIALOGWIDTH;
+	var height = 8;
+
+	var x = CenterDialogX(screenWidth, width);
+	var y = CenterDialogY(screenHeight, height);
+
+	BFClearRegion(x, y, width, height);
+	BFDrawFrame(x, y, width, height, "Confirm", BFBOXROUNDED);
+
+	var contentX = x + 2;
+	var contentWidth = width - 4;
+
+	var wrapped = BFWrapText(message, contentWidth);
+
+	for i = 1 to len(wrapped)
+	{
+		if i > 3 { break; }
+
+		BFDrawText(contentX, y + 1 + i, wrapped[i]);
+	}
+
+	var result = BFConfirm(contentX, y + 5, "", true);
+
+	HideCursor();
+	ExitDialog();
+
+	return result;
+}
+
+#@ <ShowError(screenWidth, screenHeight, message)>
+#@ Displays an error message dialog.
+
+func ShowError(screenWidth, screenHeight, message)
+{
+	EnterDialog();
+
+	var width = DIALOGWIDTH;
+	var height = 8;
+
+	var x = CenterDialogX(screenWidth, width);
+	var y = CenterDialogY(screenHeight, height);
+
+	BFClearRegion(x, y, width, height);
+	BFDrawFrame(x, y, width, height, "Error", BFBOXROUNDED);
+
+	var contentX = x + 2;
+	var contentWidth = width - 4;
+
+	var wrapped = BFWrapText(message, contentWidth);
+
+	for i = 1 to len(wrapped)
+	{
+		if i > 3 { break; }
+
+		SetAttribute(COLORRED);
+		BFDrawText(contentX, y + 1 + i, wrapped[i]);
+		SetAttribute(COLORRESET);
+	}
+
+	BFDrawText(contentX, y + 6, "Press any key...");
+
+	getch();
+	HideCursor();
+	ExitDialog();
+}
+
+#@ <ShowConflictDialog(screenWidth, screenHeight, filename)>
+#@ Shows the dialog for handling file conflicts.
+#@ Returns ''CONFLICTOVERWRITE'', ''CONFLICTOVERWRITEALL'', ''CONFLICTRENAME'',
+#@ ''CONFLICTSKIP'', ''CONFLICTSKIPALL'', or ''err'' on cancel.
+
+func ShowConflictDialog(screenWidth, screenHeight, filename)
+{
+	EnterDialog();
+
+	var width = DIALOGWIDTH;
+	var height = 12;
+
+	var x = CenterDialogX(screenWidth, width);
+	var y = CenterDialogY(screenHeight, height);
+
+	BFClearRegion(x, y, width, height);
+	BFDrawFrame(x, y, width, height, "File Exists", BFBOXROUNDED);
+
+	var contentX = x + 2;
+	var contentWidth = width - 4;
+
+	var displayName = BFTruncateMiddle(filename, contentWidth - 2);
+	BFDrawText(contentX, y + 2, "'" + displayName + "' already exists.");
+
+	BFDrawText(contentX, y + 3, "What do you want to do?");
+
+	var items = ["Overwrite", "Overwrite All", "Rename", "Skip", "Skip All"];
+
+	var selected = BFMenu(contentX, y + 5, items, 1);
+
+	HideCursor();
+	ExitDialog();
+
+	return selected;
+}
+
+#@ <ShowInput(screenWidth, screenHeight, title, prompt, defaultValue)>
+#@ Shows a centered input dialog.
+
+func ShowInput(screenWidth, screenHeight, title, prompt, defaultValue)
+{
+	EnterDialog();
+
+	var width = DIALOGWIDTH;
+	var height = 8;
+
+	var x = CenterDialogX(screenWidth, width);
+	var y = CenterDialogY(screenHeight, height);
+
+	BFClearRegion(x, y, width, height);
+	BFDrawFrame(x, y, width, height, title, BFBOXROUNDED);
+
+	var contentX = x + 2;
+	var contentWidth = width - 4;
+
+	var inputWidth = contentWidth - lenv(prompt) - 2;
+
+	var result = BFTextInput(contentX, y + 3, inputWidth, prompt, defaultValue);
+
+	HideCursor();
+	ExitDialog();
+
+	return result;
+}
+
+#@ <ShowRenameInput(screenWidth, screenHeight, title, prompt, defaultValue)>
+#@ Shows the rename input dialog.
+
+func ShowRenameInput(screenWidth, screenHeight, title, prompt, defaultValue)
+{
+	EnterDialog();
+
+	var width = DIALOGWIDTH;
+	var height = 8;
+
+	var x = CenterDialogX(screenWidth, width);
+	var y = CenterDialogY(screenHeight, height);
+
+	BFClearRegion(x, y, width, height);
+	BFDrawFrame(x, y, width, height, title, BFBOXROUNDED);
+
+	var contentX = x + 2;
+	var contentWidth = width - 4;
+
+	SetAttribute(COLORBOLD);
+	BFDrawText(contentX, y + 6, "#");
+	SetAttribute(COLORRESET);
+	BFDrawText(contentX + 1, y + 6, " Number ");
+	SetAttribute(COLORBOLD);
+	BFDrawText(contentX + 9, y + 6, "*");
+	SetAttribute(COLORRESET);
+	BFDrawText(contentX + 10, y + 6, " Extension");
+
+	var inputWidth = contentWidth - lenv(prompt) - 2;
+
+	var result = BFTextInput(contentX, y + 3, inputWidth, prompt, defaultValue);
+
+	HideCursor();
+	ExitDialog();
+
+	return result;
+}
+
+#@ <CenterDialogX(screenWidth, dialogWidth)>
+#@ Calculates centered X position for a dialog within the browser area.
+
+func CenterDialogX(screenWidth, dialogWidth)
+{
+	var areaX = SIDEBARWIDTH + 1;
+	var areaWidth = screenWidth - SIDEBARWIDTH;
+	var result = areaX + int((areaWidth - dialogWidth) / 2);
+
+	if result < areaX { result = areaX; }
+
+	return result;
+}
+
+#@ <CenterDialogY(screenHeight, dialogHeight)>
+#@ Calculates centered Y position for a dialog.
+
+func CenterDialogY(screenHeight, dialogHeight)
+{
+	var result = int((screenHeight - dialogHeight) / 2);
+
+	if result < 1 { result = 1; }
+
+	return result;
+}
+
+#@ <FormatPermissions(mode)>
+#@ Formats permission ''mode'' as human readable string.
+
+func FormatPermissions(mode)
+{
+	var ownerPerm = int(mode / 100) % 10;
+	var parts = [];
+
+	if int(ownerPerm / 4) % 2 == 1 { parts = append(parts, "read"); }
+	if int(ownerPerm / 2) % 2 == 1 { parts = append(parts, "write"); }
+	if ownerPerm % 2 == 1 { parts = append(parts, "execute"); }
+
+	if len(parts) == 0
+	{
+		return "no access";
+	}
+
+	return join(parts, ", ");
+}
+
+#@ <ShowFileInfo(screenWidth, screenHeight, path)>
+#@ Shows the file information dialog.
+
+func ShowFileInfo(screenWidth, screenHeight, path)
+{
+	EnterDialog();
+
+	var width = DIALOGWIDTH;
+	var height = 11;
+
+	var x = CenterDialogX(screenWidth, width);
+	var y = CenterDialogY(screenHeight, height);
+
+	BFClearRegion(x, y, width, height);
+	BFDrawFrame(x, y, width, height, "File Info", BFBOXROUNDED);
+
+	var contentX = x + 2;
+	var contentWidth = width - 4;
+	var row = y + 1;
+
+	var info = stat(path);
+	var linfo = lstat(path);
+
+	var isSymlink = not iserr(linfo) and StatType(linfo) == TYPESYMLINK;
+	var isDir = not iserr(info) and StatType(info) == TYPEDIR;
+	var isExecutable = false;
+
+	if not iserr(info)
+	{
+		var ownerPerm = int(info[STATMODE] / 100) % 10;
+		isExecutable = not isDir and ownerPerm % 2 == 1;
+	}
+
+	# Name
+	var name = BFTruncateMiddle(Basename(path), contentWidth - 6);
+
+	BFDrawText(contentX, row, "Name: ");
+	SetFileTypeColor(isSymlink, isDir, isExecutable);
+	BFDrawText(contentX + 6, row, name);
+	SetAttribute(COLORRESET);
+
+	row = row + 1;
+
+	if iserr(info)
+	{
+		BFDrawText(contentX, row, "Could not read file info");
+		BFDrawText(contentX, row + 2, "Press any key...");
+
+		getch();
+		HideCursor();
+		ExitDialog();
+
+		return;
+	}
+
+	# Check if symlink
+	var fileType = StatType(info);
+
+	if isSymlink
+	{
+		var target = readlink(path);
+
+		if not iserr(target)
+		{
+			target = BFTruncateMiddle(target, contentWidth - 18);
+			BFDrawText(contentX, row, "Type: symlink -> " + target);
+		}
+		else
+		{
+			BFDrawText(contentX, row, "Type: symlink (" + fileType + ")");
+		}
+	}
+	else
+	{
+		BFDrawText(contentX, row, "Type: " + fileType);
+	}
+
+	row = row + 1;
+
+	# Size
+	var size = info[STATSIZE];
+	BFDrawText(contentX, row, "Size: " + SizeToString(size) + " (" + str(size) + " bytes)");
+	row = row + 1;
+
+	# Owner
+	var uid = info[STATUID];
+	var owner = GetUsernameByUID(uid);
+	BFDrawText(contentX, row, "Owner: " + owner);
+	row = row + 1;
+
+	var mode = info[STATMODE];
+	BFDrawText(contentX, row, "Permissions: " + str(int(mode)) + " (" + FormatPermissions(mode) + ")");
+	row = row + 1;
+
+	# Modified time
+	var mtime = info[STATMTIME];
+	BFDrawText(contentX, row, "Modified: " + GregorianFormatTime(mtime));
+	row = row + 3;
+
+	BFDrawText(contentX, row, "Press any key...");
+
+	getch();
+	HideCursor();
+	ExitDialog();
+}
+
+#@ <ShowSortMenu(screenWidth, screenHeight, currentMode, currentDirection)>
+#@ Shows the sort options menu.
+
+func ShowSortMenu(screenWidth, screenHeight, currentMode, currentDirection)
+{
+	EnterDialog();
+
+	var width = 30;
+	var height = 11;
+
+	var x = CenterDialogX(screenWidth, width);
+	var y = CenterDialogY(screenHeight, height);
+
+	var mode = currentMode;
+	var direction = currentDirection;
+	var selected = 1;
+	var running = true;
+
+	var contentX = x + 2;
+	var contentWidth = width - 4;
+
+	while running
+	{
+		BFClearRegion(x, y, width, height);
+		BFDrawFrame(x, y, width, height, "Sort", BFBOXROUNDED);
+
+		# Mode options
+		var nameLabel = "  Name";
+		var sizeLabel = "  Size";
+		var mtimeLabel = "  Modified";
+
+		if mode == SORTNAME { nameLabel = "> Name"; }
+		if mode == SORTSIZE { sizeLabel = "> Size"; }
+		if mode == SORTMTIME { mtimeLabel = "> Modified"; }
+
+		var ascLabel = "  Ascending";
+		var descLabel = "  Descending";
+
+		if direction == SORTASC { ascLabel = "> Ascending"; }
+		if direction == SORTDESC { descLabel = "> Descending"; }
+
+		# ---
+
+		var row = y + 2;
+
+		if selected == 1 { SetAttribute(COLORBLACK); SetAttribute(COLORBGWHITE); }
+		BFDrawText(contentX, row, BFPadText(nameLabel, contentWidth, BFALIGNLEFT));
+		if selected == 1 { SetAttribute(COLORRESET); }
+
+		row = row + 1;
+		if selected == 2 { SetAttribute(COLORBLACK); SetAttribute(COLORBGWHITE); }
+		BFDrawText(contentX, row, BFPadText(sizeLabel, contentWidth, BFALIGNLEFT));
+		if selected == 2 { SetAttribute(COLORRESET); }
+
+		row = row + 1;
+		if selected == 3 { SetAttribute(COLORBLACK); SetAttribute(COLORBGWHITE); }
+		BFDrawText(contentX, row, BFPadText(mtimeLabel, contentWidth, BFALIGNLEFT));
+		if selected == 3 { SetAttribute(COLORRESET); }
+
+		# Separator
+		row = row + 1;
+		BFDrawHLine(x + 1, row, width - 2, "─");
+
+		row = row + 1;
+		if selected == 4 { SetAttribute(COLORBLACK); SetAttribute(COLORBGWHITE); }
+		BFDrawText(contentX, row, BFPadText(ascLabel, contentWidth, BFALIGNLEFT));
+		if selected == 4 { SetAttribute(COLORRESET); }
+
+		row = row + 1;
+		if selected == 5 { SetAttribute(COLORBLACK); SetAttribute(COLORBGWHITE); }
+		BFDrawText(contentX, row, BFPadText(descLabel, contentWidth, BFALIGNLEFT));
+		if selected == 5 { SetAttribute(COLORRESET); }
+
+		# Render help text
+		row = row + 2;
+
+		SetAttribute(COLORBOLD);
+		BFDrawText(contentX, row, "Space");
+		SetAttribute(COLORRESET);
+		BFDrawText(contentX + 5, row, " Select ");
+		SetAttribute(COLORBOLD);
+		BFDrawText(contentX + 13, row, "Enter");
+		SetAttribute(COLORRESET);
+		BFDrawText(contentX + 18, row, " Confirm");
+
+		# ---
+
+		var key = getch();
+
+		if key == BFKEYESC
+		{
+			HideCursor();
+			ExitDialog();
+
+			return err;
+		}
+		elseif key == KEYSPACE
+		{
+			if selected == 1 { mode = SORTNAME; }
+			elseif selected == 2 { mode = SORTSIZE; }
+			elseif selected == 3 { mode = SORTMTIME; }
+			elseif selected == 4 { direction = SORTASC; }
+			elseif selected == 5 { direction = SORTDESC; }
+		}
+		elseif key == BFKEYUP
+		{
+			if selected > 1 { selected = selected - 1; }
+		}
+		elseif key == BFKEYDOWN
+		{
+			if selected < 5 { selected = selected + 1; }
+		}
+		elseif key == BFKEYENTER
+		{
+			# Apply and close
+			running = false;
+		}
+	}
+
+	HideCursor();
+	ExitDialog();
+
+	return [mode, direction];
+}
+
+#@ <ShowAbout(screenWidth, screenHeight)>
+#@ Shows the about dialog.
+
+func ShowAbout(screenWidth, screenHeight)
+{
+	EnterDialog();
+
+	var width = DIALOGWIDTH;
+	var height = 13;
+
+	var x = CenterDialogX(screenWidth, width);
+	var y = CenterDialogY(screenHeight, height);
+
+	BFClearRegion(x, y, width, height);
+	BFDrawFrame(x, y, width, height, "About", BFBOXROUNDED);
+
+	var contentX = x + 2;
+	var contentWidth = width - 4;
+
+	var title = PROGRAMNAME + " V-" + VERSION;
+	title = BFPadText(title, contentWidth, BFALIGNCENTER);
+
+	var desc = "A simple TUI file manager";
+	desc = BFPadText(desc, contentWidth, BFALIGNCENTER);
+
+	var quote = "I'm the stat(path), I speak for the files";
+	quote = BFPadText(quote, contentWidth, BFALIGNCENTER);
+
+	var copyright = "Copyright (c) 2026 ideumi";
+	copyright = BFPadText(copyright, contentWidth, BFALIGNCENTER);
+
+	var bfver = "using boxflinger V-" + BFVERSION;
+	bfver = BFPadText(bfver, contentWidth, BFALIGNCENTER);
+
+	SetAttribute(COLORBOLD);
+	BFDrawText(contentX, y + 2, title);
+	SetAttribute(COLORRESET);
+	BFDrawText(contentX, y + 3, bfver);
+	BFDrawText(contentX, y + 5, desc);
+	BFDrawText(contentX, y + 7, quote);
+	BFDrawText(contentX, y + 9, copyright);
+	BFDrawText(contentX, y + 11, "Press any key...");
+
+	getch();
+
+	HideCursor();
+	ExitDialog();
+}

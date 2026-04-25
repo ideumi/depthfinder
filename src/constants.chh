@@ -1,0 +1,392 @@
+#!/usr/bin/chippy
+#
+# depthfinder - constants.chh
+#
+
+# --- Program ---
+
+#@ <VERSION>
+#@ Program version string
+
+var VERSION = "1.0.0";
+
+#@ <PROGRAMNAME>
+#@ Program display name
+
+var PROGRAMNAME = "depthfinder";
+
+#@ <PROGRAMNAMESHORT>
+#@ Program short name
+
+var PROGRAMNAMESHORT = "dfn";
+
+#@ <RUNNINGASROOT>
+#@ If the program is running as root
+
+var RUNNINGASROOT = (getuid() == 0);
+
+# --- Config files ---
+
+#@ <CONFIGFILEBOOKMARKS>
+#@ Name of the bookmarks configuration file
+
+var CONFIGFILEBOOKMARKS = ".dfn-bookmarks";
+
+#@ <CONFIGFILETERMINAL>
+#@ Name of the terminal configuration file
+
+var CONFIGFILETERMINAL = ".dfn-terminal";
+
+#@ <CONFIGFILEASSOC>
+#@ Name of the configuration file holding file associations
+
+var CONFIGFILEASSOC = ".dfn-file-associations";
+
+#@ <CONFIGFILELASTDIR>
+#@ Name of the last visited directory config file
+
+var CONFIGFILELASTDIR = ".dfn-lastdir";
+
+# --- Defaults ---
+
+#@ <DEFAULTRUNNER>
+#@ The program used to open files if no association exists in the config.
+
+var DEFAULTRUNNER = "xdg-open";
+
+# --- UI ---
+
+#@ <SIDEBARWIDTH>
+#@ Width of the sidebar panel
+
+var SIDEBARWIDTH = 20;
+
+#@ <DIALOGWIDTH>
+#@ Standard width for dialog boxes
+
+var DIALOGWIDTH = 65;
+
+#@ <DIALOGNAMEMAX>
+#@ Maximum display length for filenames in dialogs
+
+var DIALOGNAMEMAX = 50;
+
+#@ <KEYBINDSBARHEIGHT>
+#@ Height of the keybinds bar at the bottom
+
+var KEYBINDSBARHEIGHT = 3;
+
+#@ <FILEROWHEIGHT>
+#@ Height of each file entry
+
+var FILEROWHEIGHT = 2;
+
+#@ <MINTERMWIDTH>
+#@ Minimum required terminal width
+
+var MINTERMWIDTH = 95;
+
+#@ <MINTERMHEIGHT>
+#@ Minimum required terminal height
+
+var MINTERMHEIGHT = 15;
+
+# --- Focus panel ---
+
+#@ <FOCUSSIDEBAR>
+#@ Focus is on sidebar panel
+
+var FOCUSSIDEBAR = 1;
+
+#@ <FOCUSBROWSER>
+#@ Focus is on browser panel
+
+var FOCUSBROWSER = 2;
+
+# --- Clipboard ---
+
+#@ <CLIPBOARDNONE>
+#@ No clipboard operation
+
+var CLIPBOARDNONE = 0;
+
+#@ <CLIPBOARDCOPY>
+#@ Copy operation pending
+
+var CLIPBOARDCOPY = 1;
+
+#@ <CLIPBOARDCUT>
+#@ Cut operation pending
+
+var CLIPBOARDCUT = 2;
+
+# --- Conflict dialog ---
+
+#@ <CONFLICTOVERWRITE>
+#@ Conflict dialog result: overwrite existing file
+
+var CONFLICTOVERWRITE = 1;
+
+#@ <CONFLICTOVERWRITEALL>
+#@ Conflict dialog result: overwrite all existing files
+
+var CONFLICTOVERWRITEALL = 2;
+
+#@ <CONFLICTRENAME>
+#@ Conflict dialog result: rename file
+
+var CONFLICTRENAME = 3;
+
+#@ <CONFLICTSKIP>
+#@ Conflict dialog result: skip file
+
+var CONFLICTSKIP = 4;
+
+#@ <CONFLICTSKIPALL>
+#@ Conflict dialog result: skip all existing files
+
+var CONFLICTSKIPALL = 5;
+
+# --- Sort ---
+
+#@ <SORTNAME>
+#@ Sort by filename
+
+var SORTNAME = 1;
+
+#@ <SORTSIZE>
+#@ Sort by file size
+
+var SORTSIZE = 2;
+
+#@ <SORTMTIME>
+#@ Sort by modification time
+
+var SORTMTIME = 3;
+
+#@ <SORTASC>
+#@ Sort ascending
+
+var SORTASC = 1;
+
+#@ <SORTDESC>
+#@ Sort descending
+
+var SORTDESC = 2;
+
+# --- Keys ---
+
+#@ <KEYCTRLC>
+#@ Ctrl+C key
+
+var KEYCTRLC = b[3];
+
+#@ <KEYCTRLN>
+#@ Ctrl+N key
+
+var KEYCTRLN = b[14];
+
+#@ <KEYCTRLV>
+#@ Ctrl+V key
+
+var KEYCTRLV = b[22];
+
+#@ <KEYCTRLX>
+#@ Ctrl+X key
+
+var KEYCTRLX = b[24];
+
+#@ <KEYSPACE>
+#@ Space key
+
+var KEYSPACE = b[32];
+
+#@ <KEYF1>
+#@ F1 key
+
+var KEYF1 = b[27, 79, 80];
+
+#@ <KEYF2>
+#@ F2 key
+
+var KEYF2 = b[27, 79, 81];
+
+#@ <KEYALTLEFT>
+#@ Alt+Left arrow key
+
+var KEYALTLEFT = b[27, 91, 49, 59, 51, 68];
+
+#@ <KEYHASH>
+#@ '#' key
+
+var KEYHASH = b[35];
+
+#@ <KEYA>
+#@ 'a' key
+
+var KEYA = b[97];
+
+#@ <KEYAA>
+#@ 'A' key
+
+var KEYAA = b[65];
+
+#@ <KEYB>
+#@ 'b' key
+
+var KEYB = b[98];
+
+#@ <KEYBB>
+#@ 'B' key
+
+var KEYBB = b[66];
+
+#@ <KEYC>
+#@ 'c' key
+
+var KEYC = b[99];
+
+#@ <KEYCC>
+#@ 'C' key
+
+var KEYCC = b[67];
+
+#@ <KEYD>
+#@ 'd' key
+
+var KEYD = b[100];
+
+#@ <KEYDD>
+#@ 'D' key
+
+var KEYDD = b[68];
+
+#@ <KEYH>
+#@ 'h' key
+
+var KEYH = b[104];
+
+#@ <KEYHH>
+#@ 'H' key
+
+var KEYHH = b[72];
+
+#@ <KEYI>
+#@ 'i' key
+
+var KEYI = b[105];
+
+#@ <KEYII>
+#@ 'I' key
+
+var KEYII = b[73];
+
+#@ <KEYN>
+#@ 'n' key
+
+var KEYN = b[110];
+
+#@ <KEYNN>
+#@ 'N' key
+
+var KEYNN = b[78];
+
+#@ <KEYO>
+#@ 'o' key
+
+var KEYO = b[111];
+
+#@ <KEYOO>
+#@ 'O' key
+
+var KEYOO = b[79];
+
+#@ <KEYP>
+#@ 'p' key
+
+var KEYP = b[112];
+
+#@ <KEYPP>
+#@ 'P' key
+
+var KEYPP = b[80];
+
+#@ <KEYR>
+#@ 'r' key
+
+var KEYR = b[114];
+
+#@ <KEYRR>
+#@ 'R' key
+
+var KEYRR = b[82];
+
+#@ <KEYS>
+#@ 's' key
+
+var KEYS = b[115];
+
+#@ <KEYSS>
+#@ 'S' key
+
+var KEYSS = b[83];
+
+#@ <KEYT>
+#@ 't' key
+
+var KEYT = b[116];
+
+#@ <KEYTT>
+#@ 'T' key
+
+var KEYTT = b[84];
+
+# --- ANSI sequences not in libterm ---
+
+#@ <COLORUNDERLINE>
+#@ ANSI underline on attribute
+
+var COLORUNDERLINE = 4;
+
+#@ <COLORUNDERLINEOFF>
+#@ ANSI underline off attribute
+
+var COLORUNDERLINEOFF = 24;
+
+# --- Data ---
+
+#@ <COPYCHUNKSIZE>
+#@ Chunk size for file copying
+
+# NOTE: Setting this high and accepting fwrite(bytes, handle)'s blocking behaviour
+# is preferrable to file transfers slowing due to overhead.
+
+var COPYCHUNKSIZE = 8388608;
+
+#@ <SIXMONTHSSECONDS>
+#@ Number of seconds in ~6 months
+
+var SIXMONTHSSECONDS = 15768000;
+
+#@ <SHORTMONTHNAMES>
+#@ Short month names
+
+var SHORTMONTHNAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+					   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+#@ <DIRHISTORYMAX>
+#@ Maximum number of entries in the directory history
+
+var DIRHISTORYMAX = 100;
+
+#@ <TTYREDIRECT>
+#@ TTY redirect suffix
+
+var TTYREDIRECT = " < /dev/tty > /dev/tty 2>&1";
+
+# --- Egg ---
+
+#@ <EGG>
+#@ Egg
+
+var EGG = "upupdowndownleftrightleftrightbastart";

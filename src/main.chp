@@ -1,0 +1,31 @@
+#!/usr/bin/chippy
+#
+# depthfinder - main.chp
+#
+
+load("libboxflinger.chh");
+
+load("libterm.chh");
+load("libhandles.chh");
+load("libfsio.chh");
+load("libstat.chh");
+load("libpaths.chh");
+load("libstrings.chh");
+load("libgregorian.chh");
+load("libsubprocess.chh");
+load("timezone.chh");
+load("libprint.chh");
+load("libsignals.chh");
+
+# ---
+
+load("constants.chh");
+load("config.chh");
+load("browser.chh");
+load("ui.chh");
+load("search.chh");
+load("dialogs.chh");
+load("operations.chh");
+load("navigation.chh");
+load("actions.chh");
+load("depthfinder.chh");
