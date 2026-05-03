@@ -203,10 +203,12 @@ func AdjustScrollOffset()
 		scrollOffset = selectedIndex - visibleFiles + 1;
 	}
 
-	if scrollOffset < 1
-	{
-		scrollOffset = 1;
-	}
+	# Avoid empty rows below the last file when files fit the viewport.
+	var maxOffset = len(files) - visibleFiles + 1;
+
+	if maxOffset < 1 { maxOffset = 1; }
+	if scrollOffset > maxOffset { scrollOffset = maxOffset; }
+	if scrollOffset < 1 { scrollOffset = 1; }
 }
 
 #@ <NavigateToBookmark(bmIndex)>
