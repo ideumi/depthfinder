@@ -589,23 +589,30 @@ func WinChActor()
 
 		if iserr(size) { continue; }
 
-		var height = size[1];
-		var width = size[2];
+		screenHeight = size[1];
+		screenWidth = size[2];
 
-		if width < MINTERMWIDTH or height < MINTERMHEIGHT { continue; }
+		if screenWidth < MINTERMWIDTH or screenHeight < MINTERMHEIGHT { continue; }
+
+		# Re-clamp against the new viewport before drawing.
+		files = state["files"];
+		selectedIndex = state["selectedIndex"];
+		scrollOffset = state["scrollOffset"];
+
+		AdjustScrollOffset();
 
 		ClearScreen();
 
-		DrawScreen(width,
-				   height,
+		DrawScreen(screenWidth,
+				   screenHeight,
 				   state["bookmarks"],
 				   state["selectedBookmark"],
-				   state["files"],
-				   state["selectedIndex"],
-				   state["scrollOffset"],
+				   files,
+				   selectedIndex,
+				   scrollOffset,
 				   state["currentPath"],
 				   state["focusPanel"],
-				   CountMarkedFiles(state["files"]),
+				   CountMarkedFiles(files),
 				   state["clipboardMode"],
 				   state["showHidden"],
 				   state["movingBookmark"],
@@ -646,6 +653,10 @@ func MainLoop()
 			continue;
 		}
 
+		# Viewport size may have changed while getch() was blocked. Re-clamp so
+		# the selection stays visible.
+		AdjustScrollOffset();
+
 		var markedCount = CountMarkedFiles(files);
 
 		DrawScreen(screenWidth,
@@ -675,6 +686,10 @@ func MainLoop()
 			screenHeight = postSize[1];
 			screenWidth = postSize[2];
 		}
+
+		# Re-clamp before input handlers run so they compute against the
+		# same scrollOffset the actor used to redraw.
+		AdjustScrollOffset();
 
 		if focusPanel == FOCUSSIDEBAR
 		{
