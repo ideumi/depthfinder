@@ -1,6 +1,6 @@
 #!/usr/bin/chippy
 #
-# boxflinger V-1.0.6
+# boxflinger V-1.0.7
 #
 
 # Copyright (c) 2025 ideumi
@@ -22,7 +22,7 @@
 #@ (2026-04-04)
 #@ Library version
 
-var BFVERSION = "1.0.6";
+var BFVERSION = "1.0.7";
 
 #@ <BFALIGNLEFT>
 #@ (2025-09-28)
@@ -236,6 +236,30 @@ var BFKEYCTRLHOME = b[27, 91, 49, 59, 53, 72];
 #@ Ctrl+End key combination
 
 var BFKEYCTRLEND = b[27, 91, 49, 59, 53, 70];
+
+#@ <BFKEYCTRLUP>
+#@ (2026-05-04)
+#@ Ctrl+Up arrow key combination
+
+var BFKEYCTRLUP = b[27, 91, 49, 59, 53, 65];
+
+#@ <BFKEYCTRLDOWN>
+#@ (2026-05-04)
+#@ Ctrl+Down arrow key combination
+
+var BFKEYCTRLDOWN = b[27, 91, 49, 59, 53, 66];
+
+#@ <BFKEYCTRLRIGHT>
+#@ (2026-05-04)
+#@ Ctrl+Right arrow key combination
+
+var BFKEYCTRLRIGHT = b[27, 91, 49, 59, 53, 67];
+
+#@ <BFKEYCTRLLEFT>
+#@ (2026-05-04)
+#@ Ctrl+Left arrow key combination
+
+var BFKEYCTRLLEFT = b[27, 91, 49, 59, 53, 68];
 
 #@ <BFKEYCTRLD>
 #@ (2026-02-02)
@@ -731,6 +755,51 @@ func BFMeasureText(text)
 	return lenv(str(text));
 }
 
+#@ <BFNextWordPos(text, pos)>
+#@ V-1.0.0 (2026-05-04)
+#@
+#@ Returns the index at the end of the next word in ''text'' after ''pos''.
+
+func BFNextWordPos(text, pos)
+{
+	var n = len(text);
+	var i = pos;
+
+	while i < n and charat(text, i + 1) == " "
+	{
+		i = i + 1;
+	}
+
+	while i < n and charat(text, i + 1) != " "
+	{
+		i = i + 1;
+	}
+
+	return i;
+}
+
+#@ <BFPrevWordPos(text, pos)>
+#@ V-1.0.0 (2026-05-04)
+#@
+#@ Returns the index at the start of the previous word in ''text'' before ''pos''.
+
+func BFPrevWordPos(text, pos)
+{
+	var i = pos;
+
+	while i > 0 and charat(text, i) == " "
+	{
+		i = i - 1;
+	}
+
+	while i > 0 and charat(text, i) != " "
+	{
+		i = i - 1;
+	}
+
+	return i;
+}
+
 #@ <BFWrapText(text, width)>
 #@ V-1.0.2 (2025-11-04)
 #@
@@ -985,8 +1054,8 @@ func BFKittyDrawImageAuto(x, y, imagePath, cols)
 #@ position ''x'' and ''y'' with maximum visible ''width''. The ''prompt'' is
 #@ displayed before input field and ''defaultValue'' sets initial text. Returns
 #@ entered text when Enter is pressed, or ''err'' if ESC is pressed or width less
-#@ than 1. Supports Left/Right arrows, Home/End, Backspace, Delete, and all
-#@ printable characters.
+#@ than 1. Supports Left/Right arrows, Ctrl+Left/Right, Home/End, Backspace,
+#@ Delete, and all printable characters.
 
 func BFTextInput(x, y, width, prompt, defaultValue)
 {
@@ -1066,6 +1135,14 @@ func BFTextInput(x, y, width, prompt, defaultValue)
 				cursorPos = cursorPos + 1;
 			}
 		}
+		elseif key == BFKEYCTRLLEFT
+		{
+			cursorPos = BFPrevWordPos(text, cursorPos);
+		}
+		elseif key == BFKEYCTRLRIGHT
+		{
+			cursorPos = BFNextWordPos(text, cursorPos);
+		}
 		elseif key == BFKEYHOME
 		{
 			cursorPos = 0;
@@ -1088,6 +1165,8 @@ func BFTextInput(x, y, width, prompt, defaultValue)
 		elseif key == BFKEYTAB { }
 		elseif key == BFKEYUP { }
 		elseif key == BFKEYDOWN { }
+		elseif key == BFKEYCTRLUP { }
+		elseif key == BFKEYCTRLDOWN { }
 		elseif key == BFKEYCTRLU
 		{
 			text = "";
@@ -1346,9 +1425,10 @@ func _BFTextBoxLine_(x, y, width, lines, lineIndex, offset, cursorLine, cursorCo
 #@ ''x'' and ''y'' with dimensions ''width'' and ''height''. The ''title'' is
 #@ displayed in top border and ''defaultText'' sets initial content. Uses the
 #@ provided ''style''. Returns full edited text when Ctrl+D is pressed, or ''err''
-#@ if ESC is pressed. Supports arrow keys, Home/End, Page Up/Down, Ctrl+Home/End,
-#@ Backspace, Delete, Enter, and all printable characters. Auto-scrolls to keep
-#@ cursor visible. Status line shows current line number and key hints.
+#@ if ESC is pressed. Supports arrow keys, Ctrl+Left/Right, Home/End, Page Up/Down,
+#@ Ctrl+Home/End, Backspace, Delete, Enter, and all printable characters. Auto-
+#@ scrolls to keep cursor visible. Status line shows current line number and key
+#@ hints.
 
 func BFTextBox(x, y, width, height, title, defaultText, style)
 {
@@ -1483,7 +1563,7 @@ func BFTextBox(x, y, width, height, title, defaultText, style)
 				fromRedrawLine = cursorLine;
 			}
 		}
-		elseif key == BFKEYUP
+		elseif key == BFKEYUP or key == BFKEYCTRLUP
 		{
 			if cursorLine > 1
 			{
@@ -1496,7 +1576,7 @@ func BFTextBox(x, y, width, height, title, defaultText, style)
 				redrawPrev = true;
 			}
 		}
-		elseif key == BFKEYDOWN
+		elseif key == BFKEYDOWN or key == BFKEYCTRLDOWN
 		{
 			if cursorLine < len(lines)
 			{
@@ -1515,7 +1595,9 @@ func BFTextBox(x, y, width, height, title, defaultText, style)
 			{
 				var prevHScroll = 0;
 				if cursorCol >= maxLineWidth { prevHScroll = cursorCol - maxLineWidth + 1; }
+
 				cursorCol = cursorCol - 1;
+
 				var newHScroll = 0;
 				if cursorCol >= maxLineWidth { newHScroll = cursorCol - maxLineWidth + 1; }
 				if newHScroll != prevHScroll { redrawCurrent = true; }
@@ -1524,6 +1606,7 @@ func BFTextBox(x, y, width, height, title, defaultText, style)
 			{
 				cursorLine = cursorLine - 1;
 				cursorCol = len(lines[cursorLine]);
+
 				redrawCurrent = true;
 				redrawPrev = true;
 			}
@@ -1536,7 +1619,9 @@ func BFTextBox(x, y, width, height, title, defaultText, style)
 			{
 				var prevHScroll = 0;
 				if cursorCol >= maxLineWidth { prevHScroll = cursorCol - maxLineWidth + 1; }
+
 				cursorCol = cursorCol + 1;
+
 				var newHScroll = 0;
 				if cursorCol >= maxLineWidth { newHScroll = cursorCol - maxLineWidth + 1; }
 				if newHScroll != prevHScroll { redrawCurrent = true; }
@@ -1545,6 +1630,53 @@ func BFTextBox(x, y, width, height, title, defaultText, style)
 			{
 				cursorLine = cursorLine + 1;
 				cursorCol = 0;
+
+				redrawCurrent = true;
+				redrawPrev = true;
+			}
+		}
+		elseif key == BFKEYCTRLLEFT
+		{
+			if cursorCol > 0
+			{
+				var prevHScroll = 0;
+				if cursorCol >= maxLineWidth { prevHScroll = cursorCol - maxLineWidth + 1; }
+
+				cursorCol = BFPrevWordPos(lines[cursorLine], cursorCol);
+
+				var newHScroll = 0;
+				if cursorCol >= maxLineWidth { newHScroll = cursorCol - maxLineWidth + 1; }
+				if newHScroll != prevHScroll { redrawCurrent = true; }
+			}
+			elseif cursorLine > 1
+			{
+				cursorLine = cursorLine - 1;
+				cursorCol = len(lines[cursorLine]);
+
+				redrawCurrent = true;
+				redrawPrev = true;
+			}
+		}
+		elseif key == BFKEYCTRLRIGHT
+		{
+			var currentLine = lines[cursorLine];
+
+			if cursorCol < len(currentLine)
+			{
+				var prevHScroll = 0;
+				if cursorCol >= maxLineWidth { prevHScroll = cursorCol - maxLineWidth + 1; }
+
+				cursorCol = BFNextWordPos(currentLine, cursorCol);
+
+				var newHScroll = 0;
+				if cursorCol >= maxLineWidth { newHScroll = cursorCol - maxLineWidth + 1; }
+				if newHScroll != prevHScroll { redrawCurrent = true; }
+			}
+			elseif cursorLine < len(lines)
+			{
+				cursorLine = cursorLine + 1;
+				cursorCol = 0;
+
 				redrawCurrent = true;
 				redrawPrev = true;
 			}
@@ -1561,7 +1693,9 @@ func BFTextBox(x, y, width, height, title, defaultText, style)
 			var prevHScroll = 0;
 			if cursorCol >= maxLineWidth { prevHScroll = cursorCol - maxLineWidth + 1; }
 			var currentLine = lines[cursorLine];
+
 			cursorCol = len(currentLine);
+
 			var newHScroll = 0;
 			if cursorCol >= maxLineWidth { newHScroll = cursorCol - maxLineWidth + 1; }
 			if newHScroll != prevHScroll { redrawCurrent = true; }
@@ -1615,7 +1749,9 @@ func BFTextBox(x, y, width, height, title, defaultText, style)
 			}
 
 			var currentLine = lines[cursorLine];
+
 			if cursorCol > len(currentLine) { cursorCol = len(currentLine); }
+
 			redrawCurrent = true;
 			redrawPrev = true;
 		}
@@ -1634,6 +1770,7 @@ func BFTextBox(x, y, width, height, title, defaultText, style)
 
 			var currentLine = lines[cursorLine];
 			if cursorCol > len(currentLine) { cursorCol = len(currentLine); }
+
 			redrawCurrent = true;
 			redrawPrev = true;
 		}
