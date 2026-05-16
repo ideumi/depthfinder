@@ -61,11 +61,11 @@ func LoadDirectory(path, showHidden, sortMode, sortDirection)
 
 		if not iserr(info)
 		{
-			size = info[STATSIZE];
+			size = info["size"];
 			isDir = StatType(info) == TYPEDIR;
-			mtime = info[STATMTIME];
+			mtime = info["modified"];
 
-			var ownerPerm = int(info[STATMODE] / 100) % 10;
+			var ownerPerm = int(info["mode"] / 100) % 10;
 			isExecutable = not isDir and ownerPerm % 2 == 1;
 		}
 

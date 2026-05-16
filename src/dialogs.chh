@@ -320,7 +320,7 @@ func ShowFileInfo(screenWidth, screenHeight, path)
 
 	if not iserr(info)
 	{
-		var ownerPerm = int(info[STATMODE] / 100) % 10;
+		var ownerPerm = int(info["mode"] / 100) % 10;
 		isExecutable = not isDir and ownerPerm % 2 == 1;
 	}
 
@@ -371,22 +371,22 @@ func ShowFileInfo(screenWidth, screenHeight, path)
 	row = row + 1;
 
 	# Size
-	var size = info[STATSIZE];
+	var size = info["size"];
 	BFDrawText(contentX, row, "Size: " + SizeToString(size) + " (" + str(size) + " bytes)");
 	row = row + 1;
 
 	# Owner
-	var uid = info[STATUID];
+	var uid = info["userId"];
 	var owner = GetUsernameByUID(uid);
 	BFDrawText(contentX, row, "Owner: " + owner);
 	row = row + 1;
 
-	var mode = info[STATMODE];
+	var mode = info["mode"];
 	BFDrawText(contentX, row, "Permissions: " + str(int(mode)) + " (" + FormatPermissions(mode) + ")");
 	row = row + 1;
 
 	# Modified time
-	var mtime = info[STATMTIME];
+	var mtime = info["modified"];
 	BFDrawText(contentX, row, "Modified: " + GregorianFormatTime(mtime));
 	row = row + 3;
 

@@ -589,8 +589,8 @@ func WinChActor()
 
 		if iserr(size) { continue; }
 
-		screenHeight = size[1];
-		screenWidth = size[2];
+		screenHeight = size["rows"];
+		screenWidth = size["columns"];
 
 		if screenWidth < MINTERMWIDTH or screenHeight < MINTERMHEIGHT { continue; }
 
@@ -636,8 +636,8 @@ func MainLoop()
 
 		if not iserr(termSize)
 		{
-			screenHeight = termSize[1];
-			screenWidth = termSize[2];
+			screenHeight = termSize["rows"];
+			screenWidth = termSize["columns"];
 		}
 
 		# Do not render when it is expected that rendering causes broken elements
@@ -683,8 +683,8 @@ func MainLoop()
 
 		if not iserr(postSize)
 		{
-			screenHeight = postSize[1];
-			screenWidth = postSize[2];
+			screenHeight = postSize["rows"];
+			screenWidth = postSize["columns"];
 		}
 
 		# Re-clamp before input handlers run so they compute against the
