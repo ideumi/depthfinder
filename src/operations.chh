@@ -15,7 +15,7 @@ func IsSameFile(path1, path2)
 
 	if iserr(stat1) or iserr(stat2) { return false; }
 
-	return stat1[STATINODE] == stat2[STATINODE] and stat1[STATDEVICE] == stat2[STATDEVICE];
+	return stat1["inode"] == stat2["inode"] and stat1["device"] == stat2["device"];
 }
 
 #@ <DeleteDirectory(path)>
@@ -72,7 +72,7 @@ func CopySymlink(source, dest)
 
 	if not iserr(info)
 	{
-		lutime(dest, info[STATATIME], info[STATMTIME]);
+		lutime(dest, info["accessed"], info["modified"]);
 	}
 
 	return ok;
@@ -90,7 +90,7 @@ func CopyFile(source, dest, screenWidth, screenHeight)
 
 	if iserr(info) { return err; }
 
-	var fileSize = info[STATSIZE];
+	var fileSize = info["size"];
 
 	var srcHandle = fopen(source, "r");
 
@@ -146,8 +146,8 @@ func CopyFile(source, dest, screenWidth, screenHeight)
 	fclose(srcHandle);
 	fclose(dstHandle);
 
-	chmod(dest, info[STATMODE]);
-	utime(dest, info[STATATIME], info[STATMTIME]);
+	chmod(dest, info["mode"]);
+	utime(dest, info["accessed"], info["modified"]);
 
 	return ok;
 }
@@ -202,8 +202,8 @@ func CopyDirectory(source, dest, screenWidth, screenHeight)
 		}
 	}
 
-	chmod(dest, srcInfo[STATMODE]);
-	utime(dest, srcInfo[STATATIME], srcInfo[STATMTIME]);
+	chmod(dest, srcInfo["mode"]);
+	utime(dest, srcInfo["accessed"], srcInfo["modified"]);
 
 	return ok;
 }
@@ -306,7 +306,7 @@ func TransferFiles(sources, dest, screenWidth, screenHeight, isMove)
 
 		if not iserr(srcStat) and not iserr(dstStat)
 		{
-			crossFSMove = srcStat[STATDEVICE] != dstStat[STATDEVICE];
+			crossFSMove = srcStat["device"] != dstStat["device"];
 		}
 	}
 

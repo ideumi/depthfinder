@@ -41,7 +41,7 @@ depthfinder (`dfn`) is a free (as in freedom and price) [boxflinger](https://cod
 
 ## Requirements
 
-- [ChipLang](https://codeberg.org/ideumi/chip-go) >= 1.0.16
+- [ChipLang](https://codeberg.org/ideumi/chip-go) >= 1.0.17
 - make
 
 ## Building
