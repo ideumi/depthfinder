@@ -521,8 +521,10 @@ func ActionCompress()
 	var width = 50;
 	var height = 8;
 
-	var x = CenterDialogX(screenWidth, width);
-	var y = CenterDialogY(screenHeight, height);
+	var region = GetBrowserRegion(screenWidth, screenHeight);
+	var origin = BFCenterRect(region, width, height);
+	var x = origin[1];
+	var y = origin[2];
 
 	BFClearRegion(x, y, width, height);
 	BFDrawFrame(x, y, width, height, "Compress", BFBOXROUNDED);

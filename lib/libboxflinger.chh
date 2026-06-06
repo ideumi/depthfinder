@@ -1,9 +1,9 @@
 #!/usr/bin/chippy
 #
-# boxflinger V-1.0.7
+# boxflinger V-1.0.8
 #
 
-# Copyright (c) 2025 ideumi
+# Copyright (c) 2025-2026 ideumi
 #
 # Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 #
@@ -13,16 +13,20 @@
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+# ---
+#
+# Anything in media/ as well as demo/bftest/media/ is explicitly: Copyright (c) 2025 - 2026 ideumi
+# and not subject to the above licence.
 
 #
 # boxflinger - constants.chh
 #
 
 #@ <BFVERSION>
-#@ (2026-04-04)
+#@ (2026-05-31)
 #@ Library version
 
-var BFVERSION = "1.0.7";
+var BFVERSION = "1.0.8";
 
 #@ <BFALIGNLEFT>
 #@ (2025-09-28)
@@ -41,6 +45,13 @@ var BFALIGNCENTER = 1;
 #@ Right text alignment
 
 var BFALIGNRIGHT = 2;
+
+#@ <BFPAGEITEMS>
+#@ (2026-06-02)
+#@ Number of items to jump when PageUp/PageDown is pressed in non-scrollable
+#@ list widgets
+
+var BFPAGEITEMS = 5;
 
 # ---
 
@@ -142,6 +153,12 @@ var BFST = b[27, 92];
 #@ Cell pixel size query sequence (CSI + BFCELLQUERY)
 
 var BFCELLQUERY = b[49, 54, 116];
+
+#@ <BFISKITTY>
+#@ (2026-04-05)
+#@ ''true'' if running inside a kitty terminal, ''false'' otherwise
+
+var BFISKITTY = getenv("TERM") == "xterm-kitty";
 
 #
 # boxflinger - keys.chh
@@ -946,17 +963,35 @@ func BFVSplit(height, ratios)
 	return result;
 }
 
+#@ <BFCenterRect(region, dialogWidth, dialogHeight)>
+#@ V-1.0.0 (2026-05-29)
+#@
+#@ Returns the top left ''[x, y]'' position for a dialog of ''dialogWidth'' by
+#@ ''dialogHeight'' that is centered within ''region'': ''[x, y, width, height]''.
+#@ If the dialog is larger than the region in either axis, the result is clamped
+#@ to the region's origin so it remains visible.
+
+func BFCenterRect(region, dialogWidth, dialogHeight)
+{
+	var rx = region[1];
+	var ry = region[2];
+	var width = region[3];
+	var height = region[4];
+
+	var x = rx + int((width - dialogWidth) / 2);
+	var y = ry + int((height - dialogHeight) / 2);
+
+	if x < rx { x = rx; }
+	if y < ry { y = ry; }
+
+	return [x, y];
+}
+
 #
 # boxflinger - kitty.chh
 #
 
 # https://sw.kovidgoyal.net/kitty/graphics-protocol/
-
-#@ <BFISKITTY>
-#@ (2026-04-05)
-#@ ''true'' if running inside a kitty terminal, ''false'' otherwise
-
-var BFISKITTY = getenv("TERM") == "xterm-kitty";
 
 func _BFKittySend_(cmd)
 {
@@ -1881,7 +1916,7 @@ func BFTextBox(x, y, width, height, title, defaultText, style)
 #
 
 #@ <BFSelect(x, y, width, height, items, defaultIndex)>
-#@ V-1.0.3 (2026-04-04)
+#@ V-1.0.4 (2026-06-02)
 #@
 #@ Scrollable list selection widget with visual highlighting at position ''x''
 #@ and ''y'' with dimensions ''width'' and ''height''. The ''items'' array
@@ -1941,6 +1976,36 @@ func BFSelect(x, y, width, height, items, defaultIndex)
 				selected = selected + 1;
 			}
 		}
+		elseif key == BFKEYHOME
+		{
+			selected = 1;
+		}
+		elseif key == BFKEYEND
+		{
+			selected = len(items);
+		}
+		elseif key == BFKEYPAGEUP
+		{
+			if selected > height
+			{
+				selected = selected - height + 1;
+			}
+			else
+			{
+				selected = 1;
+			}
+		}
+		elseif key == BFKEYPAGEDOWN
+		{
+			if selected + height <= len(items)
+			{
+				selected = selected + height - 1;
+			}
+			else
+			{
+				selected = len(items);
+			}
+		}
 
 		if running
 		{
@@ -1978,7 +2043,7 @@ func BFSelect(x, y, width, height, items, defaultIndex)
 #
 
 #@ <BFMenu(x, y, items, defaultIndex)>
-#@ V-1.0.3 (2026-04-04)
+#@ V-1.0.4 (2026-06-02)
 #@
 #@ Simple vertical menu with visual highlighting at position ''x'' and ''y''. The
 #@ ''items'' array contains strings for menu items and ''defaultIndex'' sets
@@ -2047,6 +2112,36 @@ func BFMenu(x, y, items, defaultIndex)
 				selected = selected + 1;
 			}
 		}
+		elseif key == BFKEYHOME
+		{
+			selected = 1;
+		}
+		elseif key == BFKEYEND
+		{
+			selected = len(items);
+		}
+		elseif key == BFKEYPAGEUP
+		{
+			if selected > BFPAGEITEMS
+			{
+				selected = selected - BFPAGEITEMS;
+			}
+			else
+			{
+				selected = 1;
+			}
+		}
+		elseif key == BFKEYPAGEDOWN
+		{
+			if selected + BFPAGEITEMS <= len(items)
+			{
+				selected = selected + BFPAGEITEMS;
+			}
+			else
+			{
+				selected = len(items);
+			}
+		}
 
 		if running and selected != prevSelected
 		{
@@ -2069,7 +2164,7 @@ func BFMenu(x, y, items, defaultIndex)
 #
 
 #@ <BFRadioGroup(x, y, items, defaultIndex)>
-#@ V-1.0.3 (2026-04-04)
+#@ V-1.0.4 (2026-06-02)
 #@
 #@ Radio button group for single selection from multiple options at position ''x''
 #@ and ''y''. The ''items'' array contains strings for each radio button option
@@ -2128,6 +2223,36 @@ func BFRadioGroup(x, y, items, defaultIndex)
 			if selected < len(items)
 			{
 				selected = selected + 1;
+			}
+		}
+		elseif key == BFKEYHOME
+		{
+			selected = 1;
+		}
+		elseif key == BFKEYEND
+		{
+			selected = len(items);
+		}
+		elseif key == BFKEYPAGEUP
+		{
+			if selected > BFPAGEITEMS
+			{
+				selected = selected - BFPAGEITEMS;
+			}
+			else
+			{
+				selected = 1;
+			}
+		}
+		elseif key == BFKEYPAGEDOWN
+		{
+			if selected + BFPAGEITEMS <= len(items)
+			{
+				selected = selected + BFPAGEITEMS;
+			}
+			else
+			{
+				selected = len(items);
 			}
 		}
 
@@ -2401,7 +2526,7 @@ func BFConfirm(x, y, message, defaultYes)
 #
 
 #@ <BFSlider(x, y, width, label, value, min, max, stepSize)>
-#@ V-1.0.3 (2026-04-04)
+#@ V-1.0.4 (2026-06-02)
 #@
 #@ Interactive slider with arrow keys for numeric input at position ''x'' and
 #@ ''y'' with slider bar ''width''. The ''label'' is displayed above slider,
@@ -2504,6 +2629,14 @@ func BFSlider(x, y, width, label, value, min, max, stepSize)
 				current = max;
 			}
 		}
+		elseif key == BFKEYHOME
+		{
+			current = min;
+		}
+		elseif key == BFKEYEND
+		{
+			current = max;
+		}
 
 		if running and current != prevCurrent
 		{
@@ -2514,6 +2647,182 @@ func BFSlider(x, y, width, label, value, min, max, stepSize)
 	ShowCursor();
 
 	return result;
+}
+
+#
+# boxflinger - keybindsbar.chh
+#
+
+func _BFKeybindWidth_(key, action)
+{
+	return lenv(key) + 1 + lenv(action) + 3;
+}
+
+func _BFDrawKeybind_(x, y, key, action)
+{
+	SetAttribute(COLORBOLD);
+	BFDrawText(x, y, key);
+	SetAttribute(COLORRESET);
+
+	SetAttribute(COLORBLACK);
+	SetAttribute(COLORBGWHITE);
+
+	var actionX = x + lenv(key);
+
+	BFDrawText(actionX, y, " " + action + "   ");
+
+	return actionX + lenv(action) + 4;
+}
+
+#@ <BFKeybindsBar(x, y, width, rows)>
+#@ V-1.0.0 (2026-05-29)
+#@
+#@ Draws a keybinds bar at ''x'' and ''y'' spanning ''width'' columns and ''len(rows)''
+#@ lines. ''rows'' is a list of rows, each a list of ''[key, action]'' pairs drawn
+#@ centered on its line; an empty row leaves a blank padding line. Always returns
+#@ ''ok''.
+
+func BFKeybindsBar(x, y, width, rows)
+{
+	SetAttribute(COLORBLACK);
+	SetAttribute(COLORBGWHITE);
+
+	var pad = BFPadText("", width, BFALIGNLEFT);
+
+	for r = 1 to len(rows)
+	{
+		BFDrawText(x, y + r - 1, pad);
+	}
+
+	for r = 1 to len(rows)
+	{
+		var items = rows[r];
+		var rowY = y + r - 1;
+
+		var lineWidth = 0;
+
+		for i = 1 to len(items)
+		{
+			var item = items[i];
+			lineWidth = lineWidth + _BFKeybindWidth_(item[1], item[2]);
+		}
+
+		var xpos = x + int((width - lineWidth) / 2);
+
+		if xpos < x { xpos = x; }
+
+		for i = 1 to len(items)
+		{
+			var item = items[i];
+			xpos = _BFDrawKeybind_(xpos, rowY, item[1], item[2]);
+		}
+	}
+
+	SetAttribute(COLORRESET);
+
+	return ok;
+}
+
+#
+# boxflinger - dialogs.chh
+#
+
+#@ <BFShowMessage(region, dialogWidth, title, message, color)>
+#@ V-1.0.0 (2026-05-31)
+#@
+#@ Shows a message dialog centered within ''region'': ''[x, y, width, height]''.
+#@ The dialog is ''dialogWidth'' columns wide and auto-sizes its height from the
+#@ wrapped ''message'', clamped to the region. ''color'' is applied to each
+#@ message line. Dialog is dismissed by pressing any key. Always returns ''ok''.
+
+func BFShowMessage(region, dialogWidth, title, message, color)
+{
+	HideCursor();
+
+	var contentWidth = dialogWidth - 4;
+	var wrapped = BFWrapText(message, contentWidth);
+	var lineCount = len(wrapped);
+
+	var dialogHeight = lineCount + 5;
+	var maxHeight = region[4];
+
+	if dialogHeight > maxHeight
+	{
+		dialogHeight = maxHeight;
+		lineCount = dialogHeight - 5;
+
+		if lineCount < 0 { lineCount = 0; }
+	}
+
+	var origin = BFCenterRect(region, dialogWidth, dialogHeight);
+	var x = origin[1];
+	var y = origin[2];
+
+	BFClearRegion(x, y, dialogWidth, dialogHeight);
+	BFDrawFrame(x, y, dialogWidth, dialogHeight, title, BFBOXROUNDED);
+
+	var contentX = x + 2;
+
+	for i = 1 to lineCount
+	{
+		SetAttribute(color);
+		BFDrawText(contentX, y + 1 + i, BFClipText(wrapped[i], contentWidth));
+		SetAttribute(COLORRESET);
+	}
+
+	BFDrawText(contentX, y + dialogHeight - 2, "Press any key...");
+
+	getch();
+
+	ShowCursor();
+
+	return ok;
+}
+
+#@ <BFShowConfirm(region, dialogWidth, title, message, defaultYes)>
+#@ V-1.0.0 (2026-05-31)
+#@
+#@ Shows a Yes / No dialog centered within ''region'': ''[x, y, width, height]''.
+#@ The dialog is ''dialogWidth'' columns wide and auto-sizes its height from the
+#@ wrapped ''message'', clamped to the region. ''defaultYes'' selects the initial
+#@ button. Returns ''true'' on Yes, ''false'' on No, or ''err'' if ESC is pressed.
+
+func BFShowConfirm(region, dialogWidth, title, message, defaultYes)
+{
+	HideCursor();
+
+	var contentWidth = dialogWidth - 4;
+	var wrapped = BFWrapText(message, contentWidth);
+	var lineCount = len(wrapped);
+
+	var dialogHeight = lineCount + 5;
+	var maxHeight = region[4];
+
+	if dialogHeight > maxHeight
+	{
+		dialogHeight = maxHeight;
+		lineCount = dialogHeight - 5;
+
+		if lineCount < 0 { lineCount = 0; }
+	}
+
+	var origin = BFCenterRect(region, dialogWidth, dialogHeight);
+	var x = origin[1];
+	var y = origin[2];
+
+	BFClearRegion(x, y, dialogWidth, dialogHeight);
+	BFDrawFrame(x, y, dialogWidth, dialogHeight, title, BFBOXROUNDED);
+
+	var contentX = x + 2;
+
+	for i = 1 to lineCount
+	{
+		BFDrawText(contentX, y + 1 + i, BFClipText(wrapped[i], contentWidth));
+	}
+
+	# BFConfirm does Cursor hiding / showing internally, no need here
+
+	return BFConfirm(contentX, y + lineCount + 2, "", defaultYes);
 }
 
 #
