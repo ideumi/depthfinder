@@ -3,6 +3,19 @@
 # depthfinder - dialogs.chh
 #
 
+#@ <GetBrowserRegion(screenWidth, screenHeight)>
+#@ Returns the browser region: ''[x, y, width, height]''.
+
+func GetBrowserRegion(screenWidth, screenHeight)
+{
+	var x = SIDEBARWIDTH + 2;
+	var y = 1;
+	var width = screenWidth - SIDEBARWIDTH - 2;
+	var height = screenHeight - KEYBINDSBARHEIGHT;
+
+	return [x, y, width, height];
+}
+
 #@ <GetUsernameByUID(uid)>
 #@ Looks up username from ''/etc/passwd'' by ''uid''. Returns ''uid'' as string
 #@ if not found.
@@ -42,8 +55,10 @@ func ShowProgress(screenWidth, screenHeight, title, current, total)
 	var width = DIALOGWIDTH;
 	var height = 8;
 
-	var x = CenterDialogX(screenWidth, width);
-	var y = CenterDialogY(screenHeight, height);
+	var region = GetBrowserRegion(screenWidth, screenHeight);
+	var origin = BFCenterRect(region, width, height);
+	var x = origin[1];
+	var y = origin[2];
 
 	BFClearRegion(x, y, width, height);
 	BFDrawFrame(x, y, width, height, title, BFBOXROUNDED);
@@ -76,30 +91,12 @@ func ShowConfirm(screenWidth, screenHeight, message)
 {
 	EnterDialog();
 
-	var width = DIALOGWIDTH;
-	var height = 8;
+	var region = GetBrowserRegion(screenWidth, screenHeight);
 
-	var x = CenterDialogX(screenWidth, width);
-	var y = CenterDialogY(screenHeight, height);
-
-	BFClearRegion(x, y, width, height);
-	BFDrawFrame(x, y, width, height, "Confirm", BFBOXROUNDED);
-
-	var contentX = x + 2;
-	var contentWidth = width - 4;
-
-	var wrapped = BFWrapText(message, contentWidth);
-
-	for i = 1 to len(wrapped)
-	{
-		if i > 3 { break; }
-
-		BFDrawText(contentX, y + 1 + i, wrapped[i]);
-	}
-
-	var result = BFConfirm(contentX, y + 5, "", true);
+	var result = BFShowConfirm(region, DIALOGWIDTH, "Confirm", message, true);
 
 	HideCursor();
+
 	ExitDialog();
 
 	return result;
@@ -112,33 +109,12 @@ func ShowError(screenWidth, screenHeight, message)
 {
 	EnterDialog();
 
-	var width = DIALOGWIDTH;
-	var height = 8;
+	var region = GetBrowserRegion(screenWidth, screenHeight);
 
-	var x = CenterDialogX(screenWidth, width);
-	var y = CenterDialogY(screenHeight, height);
+	BFShowMessage(region, DIALOGWIDTH, "Error", message, COLORRED);
 
-	BFClearRegion(x, y, width, height);
-	BFDrawFrame(x, y, width, height, "Error", BFBOXROUNDED);
-
-	var contentX = x + 2;
-	var contentWidth = width - 4;
-
-	var wrapped = BFWrapText(message, contentWidth);
-
-	for i = 1 to len(wrapped)
-	{
-		if i > 3 { break; }
-
-		SetAttribute(COLORRED);
-		BFDrawText(contentX, y + 1 + i, wrapped[i]);
-		SetAttribute(COLORRESET);
-	}
-
-	BFDrawText(contentX, y + 6, "Press any key...");
-
-	getch();
 	HideCursor();
+
 	ExitDialog();
 }
 
@@ -154,8 +130,10 @@ func ShowConflictDialog(screenWidth, screenHeight, filename)
 	var width = DIALOGWIDTH;
 	var height = 12;
 
-	var x = CenterDialogX(screenWidth, width);
-	var y = CenterDialogY(screenHeight, height);
+	var region = GetBrowserRegion(screenWidth, screenHeight);
+	var origin = BFCenterRect(region, width, height);
+	var x = origin[1];
+	var y = origin[2];
 
 	BFClearRegion(x, y, width, height);
 	BFDrawFrame(x, y, width, height, "File Exists", BFBOXROUNDED);
@@ -188,8 +166,10 @@ func ShowInput(screenWidth, screenHeight, title, prompt, defaultValue)
 	var width = DIALOGWIDTH;
 	var height = 8;
 
-	var x = CenterDialogX(screenWidth, width);
-	var y = CenterDialogY(screenHeight, height);
+	var region = GetBrowserRegion(screenWidth, screenHeight);
+	var origin = BFCenterRect(region, width, height);
+	var x = origin[1];
+	var y = origin[2];
 
 	BFClearRegion(x, y, width, height);
 	BFDrawFrame(x, y, width, height, title, BFBOXROUNDED);
@@ -217,8 +197,10 @@ func ShowRenameInput(screenWidth, screenHeight, title, prompt, defaultValue)
 	var width = DIALOGWIDTH;
 	var height = 8;
 
-	var x = CenterDialogX(screenWidth, width);
-	var y = CenterDialogY(screenHeight, height);
+	var region = GetBrowserRegion(screenWidth, screenHeight);
+	var origin = BFCenterRect(region, width, height);
+	var x = origin[1];
+	var y = origin[2];
 
 	BFClearRegion(x, y, width, height);
 	BFDrawFrame(x, y, width, height, title, BFBOXROUNDED);
@@ -241,32 +223,6 @@ func ShowRenameInput(screenWidth, screenHeight, title, prompt, defaultValue)
 
 	HideCursor();
 	ExitDialog();
-
-	return result;
-}
-
-#@ <CenterDialogX(screenWidth, dialogWidth)>
-#@ Calculates centered X position for a dialog within the browser area.
-
-func CenterDialogX(screenWidth, dialogWidth)
-{
-	var areaX = SIDEBARWIDTH + 1;
-	var areaWidth = screenWidth - SIDEBARWIDTH;
-	var result = areaX + int((areaWidth - dialogWidth) / 2);
-
-	if result < areaX { result = areaX; }
-
-	return result;
-}
-
-#@ <CenterDialogY(screenHeight, dialogHeight)>
-#@ Calculates centered Y position for a dialog.
-
-func CenterDialogY(screenHeight, dialogHeight)
-{
-	var result = int((screenHeight - dialogHeight) / 2);
-
-	if result < 1 { result = 1; }
 
 	return result;
 }
@@ -301,8 +257,10 @@ func ShowFileInfo(screenWidth, screenHeight, path)
 	var width = DIALOGWIDTH;
 	var height = 11;
 
-	var x = CenterDialogX(screenWidth, width);
-	var y = CenterDialogY(screenHeight, height);
+	var region = GetBrowserRegion(screenWidth, screenHeight);
+	var origin = BFCenterRect(region, width, height);
+	var x = origin[1];
+	var y = origin[2];
 
 	BFClearRegion(x, y, width, height);
 	BFDrawFrame(x, y, width, height, "File Info", BFBOXROUNDED);
@@ -407,8 +365,10 @@ func ShowSortMenu(screenWidth, screenHeight, currentMode, currentDirection)
 	var width = 30;
 	var height = 11;
 
-	var x = CenterDialogX(screenWidth, width);
-	var y = CenterDialogY(screenHeight, height);
+	var region = GetBrowserRegion(screenWidth, screenHeight);
+	var origin = BFCenterRect(region, width, height);
+	var x = origin[1];
+	var y = origin[2];
 
 	var mode = currentMode;
 	var direction = currentDirection;
@@ -532,8 +492,10 @@ func ShowAbout(screenWidth, screenHeight)
 	var width = DIALOGWIDTH;
 	var height = 13;
 
-	var x = CenterDialogX(screenWidth, width);
-	var y = CenterDialogY(screenHeight, height);
+	var region = GetBrowserRegion(screenWidth, screenHeight);
+	var origin = BFCenterRect(region, width, height);
+	var x = origin[1];
+	var y = origin[2];
 
 	BFClearRegion(x, y, width, height);
 	BFDrawFrame(x, y, width, height, "About", BFBOXROUNDED);
