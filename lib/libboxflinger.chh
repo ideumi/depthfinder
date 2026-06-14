@@ -1,6 +1,6 @@
 #!/usr/bin/chippy
 #
-# boxflinger V-1.0.8
+# boxflinger V-1.0.9
 #
 
 # Copyright (c) 2025-2026 ideumi
@@ -26,7 +26,7 @@
 #@ (2026-05-31)
 #@ Library version
 
-var BFVERSION = "1.0.8";
+var BFVERSION = "1.0.9";
 
 #@ <BFALIGNLEFT>
 #@ (2025-09-28)
@@ -818,7 +818,7 @@ func BFPrevWordPos(text, pos)
 }
 
 #@ <BFWrapText(text, width)>
-#@ V-1.0.2 (2025-11-04)
+#@ V-1.0.3 (2026-06-14)
 #@
 #@ Wraps ''text'' into multiple lines based on word boundaries and ''width''
 #@ limit. Returns list of text lines, each at or under width characters when
@@ -854,12 +854,12 @@ func BFWrapText(text, width)
 		{
 			if lenv(currentLine) > 0
 			{
-				lines = append(lines, currentLine);
+				append(lines, currentLine);
 				currentLine = word;
 			}
 			else
 			{
-				lines = append(lines, word);
+				append(lines, word);
 				currentLine = "";
 			}
 		}
@@ -867,7 +867,7 @@ func BFWrapText(text, width)
 
 	if lenv(currentLine) > 0
 	{
-		lines = append(lines, currentLine);
+		append(lines, currentLine);
 	}
 
 	return lines;
@@ -878,7 +878,7 @@ func BFWrapText(text, width)
 #
 
 #@ <BFHSplit(width, ratios)>
-#@ V-1.0.1 (2025-11-03)
+#@ V-1.0.2 (2026-06-14)
 #@
 #@ Splits a horizontal ''width'' proportionally based on ''ratios'' array of
 #@ positive numbers. Returns list of calculated widths. Ratios are normalized
@@ -911,17 +911,17 @@ func BFHSplit(width, ratios)
 		var proportion = ratios[i] / totalRatio;
 		var colWidth = int(width * proportion);
 
-		result = append(result, colWidth);
+		append(result, colWidth);
 		remaining = remaining - colWidth;
 	}
 
-	result = append(result, remaining);
+	append(result, remaining);
 
 	return result;
 }
 
 #@ <BFVSplit(height, ratios)>
-#@ V-1.0.1 (2025-11-03)
+#@ V-1.0.2 (2026-06-14)
 #@
 #@ Splits a vertical ''height'' proportionally based on ''ratios'' array of
 #@ positive numbers. Returns list of calculated heights. Ratios are normalized
@@ -954,11 +954,11 @@ func BFVSplit(height, ratios)
 		var proportion = ratios[i] / totalRatio;
 		var rowHeight = int(height * proportion);
 
-		result = append(result, rowHeight);
+		append(result, rowHeight);
 		remaining = remaining - rowHeight;
 	}
 
-	result = append(result, remaining);
+	append(result, remaining);
 
 	return result;
 }
@@ -1024,7 +1024,7 @@ func BFKittyDrawImage(x, y, imagePath, cols, rows)
 }
 
 #@ <BFKittyGetCellPixelSize()>
-#@ V-1.0.0 (2026-04-05)
+#@ V-1.0.1 (2026-06-14)
 #@
 #@ Returns the pixel dimensions of one terminal cell as ''[cellW, cellH]'', or
 #@ ''err'' if the terminal does not support the query ''ESC[16t''.
@@ -1056,6 +1056,8 @@ func BFKittyGetCellPixelSize()
 
 	var cellH = num(parts[2]);
 	var cellW = num(parts[3]);
+
+	if iserr(cellH) or iserr(cellW) { return err; }
 
 	if cellH <= 0 or cellW <= 0 { return err; }
 
@@ -1261,7 +1263,7 @@ func BFTextInput(x, y, width, prompt, defaultValue)
 #
 
 #@ <BFNumberInput(x, y, prompt, min, max, defaultValue)>
-#@ V-1.0.4 (2026-04-04)
+#@ V-1.0.5 (2026-06-14)
 #@
 #@ Numeric input field with range validation at position ''x'' and ''y''. Only
 #@ accepts digits and optional minus sign. The ''prompt'' text has range appended
@@ -1310,7 +1312,7 @@ func BFNumberInput(x, y, prompt, min, max, defaultValue)
 			{
 				var value = num(text);
 
-				if value >= min and value <= max
+				if not iserr(value) and value >= min and value <= max
 				{
 					result = value;
 					running = false;
@@ -1421,6 +1423,18 @@ func BFNumberInput(x, y, prompt, min, max, defaultValue)
 # boxflinger - textbox.chh
 #
 
+#@ <BFTextBox(x, y, width, height, title, defaultText, style)>
+#@ V-1.0.5 (2026-06-14)
+#@
+#@ Multi-line text editor with full editing capabilities and scrolling at position
+#@ ''x'' and ''y'' with dimensions ''width'' and ''height''. The ''title'' is
+#@ displayed in top border and ''defaultText'' sets initial content. Uses the
+#@ provided ''style''. Returns full edited text when Ctrl+D is pressed, or ''err''
+#@ if ESC is pressed. Supports arrow keys, Ctrl+Left/Right, Home/End, Page Up/Down,
+#@ Ctrl+Home/End, Backspace, Delete, Enter, and all printable characters. Auto-
+#@ scrolls to keep cursor visible. Status line shows current line number and key
+#@ hints.
+
 func _BFTextBoxLine_(x, y, width, lines, lineIndex, offset, cursorLine, cursorCol)
 {
 	var maxLineWidth = width - 2;
@@ -1453,25 +1467,13 @@ func _BFTextBoxLine_(x, y, width, lines, lineIndex, offset, cursorLine, cursorCo
 	}
 }
 
-#@ <BFTextBox(x, y, width, height, title, defaultText, style)>
-#@ V-1.0.4 (2026-04-04)
-#@
-#@ Multi-line text editor with full editing capabilities and scrolling at position
-#@ ''x'' and ''y'' with dimensions ''width'' and ''height''. The ''title'' is
-#@ displayed in top border and ''defaultText'' sets initial content. Uses the
-#@ provided ''style''. Returns full edited text when Ctrl+D is pressed, or ''err''
-#@ if ESC is pressed. Supports arrow keys, Ctrl+Left/Right, Home/End, Page Up/Down,
-#@ Ctrl+Home/End, Backspace, Delete, Enter, and all printable characters. Auto-
-#@ scrolls to keep cursor visible. Status line shows current line number and key
-#@ hints.
-
 func BFTextBox(x, y, width, height, title, defaultText, style)
 {
 	if width < 5 or height < 5 { return err; }
 
 	var lines = split(defaultText, "\n");
 
-	if len(lines) == 0 { lines = append(lines, ""); }
+	if len(lines) == 0 { append(lines, ""); }
 
 	var cursorLine = 1;
 	var cursorCol = 0;
@@ -1529,7 +1531,7 @@ func BFTextBox(x, y, width, height, title, defaultText, style)
 		}
 		elseif key == BFKEYCTRLU
 		{
-			lines = lines[cursorLine] = "";
+			lines[cursorLine] = "";
 			cursorCol = 0;
 			redrawCurrent = true;
 		}
@@ -1539,20 +1541,20 @@ func BFTextBox(x, y, width, height, title, defaultText, style)
 			var before = slice(currentLine, 1, cursorCol);
 			var after = slice(currentLine, cursorCol + 1, len(currentLine));
 
-			lines = lines[cursorLine] = before;
+			lines[cursorLine] = before;
 
 			var newLines = [];
 
 			for i = 1 to cursorLine
 			{
-				newLines = append(newLines, lines[i]);
+				append(newLines, lines[i]);
 			}
 
-			newLines = append(newLines, after);
+			append(newLines, after);
 
 			for i = cursorLine + 1 to len(lines)
 			{
-				newLines = append(newLines, lines[i]);
+				append(newLines, lines[i]);
 			}
 
 			lines = newLines;
@@ -1569,7 +1571,7 @@ func BFTextBox(x, y, width, height, title, defaultText, style)
 				var before = slice(currentLine, 1, cursorCol - 1);
 				var after = slice(currentLine, cursorCol + 1, len(currentLine));
 
-				lines = lines[cursorLine] = before + after;
+				lines[cursorLine] = before + after;
 				cursorCol = cursorCol - 1;
 				redrawCurrent = true;
 			}
@@ -1582,14 +1584,14 @@ func BFTextBox(x, y, width, height, title, defaultText, style)
 
 				for i = 1 to cursorLine - 2
 				{
-					newLines = append(newLines, lines[i]);
+					append(newLines, lines[i]);
 				}
 
-				newLines = append(newLines, mergedLine);
+				append(newLines, mergedLine);
 
 				for i = cursorLine + 1 to len(lines)
 				{
-					newLines = append(newLines, lines[i]);
+					append(newLines, lines[i]);
 				}
 
 				lines = newLines;
@@ -1744,7 +1746,7 @@ func BFTextBox(x, y, width, height, title, defaultText, style)
 				var before = slice(currentLine, 1, cursorCol);
 				var after = slice(currentLine, cursorCol + 2, len(currentLine));
 
-				lines = lines[cursorLine] = before + after;
+				lines[cursorLine] = before + after;
 				redrawCurrent = true;
 			}
 			elseif cursorLine < len(lines)
@@ -1756,14 +1758,14 @@ func BFTextBox(x, y, width, height, title, defaultText, style)
 
 				for i = 1 to cursorLine - 1
 				{
-					newLines = append(newLines, lines[i]);
+					append(newLines, lines[i]);
 				}
 
-				newLines = append(newLines, mergedLine);
+				append(newLines, mergedLine);
 
 				for i = cursorLine + 2 to len(lines)
 				{
-					newLines = append(newLines, lines[i]);
+					append(newLines, lines[i]);
 				}
 
 				lines = newLines;
@@ -1836,7 +1838,7 @@ func BFTextBox(x, y, width, height, title, defaultText, style)
 					var before = slice(currentLine, 1, cursorCol);
 					var after = slice(currentLine, cursorCol + 1, len(currentLine));
 
-					lines = lines[cursorLine] = before + char + after;
+					lines[cursorLine] = before + char + after;
 					cursorCol = cursorCol + 1;
 					redrawCurrent = true;
 				}
@@ -2273,7 +2275,7 @@ func BFRadioGroup(x, y, items, defaultIndex)
 #
 
 #@ <BFCheckboxList(x, y, width, height, items, checkedItems)>
-#@ V-1.0.2 (2026-04-04)
+#@ V-1.0.3 (2026-06-14)
 #@
 #@ Multiple selection list with toggleable checkboxes and scrolling at position
 #@ ''x'' and ''y'' with dimensions ''width'' and ''height''. The ''items'' array
@@ -2328,7 +2330,7 @@ func BFCheckboxList(x, y, width, height, items, checkedItems)
 			}
 		}
 
-		checked = append(checked, isChecked);
+		append(checked, isChecked);
 	}
 
 	var running = true;
@@ -2365,7 +2367,7 @@ func BFCheckboxList(x, y, width, height, items, checkedItems)
 			{
 				if checked[i]
 				{
-					result = append(result, i);
+					append(result, i);
 				}
 			}
 
@@ -2379,7 +2381,7 @@ func BFCheckboxList(x, y, width, height, items, checkedItems)
 		elseif type(key) == "bytes" and len(key) == 1 and key[1] == 32
 		{
 			var currentState = checked[selected];
-			checked = checked[selected] = not currentState;
+			checked[selected] = not currentState;
 			spaceToggled = true;
 		}
 		elseif key == BFKEYUP
@@ -2653,6 +2655,14 @@ func BFSlider(x, y, width, label, value, min, max, stepSize)
 # boxflinger - keybindsbar.chh
 #
 
+#@ <BFKeybindsBar(x, y, width, rows)>
+#@ V-1.0.0 (2026-05-29)
+#@
+#@ Draws a keybinds bar at ''x'' and ''y'' spanning ''width'' columns and ''len(rows)''
+#@ lines. ''rows'' is a list of rows, each a list of ''[key, action]'' pairs drawn
+#@ centered on its line; an empty row leaves a blank padding line. Always returns
+#@ ''ok''.
+
 func _BFKeybindWidth_(key, action)
 {
 	return lenv(key) + 1 + lenv(action) + 3;
@@ -2673,14 +2683,6 @@ func _BFDrawKeybind_(x, y, key, action)
 
 	return actionX + lenv(action) + 4;
 }
-
-#@ <BFKeybindsBar(x, y, width, rows)>
-#@ V-1.0.0 (2026-05-29)
-#@
-#@ Draws a keybinds bar at ''x'' and ''y'' spanning ''width'' columns and ''len(rows)''
-#@ lines. ''rows'' is a list of rows, each a list of ''[key, action]'' pairs drawn
-#@ centered on its line; an empty row leaves a blank padding line. Always returns
-#@ ''ok''.
 
 func BFKeybindsBar(x, y, width, rows)
 {
