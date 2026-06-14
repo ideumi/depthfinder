@@ -235,9 +235,9 @@ func FormatPermissions(mode)
 	var ownerPerm = int(mode / 100) % 10;
 	var parts = [];
 
-	if int(ownerPerm / 4) % 2 == 1 { parts = append(parts, "read"); }
-	if int(ownerPerm / 2) % 2 == 1 { parts = append(parts, "write"); }
-	if ownerPerm % 2 == 1 { parts = append(parts, "execute"); }
+	if int(ownerPerm / 4) % 2 == 1 { append(parts, "read"); }
+	if int(ownerPerm / 2) % 2 == 1 { append(parts, "write"); }
+	if ownerPerm % 2 == 1 { append(parts, "execute"); }
 
 	if len(parts) == 0
 	{

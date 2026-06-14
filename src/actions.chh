@@ -339,7 +339,7 @@ func ActionOpenWith()
 	}
 
 	# NOTE: Otherwise programs like VLC etc. open files in the wrong order
-	filesToOpen = sort(filesToOpen);
+	sort(filesToOpen);
 
 	var fullCmd = cmd;
 

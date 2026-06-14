@@ -441,7 +441,7 @@ func TransferFiles(sources, dest, screenWidth, screenHeight, isMove)
 		# Track source for later deletion
 		if crossFSMove
 		{
-			sourcesToDelete = append(sourcesToDelete, srcPath);
+			append(sourcesToDelete, srcPath);
 		}
 	}
 
