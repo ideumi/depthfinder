@@ -53,7 +53,7 @@ func LoadBookmarks()
 					"path": bmPath
 				];
 
-				bookmarks = append(bookmarks, bookmark);
+				append(bookmarks, bookmark);
 			}
 		}
 	}
@@ -87,7 +87,7 @@ func SaveBookmarks(bookmarks)
 			name = replace(name, ";", "");
 			bmPath = replace(bmPath, ";", "");
 
-			lines = append(lines, name + ";" + bmPath);
+			append(lines, name + ";" + bmPath);
 		}
 	}
 
@@ -104,7 +104,7 @@ func AddBookmark(bookmarks, name, path)
 		"path": path
 	];
 
-	bookmarks = append(bookmarks, bookmark);
+	append(bookmarks, bookmark);
 
 	var result = SaveBookmarks(bookmarks);
 
@@ -162,7 +162,7 @@ func LoadFileAssoc()
 
 			if ext != "" and cmd != ""
 			{
-				assoc = assoc[ext] = cmd;
+				assoc[ext] = cmd;
 			}
 		}
 	}
@@ -194,9 +194,9 @@ func CreateDefaultBookmarks()
 	var home = getenv("HOME");
 
 	var lines = [];
-	lines = append(lines, "Home;" + home);
-	lines = append(lines, "Documents;" + JoinPath(home, "Documents"));
-	lines = append(lines, "Downloads;" + JoinPath(home, "Downloads"));
+	append(lines, "Home;" + home);
+	append(lines, "Documents;" + JoinPath(home, "Documents"));
+	append(lines, "Downloads;" + JoinPath(home, "Downloads"));
 
 	return WriteLines(path, lines, true);
 }

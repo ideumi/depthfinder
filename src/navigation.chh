@@ -69,7 +69,7 @@ func NavigateTo(path)
 	# Push current path to history before navigating away
 	if not navigatingBack and currentPath != ""
 	{
-		dirHistory = append(dirHistory, currentPath);
+		append(dirHistory, currentPath);
 
 		if len(dirHistory) > DIRHISTORYMAX
 		{

@@ -92,8 +92,8 @@ func HandleSidebarInput(key)
 			# Swap bookmark with one above
 			var temp = bookmarks[selectedBookmark];
 
-			bookmarks = bookmarks[selectedBookmark] = bookmarks[selectedBookmark - 1];
-			bookmarks = bookmarks[selectedBookmark - 1] = temp;
+			bookmarks[selectedBookmark] = bookmarks[selectedBookmark - 1];
+			bookmarks[selectedBookmark - 1] = temp;
 
 			selectedBookmark = selectedBookmark - 1;
 		}
@@ -110,8 +110,8 @@ func HandleSidebarInput(key)
 			# Swap bookmark with one below
 			var temp = bookmarks[selectedBookmark];
 
-			bookmarks = bookmarks[selectedBookmark] = bookmarks[selectedBookmark + 1];
-			bookmarks = bookmarks[selectedBookmark + 1] = temp;
+			bookmarks[selectedBookmark] = bookmarks[selectedBookmark + 1];
+			bookmarks[selectedBookmark + 1] = temp;
 
 			selectedBookmark = selectedBookmark + 1;
 		}

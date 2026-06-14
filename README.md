@@ -41,7 +41,7 @@ depthfinder (`dfn`) is a free (as in freedom and price) [boxflinger](https://cod
 
 ## Requirements
 
-- [ChipLang](https://codeberg.org/ideumi/chip-go) >= 1.0.17
+- [ChipLang](https://codeberg.org/ideumi/chip-go) >= 1.0.19
 - make
 
 ## Building
@@ -118,11 +118,8 @@ Commands without the prefix are `Spawn(command)`'ed in the background.
 
 ## Known Issues
 
-- Loading of very large directories (e.g. `/usr/bin/`) is slow
-	- dfn's file loading logic in the browser is currently single threaded, i'll fix this at some point
-	
 - Window resizing logic does not trigger when and dialog is open, only after it is closed
-	- This is intentional for now and is probably a bigger refactor, not sure if worth yet
+	- This is intentional for now and is probably a bigger refactor, not sure if this is worth yet
 		- boxflinger would need to support (?)
 
 - constants.chh: `COPYCHUNKSIZE`: works fine on my hardware, but will likely block more when copying files on slower or different type of hardware	

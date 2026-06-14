@@ -73,11 +73,11 @@ func LoadDirectory(path, showHidden, sortMode, sortDirection)
 
 		if isDir
 		{
-			dirs = append(dirs, entry);
+			append(dirs, entry);
 		}
 		else
 		{
-			files = append(files, entry);
+			append(files, entry);
 		}
 	}
 
@@ -90,17 +90,17 @@ func LoadDirectory(path, showHidden, sortMode, sortDirection)
 	{
 		var parentEntry = CreateFileEntry("..", 0, true, false, false, false, 0);
 
-		result = append(result, parentEntry);
+		append(result, parentEntry);
 	}
 
 	for i = 1 to len(sortedDirs)
 	{
-		result = append(result, sortedDirs[i]);
+		append(result, sortedDirs[i]);
 	}
 
 	for i = 1 to len(sortedFiles)
 	{
-		result = append(result, sortedFiles[i]);
+		append(result, sortedFiles[i]);
 	}
 
 	return result;
@@ -160,10 +160,10 @@ func SortFileEntries(entries, mode, direction)
 			key = lower(entry["name"]);
 		}
 
-		sortable = append(sortable, key + "|" + PadIndex(i));
+		append(sortable, key + "|" + PadIndex(i));
 	}
 
-	sortable = sort(sortable);
+	sort(sortable);
 
 	var sorted = [];
 
@@ -172,7 +172,7 @@ func SortFileEntries(entries, mode, direction)
 		var parts = split(sortable[i], "|");
 		var idx = num(parts[len(parts)]);
 
-		sorted = append(sorted, entries[idx]);
+		append(sorted, entries[idx]);
 	}
 
 	if direction == SORTDESC
@@ -181,7 +181,7 @@ func SortFileEntries(entries, mode, direction)
 
 		for i = len(sorted) to 1 step -1
 		{
-			reversed = append(reversed, sorted[i]);
+			append(reversed, sorted[i]);
 		}
 
 		return reversed;
@@ -200,9 +200,9 @@ func ToggleFileMark(files, index)
 
 	var entry = files[index];
 
-	entry = entry["marked"] = not entry["marked"];
+	entry["marked"] = not entry["marked"];
 
-	return files[index] = entry;
+	return files;
 }
 
 #@ <GetMarkedFiles(files, currentPath)>
@@ -218,7 +218,7 @@ func GetMarkedFiles(files, currentPath)
 
 		if entry["marked"]
 		{
-			marked = append(marked, JoinPath(currentPath, entry["name"]));
+			append(marked, JoinPath(currentPath, entry["name"]));
 		}
 	}
 
@@ -234,8 +234,7 @@ func ClearAllMarks(files)
 	{
 		var entry = files[i];
 
-		entry = entry["marked"] = false;
-		files = files[i] = entry;
+		entry["marked"] = false;
 	}
 
 	return files;
@@ -272,7 +271,7 @@ func GetSelectedFiles(files, currentPath, selectedIndex)
 
 		if name != ".."
 		{
-			selected = append(selected, JoinPath(currentPath, name));
+			append(selected, JoinPath(currentPath, name));
 		}
 	}
 
@@ -314,8 +313,7 @@ func ToggleSelectAll(files)
 		{
 			var entry = files[i];
 
-			entry = entry["marked"] = newState;
-			files = files[i] = entry;
+			entry["marked"] = newState;
 		}
 	}
 
