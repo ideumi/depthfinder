@@ -1,28 +1,42 @@
+<a href="https://codeberg.org/ideumi/depthfinder/releases"><img src="https://img.shields.io/gitea/v/release/ideumi/depthfinder?gitea_url=https%3A%2F%2Fcodeberg.org&label=release" alt="Latest release"/></a>
+
 # depthfinder
 
-depthfinder (`dfn`) is a free (as in freedom and price) [boxflinger](https://codeberg.org/ideumi/boxflinger) based, (mostly) zero-config file manager that runs in the terminal. It is written in [ChipLang](https://codeberg.org/ideumi/chip-go). It is primarily meant to operate in a terminal emulator on top of an X11 or Wayland session, parallel to GUI tools, though it can run solely in a tty environment. `dfn` has close to no external dependencies and works entirely using the ChipLang runtime and corelib.
+depthfinder (or `dfn` for short) is a:
 
-### [Download depthfinder](https://codeberg.org/ideumi/depthfinder/releases)
+- fast
+- minimalist
+- [boxflinger](https://codeberg.org/ideumi/boxflinger) based
+- (mostly) zero-config
+  
+general-purpose **file manager** for Linux that runs in the terminal, it is written in [Chippy](https://codeberg.org/ideumi/chippy).
+
+depthfinder is primarily meant to operate in a terminal emulator on top of an X11 or Wayland session, parallel to existing GUI tools. Though it can run solely in a tty environment or via remote `ssh`.
+
+`dfn` has close to no external third-party dependencies (except `xdg-open`) and works entirely using boxflinger as well as the Chippy runtime and corelib.
+
+### [Get depthfinder](#getting-depthfinder)
 
 ## Screenshots
 
 <p align="left">
-  <img src="media/screensh_browser.png" alt="File Browser" width="512">
-  <img src="media/screensh_marked.png" alt="Marked Files" width="512">
+	<img src="media/screensh_browser.png" alt="File Browser" width="512">
+	<img src="media/screensh_marked.png" alt="Marked Files" width="512">
 </p>
 
 <p align="left">
-  <img src="media/screensh_search.png" alt="Search" width="512">
-  <img src="media/screensh_info.png" alt="File Info" width="512">
+	<img src="media/screensh_search.png" alt="Search" width="512">
+	<img src="media/screensh_info.png" alt="File Info" width="512">
 </p>
 
 <p align="left">
-  <img src="media/screensh_sort.png" alt="Sort Menu" width="512">
+	<img src="media/screensh_sort.png" alt="Sort Menu" width="512">
 </p>
 
 ## Features
 
 - Easy to use
+- Minimalist
 - Two-panel layout with sidebar bookmarks and file browser
 - File operations: copy, cut, paste, delete, rename, create files and directories
 	- Bulk rename
@@ -39,43 +53,52 @@ depthfinder (`dfn`) is a free (as in freedom and price) [boxflinger](https://cod
 - Bookmark management
 - Dynamic window titles (for supporting terminals)
 
+## Getting depthfinder
+
+1. Install [Chippy](https://codeberg.org/ideumi/chippy#installation-for-supported-platforms-supported-platforms).
+
+2. Download the latest release bundle `dfn` from the [releases page](https://codeberg.org/ideumi/depthfinder/releases) or [build](#building) one yourself.
+
+3. Copy / install it to any preferred location, e.g. `/usr/bin/`:
+
+```bash
+sudo install -m 755 dfn /usr/bin/dfn
+```
+
+4. Run the file manager in your preferred terminal:
+
+```bash
+dfn
+```
+
+5. See [Configuration](#configuration).
+
 ## Requirements
 
-- [ChipLang](https://codeberg.org/ideumi/chip-go) >= 1.0.19
+- [Chippy](https://codeberg.org/ideumi/chippy) >= 1.0.20
 - make
+- git
 
 ## Building
 
 ```bash
+git clone https://codeberg.org/ideumi/depthfinder
+cd depthfinder
 mkdir out
-chippy combine
 
-# or
 make
 ```
 
-## Installation on FHS-Distros
+### Installation on FHS-Distros
 
 ```bash
-mkdir out
 sudo make install
 ```
 
-## Uninstallation on FHS-Distros
+### Uninstallation on FHS-Distros
 
 ```bash
-mkdir out
 sudo make uninstall
-```
-
-## Usage
-
-```bash
-# Run the installed bundle
-dfn
-
-# Run the built bundle
-./out/dfn
 ```
 
 ## Configuration
@@ -118,13 +141,13 @@ Commands without the prefix are `Spawn(command)`'ed in the background.
 
 ## Known Issues
 
-- Window resizing logic does not trigger when and dialog is open, only after it is closed
-	- This is intentional for now and is probably a bigger refactor, not sure if this is worth yet
-		- boxflinger would need to support (?)
+- Window resizing logic does not trigger when a dialog is opened, only after it is closed
+	- This is intentional for now
 
-- constants.chh: `COPYCHUNKSIZE`: works fine on my hardware, but will likely block more when copying files on slower or different type of hardware	
+- constants.chh: `COPYCHUNKSIZE`: works fine on my hardware, but will maybe block more when copying files on slower or different types of hardware	(e.g. HDD drives)
+	- Non issue in practice but perhaps a UX thing
 	- I'll maybe have the actual copying in an actor at some point so the UI refresh isn't bound to fwrite blocking
 
 ## License
 
-`depthfinder` is licensed under the 2-Clause BSD License. See `LICENCE.txt`.
+depthfinder is licensed under the 2-Clause BSD License. See `LICENCE.txt`.
