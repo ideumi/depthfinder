@@ -1,5 +1,6 @@
 build:
 	chippy check all
+	chippy format check all src/
 	chippy combine
 
 install: build
