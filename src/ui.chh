@@ -77,16 +77,8 @@ func FormatCompactDate(timestamp)
 
 func DrawSidebar(x, y, width, height, bookmarks, selected, hasFocus, isMoving)
 {
-	var title = upper(PROGRAMNAME);
-	title = BFClipText(title, width - 1);
-	title = BFPadText(title, width - 1, BFALIGNCENTER);
-
-	SetAttribute(COLORBOLD);
-	BFDrawText(x, y, title);
-	SetAttribute(COLORRESET);
-
-	var contentY = y + 2;
-	var contentHeight = height - 2;
+	var contentY = y + 1;
+	var contentHeight = height - 1;
 
 	for row = 1 to contentHeight
 	{
@@ -360,7 +352,35 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 
 func DrawVerticalSeparator(x, y, height)
 {
+	SetFGColor256(DFNCOLORDIM);
 	BFDrawVLine(x, y, height, "│");
+	SetAttribute(COLORRESET);
+}
+
+#@ <BottomReserve()>
+#@ Returns the number of rows reserved at the bottom of the screen. If not
+#@ KEYBINDSBARHEIGHT then 1 is returned for the ". binds" hint.
+
+func BottomReserve()
+{
+	if showKeybinds
+	{
+		return KEYBINDSBARHEIGHT;
+	}
+
+	return 1;
+}
+
+#@ <DrawBottomHint(y, sidebarWidth)>
+#@ Draws the ". binds" hint.
+
+func DrawBottomHint(y, sidebarWidth)
+{
+	BFClearRegion(1, y, sidebarWidth - 1, 1);
+
+	SetFGColor256(DFNCOLORDIM);
+	BFDrawText(2, y, ". binds");
+	SetAttribute(COLORRESET);
 }
 
 #@ <DrawKeybindsBar(y, width, focusPanel)>
@@ -372,6 +392,8 @@ func DrawKeybindsBar(y, width, focusPanel)
 
 	if focusPanel == FOCUSSIDEBAR
 	{
+		append(rows, []);
+
 		append(rows, [
 			["Up/Down", "Navigate"],
 			["Enter", "Go"],
@@ -381,6 +403,9 @@ func DrawKeybindsBar(y, width, focusPanel)
 			["1-9", "Jump"],
 			["Esc", "Quit"]
 		]);
+
+		append(rows, []);
+
 	}
 	else
 	{
@@ -431,7 +456,7 @@ func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, files, s
 	var separatorX = sidebarWidth;
 	var browserX = sidebarWidth + 2;
 	var browserWidth = screenWidth - sidebarWidth - 2;
-	var contentHeight = screenHeight - KEYBINDSBARHEIGHT;
+	var contentHeight = screenHeight - BottomReserve();
 
 	DrawSidebar(1,
 				1,
@@ -442,7 +467,14 @@ func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, files, s
 				focusPanel == FOCUSSIDEBAR,
 				movingBookmark);
 
-	DrawVerticalSeparator(separatorX, 1, contentHeight);
+	var separatorHeight = screenHeight;
+
+	if showKeybinds
+	{
+		separatorHeight = contentHeight;
+	}
+
+	DrawVerticalSeparator(separatorX, 1, separatorHeight);
 
 	DrawBrowser(browserX,
 				1,
@@ -459,5 +491,12 @@ func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, files, s
 				sortMode,
 				sortDirection);
 
-	DrawKeybindsBar(screenHeight, screenWidth, focusPanel);
+	if showKeybinds
+	{
+		DrawKeybindsBar(screenHeight, screenWidth, focusPanel);
+	}
+	else
+	{
+		DrawBottomHint(screenHeight, sidebarWidth);
+	}
 }

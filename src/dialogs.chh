@@ -11,7 +11,7 @@ func GetBrowserRegion(screenWidth, screenHeight)
 	var x = SIDEBARWIDTH + 2;
 	var y = 1;
 	var width = screenWidth - SIDEBARWIDTH - 2;
-	var height = screenHeight - KEYBINDSBARHEIGHT;
+	var height = screenHeight - BottomReserve();
 
 	return [x, y, width, height];
 }

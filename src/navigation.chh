@@ -181,7 +181,7 @@ func NavigateInto()
 
 func GetVisibleFileCount()
 {
-	var contentHeight = screenHeight - KEYBINDSBARHEIGHT - 2;
+	var contentHeight = screenHeight - BottomReserve() - 2;
 
 	return int(contentHeight / FILEROWHEIGHT);
 }

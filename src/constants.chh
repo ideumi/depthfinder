@@ -221,6 +221,11 @@ var KEYALTLEFT = b[27, 91, 49, 59, 51, 68];
 
 var KEYHASH = b[35];
 
+#@ <KEYDOT>
+#@ '.' key
+
+var KEYDOT = b[46];
+
 #@ <KEYA>
 #@ 'a' key
 
@@ -342,6 +347,11 @@ var KEYT = b[116];
 var KEYTT = b[84];
 
 # --- ANSI sequences not in libterm ---
+
+#@ <DFNCOLORDIM>
+#@ 256-color greyscale color
+
+var DFNCOLORDIM = 240;
 
 #@ <COLORUNDERLINE>
 #@ ANSI underline on attribute
