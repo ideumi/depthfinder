@@ -14,6 +14,7 @@ var scrollOffset = 1;
 
 var showHidden = false;
 var movingBookmark = false;
+var showKeybinds = false;
 
 var sortMode = SORTNAME;
 var sortDirection = SORTASC;
@@ -43,8 +44,7 @@ var inDialog = false;
 #@ <ConfirmExit()>
 #@ The exit confirmation dialog.
 
-func ConfirmExit()
-{
+func ConfirmExit() {
 	var confirmed = ShowConfirm(screenWidth, screenHeight, "Do you really want to exit?");
 
 	return not iserr(confirmed) and confirmed;
@@ -53,42 +53,33 @@ func ConfirmExit()
 #@ <HandleSidebarInput(key)>
 #@ Handles key input when sidebar has focus.
 
-func HandleSidebarInput(key)
-{
+func HandleSidebarInput(key) {
 	# ESC
-	if key == BFKEYESC
-	{
-		if movingBookmark
-		{
+	if key == BFKEYESC {
+		if movingBookmark {
 			movingBookmark = false;
 			SaveBookmarks(bookmarks);
-		}
-		elseif len(clipboard) > 0
-		{
+		} elseif len(clipboard) > 0 {
 			clipboard = [];
 			clipboardMode = CLIPBOARDNONE;
+		} else {
+			if ConfirmExit() {
+				return false;
+			}
 		}
-		else
-		{
-			if ConfirmExit() { return false; }
-		}
-	}
+	} elseif
 	# TAB
-	elseif key == BFKEYTAB
-	{
-		if movingBookmark
-		{
+	key == BFKEYTAB {
+		if movingBookmark {
 			movingBookmark = false;
 			SaveBookmarks(bookmarks);
 		}
 
 		focusPanel = FOCUSBROWSER;
-	}
+	} elseif
 	# Up Arrow
-	elseif key == BFKEYUP
-	{
-		if movingBookmark and selectedBookmark > 1
-		{
+	key == BFKEYUP {
+		if movingBookmark and selectedBookmark > 1 {
 			# Swap bookmark with one above
 			var temp = bookmarks[selectedBookmark];
 
@@ -96,17 +87,13 @@ func HandleSidebarInput(key)
 			bookmarks[selectedBookmark - 1] = temp;
 
 			selectedBookmark = selectedBookmark - 1;
-		}
-		elseif selectedBookmark > 1
-		{
+		} elseif selectedBookmark > 1 {
 			selectedBookmark = selectedBookmark - 1;
 		}
-	}
+	} elseif
 	# Down arrow
-	elseif key == BFKEYDOWN
-	{
-		if movingBookmark and selectedBookmark < len(bookmarks)
-		{
+	key == BFKEYDOWN {
+		if movingBookmark and selectedBookmark < len(bookmarks) {
 			# Swap bookmark with one below
 			var temp = bookmarks[selectedBookmark];
 
@@ -114,100 +101,80 @@ func HandleSidebarInput(key)
 			bookmarks[selectedBookmark + 1] = temp;
 
 			selectedBookmark = selectedBookmark + 1;
-		}
-		elseif selectedBookmark < len(bookmarks)
-		{
+		} elseif selectedBookmark < len(bookmarks) {
 			selectedBookmark = selectedBookmark + 1;
 		}
-	}
+	} elseif
 	# Space
-	elseif key == KEYSPACE
-	{
-		if selectedBookmark >= 1 and selectedBookmark <= len(bookmarks)
-		{
-			if movingBookmark
-			{
+	key == KEYSPACE {
+		if selectedBookmark >= 1 and selectedBookmark <= len(bookmarks) {
+			if movingBookmark {
 				movingBookmark = false;
 
 				SaveBookmarks(bookmarks);
-			}
-			else
-			{
+			} else {
 				movingBookmark = true;
 			}
 		}
-	}
+	} elseif
 	# Enter, Right Arrow
-	elseif key == BFKEYENTER or key == BFKEYRIGHT
-	{
-		if selectedBookmark >= 1 and selectedBookmark <= len(bookmarks)
-		{
+	key == BFKEYENTER or key == BFKEYRIGHT {
+		if selectedBookmark >= 1 and selectedBookmark <= len(bookmarks) {
 			var bm = bookmarks[selectedBookmark];
 			var path = bm["path"];
 
-			if IsDir(path)
-			{
+			if IsDir(path) {
 				NavigateTo(path);
 				focusPanel = FOCUSBROWSER;
-			}
-			else
-			{
+			} else {
 				ShowError(screenWidth, screenHeight, "Directory not found: " + path);
 			}
 		}
-	}
+	} elseif
 	# Home
-	elseif key == BFKEYHOME or key == BFKEYPAGEUP
-	{
-		if len(bookmarks) > 0 { selectedBookmark = 1; }
-	}
+	key == BFKEYHOME or key == BFKEYPAGEUP {
+		if len(bookmarks) > 0 {
+			selectedBookmark = 1;
+		}
+	} elseif
 	# End
-	elseif key == BFKEYEND or key == BFKEYPAGEDOWN
-	{
-		if len(bookmarks) > 0 { selectedBookmark = len(bookmarks); }
-	}
+	key == BFKEYEND or key == BFKEYPAGEDOWN {
+		if len(bookmarks) > 0 {
+			selectedBookmark = len(bookmarks);
+		}
+	} elseif
 	# Del
-	elseif key == BFKEYDELETE
-	{
-		if selectedBookmark >= 1 and selectedBookmark <= len(bookmarks)
-		{
+	key == BFKEYDELETE {
+		if selectedBookmark >= 1 and selectedBookmark <= len(bookmarks) {
 			var bm = bookmarks[selectedBookmark];
 			var bmName = bm["name"];
 
 			var confirmed = ShowConfirm(screenWidth, screenHeight, "Remove bookmark '" + bmName + "'?");
 
-			if not iserr(confirmed) and confirmed
-			{
+			if not iserr(confirmed) and confirmed {
 				var result = RemoveBookmark(bookmarks, selectedBookmark);
 
-				if not iserr(result)
-				{
+				if not iserr(result) {
 					bookmarks = result;
 
-					if selectedBookmark > len(bookmarks) and len(bookmarks) > 0
-					{
+					if selectedBookmark > len(bookmarks) and len(bookmarks) > 0 {
 						selectedBookmark = len(bookmarks);
 					}
 
-					if selectedBookmark < 1 and len(bookmarks) > 0
-					{
+					if selectedBookmark < 1 and len(bookmarks) > 0 {
 						selectedBookmark = 1;
 					}
-				}
-				else
-				{
+				} else {
 					ShowError(screenWidth, screenHeight, "Failed to remove bookmark");
 				}
 			}
 		}
-	}
+	} elseif
 	# 1-9 keys
-	elseif type(key) == "bytes" and len(key) == 1 and key[1] >= 49 and key[1] <= 57
-	{
+	type(key) == "bytes" and len(key) == 1 and key[1] >= 49 and key[1] <= 57 {
 		var bmIndex = key[1] - 48;
 
-		if NavigateToBookmark(bmIndex)
-		{
+		if NavigateToBookmark(bmIndex) {
 			focusPanel = FOCUSBROWSER;
 		}
 	}
@@ -218,128 +185,103 @@ func HandleSidebarInput(key)
 #@ <HandleBrowserInput(key)>
 #@ Handles key input when browser has focus.
 
-func HandleBrowserInput(key)
-{
+func HandleBrowserInput(key) {
 	# ESC
-	if key == BFKEYESC
-	{
-		if CountMarkedFiles(files) > 0
-		{
+	if key == BFKEYESC {
+		if CountMarkedFiles(files) > 0 {
 			files = ClearAllMarks(files);
-		}
-		elseif len(clipboard) > 0
-		{
+		} elseif len(clipboard) > 0 {
 			clipboard = [];
 			clipboardMode = CLIPBOARDNONE;
+		} else {
+			if ConfirmExit() {
+				return false;
+			}
 		}
-		else
-		{
-			if ConfirmExit() { return false; }
-		}
-	}
+	} elseif
 	# TAB
-	elseif key == BFKEYTAB
-	{
+	key == BFKEYTAB {
 		focusPanel = FOCUSSIDEBAR;
-	}
-	elseif key == BFKEYUP
-	{
-		if selectedIndex > 1
-		{
+	} elseif key == BFKEYUP {
+		if selectedIndex > 1 {
 			selectedIndex = selectedIndex - 1;
 
 			AdjustScrollOffset();
 		}
-	}
+	} elseif
 	# Down Arrow
-	elseif key == BFKEYDOWN
-	{
-		if selectedIndex < len(files)
-		{
+	key == BFKEYDOWN {
+		if selectedIndex < len(files) {
 			selectedIndex = selectedIndex + 1;
 
 			AdjustScrollOffset();
 		}
-	}
+	} elseif
 	# PgUp
-	elseif key == BFKEYPAGEUP
-	{
+	key == BFKEYPAGEUP {
 		var pageSize = GetVisibleFileCount();
 
 		selectedIndex = selectedIndex - pageSize;
 
-		if selectedIndex < 1
-		{
+		if selectedIndex < 1 {
 			selectedIndex = 1;
 		}
 
 		AdjustScrollOffset();
-	}
+	} elseif
 	# PgDown
-	elseif key == BFKEYPAGEDOWN
-	{
+	key == BFKEYPAGEDOWN {
 		var pageSize = GetVisibleFileCount();
 
 		selectedIndex = selectedIndex + pageSize;
 
-		if selectedIndex > len(files)
-		{
+		if selectedIndex > len(files) {
 			selectedIndex = len(files);
 		}
 
 		AdjustScrollOffset();
-	}
+	} elseif
 	# Home
-	elseif key == BFKEYHOME
-	{
+	key == BFKEYHOME {
 		selectedIndex = 1;
 		scrollOffset = 1;
-	}
+	} elseif
 	# End
-	elseif key == BFKEYEND
-	{
+	key == BFKEYEND {
 		selectedIndex = len(files);
 
 		AdjustScrollOffset();
-	}
+	} elseif
 	# Enter, Right Arrow
-	elseif key == BFKEYENTER or key == BFKEYRIGHT
-	{
+	key == BFKEYENTER or key == BFKEYRIGHT {
 		NavigateInto();
-	}
+	} elseif
 	# Alt + Left Arrow
-	elseif key == KEYALTLEFT
-	{
+	key == KEYALTLEFT {
 		NavigateBack();
-	}
+	} elseif
 	# Left Arrow
-	elseif key == BFKEYLEFT
-	{
+	key == BFKEYLEFT {
 		NavigateUp();
-	}
+	} elseif
 	# Space
-	elseif key == KEYSPACE
-	{
-		if selectedIndex >= 1 and selectedIndex <= len(files)
-		{
+	key == KEYSPACE {
+		if selectedIndex >= 1 and selectedIndex <= len(files) {
 			var name = files[selectedIndex]["name"];
 
-			if name != ".."
-			{
+			if name != ".." {
 				files = ToggleFileMark(files, selectedIndex);
 			}
 		}
-	}
+	} elseif
 	# a or A
-	elseif key == KEYA or key == KEYAA
-	{
+	key == KEYA or key == KEYAA {
 		files = ToggleSelectAll(files);
-	}
+	} elseif
 	# s or S
-	elseif key == KEYS or key == KEYSS
-	{
+	key == KEYS or key == KEYSS {
 		var browserWidth = screenWidth - SIDEBARWIDTH - 2;
-		var browserHeight = screenHeight - KEYBINDSBARHEIGHT - 2;
+		var browserHeight = screenHeight - BottomReserve() - 2;
 
 		var searchWidth = int(browserWidth * 80 / 100);
 		var searchHeight = int(browserHeight * 80 / 100);
@@ -349,160 +291,130 @@ func HandleBrowserInput(key)
 
 		var result = SearchMode(searchX, searchY, searchWidth, searchHeight, files);
 
-		if not iserr(result)
-		{
+		if not iserr(result) {
 			selectedIndex = result;
 
 			AdjustScrollOffset();
 		}
-	}
+	} elseif
 	# r or R
-	elseif key == KEYR or key == KEYRR
-	{
+	key == KEYR or key == KEYRR {
 		ClearScreen();
 		RefreshDirectory();
-	}
+	} elseif
 	# h or H
-	elseif key == KEYH or key == KEYHH
-	{
+	key == KEYH or key == KEYHH {
 		showHidden = not showHidden;
 
 		RefreshDirectory();
-	}
+	} elseif
 	# Ctrl + C
-	elseif key == KEYCTRLC
-	{
+	key == KEYCTRLC {
 		var selected = GetSelectedFiles(files, currentPath, selectedIndex);
 
-		if len(selected) > 0
-		{
+		if len(selected) > 0 {
 			clipboard = selected;
 			clipboardMode = CLIPBOARDCOPY;
 
 			files = ClearAllMarks(files);
 		}
-	}
+	} elseif
 	# Ctrl + X
-	elseif key == KEYCTRLX
-	{
+	key == KEYCTRLX {
 		var selected = GetSelectedFiles(files, currentPath, selectedIndex);
 
-		if len(selected) > 0
-		{
+		if len(selected) > 0 {
 			clipboard = selected;
 			clipboardMode = CLIPBOARDCUT;
 
 			files = ClearAllMarks(files);
 		}
-	}
+	} elseif
 	# Ctrl + V
-	elseif key == KEYCTRLV
-	{
+	key == KEYCTRLV {
 		ActionPaste();
-	}
+	} elseif
 	# Del
-	elseif key == BFKEYDELETE
-	{
+	key == BFKEYDELETE {
 		var selected = GetSelectedFiles(files, currentPath, selectedIndex);
 
-		if len(selected) > 0
-		{
+		if len(selected) > 0 {
 			var result = DeleteFiles(selected, screenWidth, screenHeight);
 
-			if isok(result)
-			{
+			if isok(result) {
 				files = ClearAllMarks(files);
 			}
 
 			RefreshDirectory();
 		}
-	}
+	} elseif
 	# Ctrl + N
-	elseif key == KEYCTRLN
-	{
+	key == KEYCTRLN {
 		OpenNewWindow();
-	}
+	} elseif
 	# F1
-	elseif key == KEYF1
-	{
+	key == KEYF1 {
 		OpenTerminal();
-	}
+	} elseif
 	# F2
-	elseif key == KEYF2
-	{
+	key == KEYF2 {
 		ActionRename();
-	}
+	} elseif
 	# o or O
-	elseif key == KEYO or key == KEYOO
-	{
+	key == KEYO or key == KEYOO {
 		ActionOpenWith();
-	}
+	} elseif
 	# n or N
-	elseif key == KEYN or key == KEYNN
-	{
+	key == KEYN or key == KEYNN {
 		ActionNewFile();
-	}
+	} elseif
 	# d or D
-	elseif key == KEYD or key == KEYDD
-	{
+	key == KEYD or key == KEYDD {
 		ActionNewDir();
-	}
+	} elseif
 	# i or I
-	elseif key == KEYI or key == KEYII
-	{
-		if selectedIndex >= 1 and selectedIndex <= len(files)
-		{
+	key == KEYI or key == KEYII {
+		if selectedIndex >= 1 and selectedIndex <= len(files) {
 			var entry = files[selectedIndex];
 			var name = entry["name"];
 
-			if name != ".."
-			{
+			if name != ".." {
 				var fullPath = JoinPath(currentPath, name);
 
 				ShowFileInfo(screenWidth, screenHeight, fullPath);
 			}
 		}
-	}
+	} elseif
 	# Hash
-	elseif key == KEYHASH
-	{
+	key == KEYHASH {
 		ActionRunCommand();
-	}
+	} elseif
 	# p or P
-	elseif key == KEYP or key == KEYPP
-	{
+	key == KEYP or key == KEYPP {
 		var newPath = ShowInput(screenWidth, screenHeight, "Go To", "Path: ", currentPath);
 
-		if not iserr(newPath) and newPath != ""
-		{
-			if IsDir(newPath)
-			{
+		if not iserr(newPath) and newPath != "" {
+			if IsDir(newPath) {
 				NavigateTo(newPath);
-			}
-			else
-			{
+			} else {
 				ShowError(screenWidth, screenHeight, "Not a directory: " + newPath);
 			}
 		}
-	}
+	} elseif
 	# b or B
-	elseif key == KEYB or key == KEYBB
-	{
+	key == KEYB or key == KEYBB {
 		ActionAddBookmark();
-	}
+	} elseif
 	# t or T
-	elseif key == KEYT or key == KEYTT
-	{
+	key == KEYT or key == KEYTT {
 		ActionSort();
-	}
+	} elseif
 	# c or C
-	elseif key == KEYC or key == KEYCC
-	{
+	key == KEYC or key == KEYCC {
 		ActionCompress();
-	}
+	} elseif
 	# 1-9 keys
-	elseif type(key) == "bytes" and len(key) == 1 and key[1] >= 49 and key[1] <= 57
-	{
+	type(key) == "bytes" and len(key) == 1 and key[1] >= 49 and key[1] <= 57 {
 		var bmIndex = key[1] - 48;
 
 		NavigateToBookmark(bmIndex);
@@ -515,8 +427,7 @@ func HandleBrowserInput(key)
 #@ Packs the render-relevant globals into a single map so the winsize actor can
 #@ repaint with up-to-date state.
 
-func CurrentState()
-{
+func CurrentState() {
 	return m[
 		"bookmarks": bookmarks,
 		"selectedBookmark": selectedBookmark,
@@ -538,12 +449,10 @@ func CurrentState()
 #@ Sets the in-dialog flag and tells the winsize actor to suppress repaints
 #@ until the dialog returns.
 
-func EnterDialog()
-{
+func EnterDialog() {
 	inDialog = true;
 
-	if not iserr(winsizeHandle)
-	{
+	if not iserr(winsizeHandle) {
 		send(winsizeHandle, CurrentState());
 	}
 }
@@ -551,12 +460,10 @@ func EnterDialog()
 #@ <ExitDialog()>
 #@ Clears the in-dialog flag.
 
-func ExitDialog()
-{
+func ExitDialog() {
 	inDialog = false;
 
-	if not iserr(winsizeHandle)
-	{
+	if not iserr(winsizeHandle) {
 		send(winsizeHandle, CurrentState());
 	}
 }
@@ -564,35 +471,40 @@ func ExitDialog()
 #@ <WinChangeActor()>
 #@ Actor for detecting and acting :D on window size changes
 
-func WinChActor()
-{
+func WinChActor() {
 	sigcatch([SIGWINCH]);
 
 	var state = m[];
 
-	while true
-	{
+	while true {
 		signal();
 
 		var msgs = receive(false);
 
-		if len(msgs) > 0
-		{
+		if len(msgs) > 0 {
 			state = msgs[len(msgs)];
 		}
 
-		if len(state) == 0 { continue; }
+		if len(state) == 0 {
+			continue;
+		}
 
-		if state["inDialog"] { continue; }
+		if state["inDialog"] {
+			continue;
+		}
 
 		var size = winsize();
 
-		if iserr(size) { continue; }
+		if iserr(size) {
+			continue;
+		}
 
 		screenHeight = size["rows"];
 		screenWidth = size["columns"];
 
-		if screenWidth < MINTERMWIDTH or screenHeight < MINTERMHEIGHT { continue; }
+		if screenWidth < MINTERMWIDTH or screenHeight < MINTERMHEIGHT {
+			continue;
+		}
 
 		# Re-clamp against the new viewport before drawing.
 		files = state["files"];
@@ -604,46 +516,42 @@ func WinChActor()
 		ClearScreen();
 
 		DrawScreen(screenWidth,
-				   screenHeight,
-				   state["bookmarks"],
-				   state["selectedBookmark"],
-				   files,
-				   selectedIndex,
-				   scrollOffset,
-				   state["currentPath"],
-				   state["focusPanel"],
-				   CountMarkedFiles(files),
-				   state["clipboardMode"],
-				   state["showHidden"],
-				   state["movingBookmark"],
-				   state["sortMode"],
-				   state["sortDirection"]);
+			screenHeight,
+			state["bookmarks"],
+			state["selectedBookmark"],
+			files,
+			selectedIndex,
+			scrollOffset,
+			state["currentPath"],
+			state["focusPanel"],
+			CountMarkedFiles(files),
+			state["clipboardMode"],
+			state["showHidden"],
+			state["movingBookmark"],
+			state["sortMode"],
+			state["sortDirection"]);
 	}
 }
 
 #@ <MainLoop()>
 #@ Main event loop.
 
-func MainLoop()
-{
+func MainLoop() {
 	var running = true;
 
-	while running
-	{
+	while running {
 		inDialog = false;
 
 		var termSize = winsize();
 
-		if not iserr(termSize)
-		{
+		if not iserr(termSize) {
 			screenHeight = termSize["rows"];
 			screenWidth = termSize["columns"];
 		}
 
 		# Do not render when it is expected that rendering causes broken elements
 		# on the screen.
-		if screenWidth < MINTERMWIDTH or screenHeight < MINTERMHEIGHT
-		{
+		if screenWidth < MINTERMWIDTH or screenHeight < MINTERMHEIGHT {
 			ClearScreen();
 			CursorTo(1, 1);
 
@@ -660,20 +568,20 @@ func MainLoop()
 		var markedCount = CountMarkedFiles(files);
 
 		DrawScreen(screenWidth,
-				   screenHeight,
-				   bookmarks,
-				   selectedBookmark,
-				   files,
-				   selectedIndex,
-				   scrollOffset,
-				   currentPath,
-				   focusPanel,
-				   markedCount,
-				   clipboardMode,
-				   showHidden,
-				   movingBookmark,
-				   sortMode,
-				   sortDirection);
+			screenHeight,
+			bookmarks,
+			selectedBookmark,
+			files,
+			selectedIndex,
+			scrollOffset,
+			currentPath,
+			focusPanel,
+			markedCount,
+			clipboardMode,
+			showHidden,
+			movingBookmark,
+			sortMode,
+			sortDirection);
 
 		send(winsizeHandle, CurrentState());
 
@@ -681,8 +589,7 @@ func MainLoop()
 
 		var postSize = winsize();
 
-		if not iserr(postSize)
-		{
+		if not iserr(postSize) {
 			screenHeight = postSize["rows"];
 			screenWidth = postSize["columns"];
 		}
@@ -691,12 +598,19 @@ func MainLoop()
 		# same scrollOffset the actor used to redraw.
 		AdjustScrollOffset();
 
-		if focusPanel == FOCUSSIDEBAR
-		{
-			running = HandleSidebarInput(key);
+		# Handling KEYDOT must be here since the keybinds bar toggle should work
+		# in both sidebar and non sidebar focus modes
+		if key == KEYDOT {
+			showKeybinds = not showKeybinds;
+
+			ClearScreen();
+
+			continue;
 		}
-		else
-		{
+
+		if focusPanel == FOCUSSIDEBAR {
+			running = HandleSidebarInput(key);
+		} else {
 			running = HandleBrowserInput(key);
 		}
 	}
@@ -707,8 +621,7 @@ func MainLoop()
 #@ files and determining starting directory. It also spawns the window-resize
 #@ detection actor.
 
-func Init()
-{
+func Init() {
 	CreateDefaultBookmarks();
 	CreateDefaultFileAssoc();
 	CreateDefaultTerminal();
@@ -718,26 +631,32 @@ func Init()
 
 	var loadedBookmarks = LoadBookmarks();
 
-	if iserr(loadedBookmarks) { bookmarks = []; }
-	else { bookmarks = loadedBookmarks; }
+	if iserr(loadedBookmarks) {
+		bookmarks = [];
+	} else {
+		bookmarks = loadedBookmarks;
+	}
 
 	var loadedAssoc = LoadFileAssoc();
 
-	if iserr(loadedAssoc) { fileAssoc = m[]; }
-	else { fileAssoc = loadedAssoc; }
+	if iserr(loadedAssoc) {
+		fileAssoc = m[];
+	} else {
+		fileAssoc = loadedAssoc;
+	}
 
 	var loadedTerminal = LoadTerminal();
-	if not iserr(loadedTerminal) { terminal = loadedTerminal; }
+	if not iserr(loadedTerminal) {
+		terminal = loadedTerminal;
+	}
 
 	# Determine starting directory
 	var startPath = LoadLastDir();
 
-	if iserr(startPath)
-	{
+	if iserr(startPath) {
 		startPath = getenv("HOME");
 
-		if iserr(startPath)
-		{
+		if iserr(startPath) {
 			startPath = "/";
 		}
 	}
@@ -745,12 +664,10 @@ func Init()
 	# If we have a CLI arg and it is a directory, move to it
 	var cmdArgs = args();
 
-	if not iserr(cmdArgs) and len(cmdArgs) >= 1
-	{
+	if not iserr(cmdArgs) and len(cmdArgs) >= 1 {
 		var argPath = cmdArgs[1];
 
-		if IsDir(argPath)
-		{
+		if IsDir(argPath) {
 			startPath = AbsolutePath(argPath);
 		}
 	}
@@ -764,8 +681,7 @@ func Init()
 #@ <Cleanup()>
 #@ Cleanup before exit.
 
-func Cleanup()
-{
+func Cleanup() {
 	ShowCursor();
 	ClearScreen();
 }
@@ -773,8 +689,7 @@ func Cleanup()
 #@ <Main()>
 #@ Entry point.
 
-func Main()
-{
+func Main() {
 	SetTitle(PROGRAMNAME + " V-" + VERSION);
 
 	ClearScreen();

@@ -8,7 +8,7 @@
 #@ <VERSION>
 #@ Program version string
 
-var VERSION = "1.0.5";
+var VERSION = "1.0.6";
 
 #@ <PROGRAMNAME>
 #@ Program display name
@@ -221,6 +221,11 @@ var KEYALTLEFT = b[27, 91, 49, 59, 51, 68];
 
 var KEYHASH = b[35];
 
+#@ <KEYDOT>
+#@ '.' key
+
+var KEYDOT = b[46];
+
 #@ <KEYA>
 #@ 'a' key
 
@@ -343,6 +348,11 @@ var KEYTT = b[84];
 
 # --- ANSI sequences not in libterm ---
 
+#@ <DFNCOLORDIM>
+#@ 256-color greyscale color
+
+var DFNCOLORDIM = 240;
+
 #@ <COLORUNDERLINE>
 #@ ANSI underline on attribute
 
@@ -372,7 +382,7 @@ var SIXMONTHSSECONDS = 15768000;
 #@ Short month names
 
 var SHORTMONTHNAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-					   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 #@ <DIRHISTORYMAX>
 #@ Maximum number of entries in the directory history

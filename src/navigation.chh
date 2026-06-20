@@ -6,9 +6,10 @@
 #@ <GetParentPath(path)>
 #@ Returns the parent directory path.
 
-func GetParentPath(path)
-{
-	if path == "/" { return "/"; }
+func GetParentPath(path) {
+	if path == "/" {
+		return "/";
+	}
 
 	return Dirname(path);
 }
@@ -16,11 +17,12 @@ func GetParentPath(path)
 #@ <UpdateTitle()>
 #@ Updates the terminal title to reflect the current directory.
 
-func UpdateTitle()
-{
+func UpdateTitle() {
 	var dirName = Basename(currentPath);
 
-	if dirName == "" { dirName = "/"; }
+	if dirName == "" {
+		dirName = "/";
+	}
 
 	SetTitle(dirName + " - " + PROGRAMNAME);
 }
@@ -28,29 +30,23 @@ func UpdateTitle()
 #@ <RefreshDirectory()>
 #@ Reloads the current directory contents.
 
-func RefreshDirectory()
-{
+func RefreshDirectory() {
 	var loadResult = LoadDirectory(currentPath, showHidden, sortMode, sortDirection);
 
-	if iserr(loadResult)
-	{
+	if iserr(loadResult) {
 		files = [];
 
 		ShowError(screenWidth, screenHeight, "Cannot read directory: " + currentPath);
-	}
-	else
-	{
+	} else {
 		files = loadResult;
 	}
 
 	# Out of bounds reset
-	if selectedIndex > len(files) and len(files) > 0
-	{
+	if selectedIndex > len(files) and len(files) > 0 {
 		selectedIndex = len(files);
 	}
 
-	if selectedIndex < 1 and len(files) > 0
-	{
+	if selectedIndex < 1 and len(files) > 0 {
 		selectedIndex = 1;
 	}
 
@@ -60,19 +56,20 @@ func RefreshDirectory()
 #@ <NavigateTo(path)>
 #@ Changes to the specified directory.
 
-func NavigateTo(path)
-{
-	if path == "" { path = "/"; }
+func NavigateTo(path) {
+	if path == "" {
+		path = "/";
+	}
 
-	if not IsDir(path) { return; }
+	if not IsDir(path) {
+		return;
+	}
 
 	# Push current path to history before navigating away
-	if not navigatingBack and currentPath != ""
-	{
+	if not navigatingBack and currentPath != "" {
 		append(dirHistory, currentPath);
 
-		if len(dirHistory) > DIRHISTORYMAX
-		{
+		if len(dirHistory) > DIRHISTORYMAX {
 			dirHistory = dirHistory - 1;
 		}
 	}
@@ -83,12 +80,9 @@ func NavigateTo(path)
 
 	RefreshDirectory();
 
-	if path != "/" and len(files) > 1
-	{
+	if path != "/" and len(files) > 1 {
 		selectedIndex = 2;
-	}
-	else
-	{
+	} else {
 		selectedIndex = 1;
 	}
 
@@ -100,21 +94,17 @@ func NavigateTo(path)
 #@ <NavigateUp()>
 #@ Navigates to the parent directory.
 
-func NavigateUp()
-{
+func NavigateUp() {
 	var parent = GetParentPath(currentPath);
 
-	if parent != currentPath
-	{
+	if parent != currentPath {
 		var oldName = Basename(currentPath);
 
 		NavigateTo(parent);
 
 		# Try to select the directory we came from
-		for i = 1 to len(files)
-		{
-			if files[i]["name"] == oldName
-			{
+		for i = 1 to len(files) {
+			if files[i]["name"] == oldName {
 				selectedIndex = i;
 
 				AdjustScrollOffset();
@@ -128,18 +118,19 @@ func NavigateUp()
 #@ <NavigateInto()>
 #@ Enters the selected directory or opens the selected file(s).
 
-func NavigateInto()
-{
-	if len(files) == 0 { return; }
+func NavigateInto() {
+	if len(files) == 0 {
+		return;
+	}
 
-	if selectedIndex < 1 or selectedIndex > len(files) { return; }
+	if selectedIndex < 1 or selectedIndex > len(files) {
+		return;
+	}
 
 	var selectedFiles = GetMarkedFiles(files, currentPath);
 
-	if len(selectedFiles) > 1
-	{
-		for i = 1 to len(selectedFiles)
-		{
+	if len(selectedFiles) > 1 {
+		for i = 1 to len(selectedFiles) {
 			OpenFile(selectedFiles[i]);
 		}
 
@@ -152,8 +143,7 @@ func NavigateInto()
 	var name = entry["name"];
 	var isDir = entry["isDir"];
 
-	if name == ".."
-	{
+	if name == ".." {
 		NavigateUp();
 
 		return;
@@ -161,16 +151,12 @@ func NavigateInto()
 
 	var fullPath = JoinPath(currentPath, name);
 
-	if isDir
-	{
+	if isDir {
 		NavigateTo(fullPath);
-	}
-	else
-	{
+	} else {
 		OpenFile(fullPath);
 
-		if entry["marked"]
-		{
+		if entry["marked"] {
 			files = ToggleFileMark(files, selectedIndex);
 		}
 	}
@@ -179,9 +165,8 @@ func NavigateInto()
 #@ <GetVisibleFileCount()>
 #@ Returns how many files can be displayed at once.
 
-func GetVisibleFileCount()
-{
-	var contentHeight = screenHeight - KEYBINDSBARHEIGHT - 2;
+func GetVisibleFileCount() {
+	var contentHeight = screenHeight - BottomReserve() - 2;
 
 	return int(contentHeight / FILEROWHEIGHT);
 }
@@ -189,40 +174,40 @@ func GetVisibleFileCount()
 #@ <AdjustScrollOffset()>
 #@ Adjusts scroll offset to keep selection visible.
 
-func AdjustScrollOffset()
-{
+func AdjustScrollOffset() {
 	var visibleFiles = GetVisibleFileCount();
 
-	if selectedIndex < scrollOffset
-	{
+	if selectedIndex < scrollOffset {
 		scrollOffset = selectedIndex;
 	}
 
-	if selectedIndex >= scrollOffset + visibleFiles
-	{
+	if selectedIndex >= scrollOffset + visibleFiles {
 		scrollOffset = selectedIndex - visibleFiles + 1;
 	}
 
 	# Avoid empty rows below the last file when files fit the viewport.
 	var maxOffset = len(files) - visibleFiles + 1;
 
-	if maxOffset < 1 { maxOffset = 1; }
-	if scrollOffset > maxOffset { scrollOffset = maxOffset; }
-	if scrollOffset < 1 { scrollOffset = 1; }
+	if maxOffset < 1 {
+		maxOffset = 1;
+	}
+	if scrollOffset > maxOffset {
+		scrollOffset = maxOffset;
+	}
+	if scrollOffset < 1 {
+		scrollOffset = 1;
+	}
 }
 
 #@ <NavigateToBookmark(bmIndex)>
 #@ Navigates to the bookmark at ''bmIndex'' if valid.
 
-func NavigateToBookmark(bmIndex)
-{
-	if bmIndex >= 1 and bmIndex <= len(bookmarks)
-	{
+func NavigateToBookmark(bmIndex) {
+	if bmIndex >= 1 and bmIndex <= len(bookmarks) {
 		var bm = bookmarks[bmIndex];
 		var path = bm["path"];
 
-		if IsDir(path)
-		{
+		if IsDir(path) {
 			selectedBookmark = bmIndex;
 			NavigateTo(path);
 
@@ -236,15 +221,12 @@ func NavigateToBookmark(bmIndex)
 #@ <NavigateBack()>
 #@ Navigates to the previous directory in history.
 
-func NavigateBack()
-{
-	while len(dirHistory) > 0
-	{
+func NavigateBack() {
+	while len(dirHistory) > 0 {
 		var prevPath = dirHistory[len(dirHistory)];
 		dirHistory = dirHistory - len(dirHistory);
 
-		if IsDir(prevPath)
-		{
+		if IsDir(prevPath) {
 			navigatingBack = true;
 			NavigateTo(prevPath);
 			navigatingBack = false;
