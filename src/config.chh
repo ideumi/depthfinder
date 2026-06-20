@@ -6,11 +6,12 @@
 #@ <GetConfigPath(configFile)>
 #@ Returns the path to ''configFile''.
 
-func GetConfigPath(configFile)
-{
+func GetConfigPath(configFile) {
 	var home = getenv("HOME");
 
-	if iserr(home) { return err; }
+	if iserr(home) {
+		return err;
+	}
 
 	return JoinPath(home, configFile);
 }
@@ -18,36 +19,40 @@ func GetConfigPath(configFile)
 #@ <LoadBookmarks()>
 #@ Loads bookmarks.
 
-func LoadBookmarks()
-{
+func LoadBookmarks() {
 	var bookmarks = [];
 	var path = GetConfigPath(CONFIGFILEBOOKMARKS);
 
-	if iserr(path) { return err; }
+	if iserr(path) {
+		return err;
+	}
 
-	if not IsFile(path) { return err; }
+	if not IsFile(path) {
+		return err;
+	}
 
 	# ---
 
 	var lines = ReadLines(path);
 
-	if iserr(lines) { return err; }
+	if iserr(lines) {
+		return err;
+	}
 
-	for i = 1 to len(lines)
-	{
+	for i = 1 to len(lines) {
 		var line = Trim(lines[i]);
 
-		if line == "" { continue; }
+		if line == "" {
+			continue;
+		}
 
 		var parts = split(line, ";");
 
-		if len(parts) >= 2
-		{
+		if len(parts) >= 2 {
 			var name = Trim(parts[1]);
 			var bmPath = Trim(parts[2]);
 
-			if name != "" and bmPath != ""
-			{
+			if name != "" and bmPath != "" {
 				var bookmark = m[
 					"name": name,
 					"path": bmPath
@@ -64,26 +69,27 @@ func LoadBookmarks()
 #@ <SaveBookmarks(bookmarks)>
 #@ Saves bookmarks list.
 
-func SaveBookmarks(bookmarks)
-{
+func SaveBookmarks(bookmarks) {
 	var path = GetConfigPath(CONFIGFILEBOOKMARKS);
 
-	if iserr(path) { return err; }
+	if iserr(path) {
+		return err;
+	}
 
-	if not IsFile(path) { return err; }
+	if not IsFile(path) {
+		return err;
+	}
 
 	# ---
 
 	var lines = [];
 
-	for i = 1 to len(bookmarks)
-	{
+	for i = 1 to len(bookmarks) {
 		var bm = bookmarks[i];
 		var name = bm["name"];
 		var bmPath = bm["path"];
 
-		if not iserr(name) and not iserr(bmPath)
-		{
+		if not iserr(name) and not iserr(bmPath) {
 			name = replace(name, ";", "");
 			bmPath = replace(bmPath, ";", "");
 
@@ -97,8 +103,7 @@ func SaveBookmarks(bookmarks)
 #@ <AddBookmark(bookmarks, name, path)>
 #@ Adds a new bookmark and saves.
 
-func AddBookmark(bookmarks, name, path)
-{
+func AddBookmark(bookmarks, name, path) {
 	var bookmark = m[
 		"name": name,
 		"path": path
@@ -108,7 +113,9 @@ func AddBookmark(bookmarks, name, path)
 
 	var result = SaveBookmarks(bookmarks);
 
-	if iserr(result) { return err; }
+	if iserr(result) {
+		return err;
+	}
 
 	return bookmarks;
 }
@@ -116,15 +123,18 @@ func AddBookmark(bookmarks, name, path)
 #@ <RemoveBookmark(bookmarks, index)>
 #@ Removes a bookmark at ''index'' and saves.
 
-func RemoveBookmark(bookmarks, index)
-{
-	if index < 1 or index > len(bookmarks) { return err; }
+func RemoveBookmark(bookmarks, index) {
+	if index < 1 or index > len(bookmarks) {
+		return err;
+	}
 
 	bookmarks = bookmarks - index;
 
 	var result = SaveBookmarks(bookmarks);
 
-	if iserr(result) { return err; }
+	if iserr(result) {
+		return err;
+	}
 
 	return bookmarks;
 }
@@ -132,36 +142,40 @@ func RemoveBookmark(bookmarks, index)
 #@ <LoadFileAssoc()>
 #@ Loads file associations.
 
-func LoadFileAssoc()
-{
+func LoadFileAssoc() {
 	var assoc = m[];
 	var path = GetConfigPath(CONFIGFILEASSOC);
 
-	if iserr(path) { return err; }
+	if iserr(path) {
+		return err;
+	}
 
-	if not IsFile(path) { return err; }
+	if not IsFile(path) {
+		return err;
+	}
 
 	# ---
 
 	var lines = ReadLines(path);
 
-	if iserr(lines) { return err; }
+	if iserr(lines) {
+		return err;
+	}
 
-	for i = 1 to len(lines)
-	{
+	for i = 1 to len(lines) {
 		var line = Trim(lines[i]);
 
-		if line == "" { continue; }
+		if line == "" {
+			continue;
+		}
 
 		var parts = split(line, ";");
 
-		if len(parts) >= 2
-		{
+		if len(parts) >= 2 {
 			var ext = lower(Trim(parts[1]));
 			var cmd = Trim(parts[2]);
 
-			if ext != "" and cmd != ""
-			{
+			if ext != "" and cmd != "" {
 				assoc[ext] = cmd;
 			}
 		}
@@ -173,8 +187,7 @@ func LoadFileAssoc()
 #@ <GetAssocCommand(fileAssoc, extension)>
 #@ Looks up the command for a file ''extension''.
 
-func GetAssocCommand(fileAssoc, extension)
-{
+func GetAssocCommand(fileAssoc, extension) {
 	var ext = lower(extension);
 
 	return fileAssoc[ext];
@@ -183,13 +196,16 @@ func GetAssocCommand(fileAssoc, extension)
 #@ <CreateDefaultBookmarks()>
 #@ Creates default bookmarks file if it doesn't exist.
 
-func CreateDefaultBookmarks()
-{
+func CreateDefaultBookmarks() {
 	var path = GetConfigPath(CONFIGFILEBOOKMARKS);
 
-	if iserr(path) { return err; }
+	if iserr(path) {
+		return err;
+	}
 
-	if IsFile(path) { return ok; }
+	if IsFile(path) {
+		return ok;
+	}
 
 	var home = getenv("HOME");
 
@@ -204,13 +220,16 @@ func CreateDefaultBookmarks()
 #@ <CreateDefaultFileAssoc()>
 #@ Creates default file associations if file doesn't exist.
 
-func CreateDefaultFileAssoc()
-{
+func CreateDefaultFileAssoc() {
 	var path = GetConfigPath(CONFIGFILEASSOC);
 
-	if iserr(path) { return err; }
+	if iserr(path) {
+		return err;
+	}
 
-	if IsFile(path) { return ok; }
+	if IsFile(path) {
+		return ok;
+	}
 
 	return WriteFile(path, "", true, true);
 }
@@ -218,13 +237,16 @@ func CreateDefaultFileAssoc()
 #@ <CreateDefaultTerminal()>
 #@ Creates default terminal config if it doesn't exist.
 
-func CreateDefaultTerminal()
-{
+func CreateDefaultTerminal() {
 	var path = GetConfigPath(CONFIGFILETERMINAL);
 
-	if iserr(path) { return err; }
+	if iserr(path) {
+		return err;
+	}
 
-	if IsFile(path) { return ok; }
+	if IsFile(path) {
+		return ok;
+	}
 
 	return WriteFile(path, "", true, true);
 }
@@ -232,13 +254,16 @@ func CreateDefaultTerminal()
 #@ <CreateDefaultLastDir()>
 #@ Creates default last directory file if it doesn't exist.
 
-func CreateDefaultLastDir()
-{
+func CreateDefaultLastDir() {
 	var path = GetConfigPath(CONFIGFILELASTDIR);
 
-	if iserr(path) { return err; }
+	if iserr(path) {
+		return err;
+	}
 
-	if IsFile(path) { return ok; }
+	if IsFile(path) {
+		return ok;
+	}
 
 	return WriteFile(path, "", true, true);
 }
@@ -249,21 +274,28 @@ func CreateDefaultLastDir()
 # NOTE: I know of no way to solve this via XDG without some ugly hacks. So just
 # let the user decide what terminal they'd like.
 
-func LoadTerminal()
-{
+func LoadTerminal() {
 	var path = GetConfigPath(CONFIGFILETERMINAL);
 
-	if iserr(path) { return err; }
+	if iserr(path) {
+		return err;
+	}
 
-	if not IsFile(path) { return err; }
+	if not IsFile(path) {
+		return err;
+	}
 
 	var content = ReadFile(path, true);
 
-	if iserr(content) { return err; }
+	if iserr(content) {
+		return err;
+	}
 
 	var trimmed = Trim(content);
 
-	if trimmed == "" { return err; }
+	if trimmed == "" {
+		return err;
+	}
 
 	return trimmed;
 }
@@ -271,11 +303,12 @@ func LoadTerminal()
 #@ <SaveLastDir(path)>
 #@ Saves the current directory ''path''.
 
-func SaveLastDir(path)
-{
+func SaveLastDir(path) {
 	var filePath = GetConfigPath(CONFIGFILELASTDIR);
 
-	if iserr(filePath) { return err; }
+	if iserr(filePath) {
+		return err;
+	}
 
 	return WriteFile(filePath, path, true, true);
 }
@@ -283,27 +316,36 @@ func SaveLastDir(path)
 #@ <LoadLastDir()>
 #@ Loads the last visited directory from the config.
 
-func LoadLastDir()
-{
+func LoadLastDir() {
 	var filePath = GetConfigPath(CONFIGFILELASTDIR);
 
-	if iserr(filePath) { return err; }
+	if iserr(filePath) {
+		return err;
+	}
 
-	if not IsFile(filePath) { return err; }
+	if not IsFile(filePath) {
+		return err;
+	}
 
 	# ---
 
 	var content = ReadFile(filePath, true);
 
-	if iserr(content) { return err; }
+	if iserr(content) {
+		return err;
+	}
 
 	# ---
 
 	var path = Trim(content);
 
-	if path == "" { return err; }
+	if path == "" {
+		return err;
+	}
 
-	if not IsDir(path) { return err; }
+	if not IsDir(path) {
+		return err;
+	}
 
 	return path;
 }
