@@ -6,7 +6,8 @@
 #@ <RunForeground(command)>
 #@ Runs a command in the foreground with TTY redirect.
 
-func RunForeground(command) {
+func RunForeground(command)
+{
 	ShowCursor();
 	ClearScreen();
 	CursorTo(1, 1);
@@ -15,9 +16,7 @@ func RunForeground(command) {
 	var exitCode = -1;
 	var handle = popen(tuiCmd, "r");
 
-	if not iserr(handle) {
-		exitCode = pclose(handle);
-	}
+	if not iserr(handle) { exitCode = pclose(handle); }
 
 	Print("\n--- Exit " + str(exitCode) + ", press any key to continue ---");
 
@@ -33,35 +32,31 @@ func RunForeground(command) {
 #@ terminal foreground, otherwise it will be spawned in the background. If no
 #@ command is associated, then ''DEFAULTRUNNER'' will be used.
 
-func OpenFile(path) {
+func OpenFile(path)
+{
 	var ext = FileExtension(path);
 	var cmd = GetAssocCommand(fileAssoc, ext);
 
-	if iserr(cmd) or cmd == "" {
-		cmd = DEFAULTRUNNER;
-	}
+	if iserr(cmd) or cmd == "" { cmd = DEFAULTRUNNER; }
 
 	# Prefix handling
 	var isTui = StartsWith(cmd, "!");
 
-	if isTui {
-		cmd = slice(cmd, 2, len(cmd));
-	}
+	if isTui { cmd = slice(cmd, 2, len(cmd)); }
 
 	var fullCmd = cmd + " " + ShellEscape(path);
 
-	if isTui {
-		RunForeground(fullCmd);
-	} else {
-		Spawn(fullCmd);
-	}
+	if isTui { RunForeground(fullCmd); }
+	else { Spawn(fullCmd); }
 }
 
 #@ <CheckTerminal()>
 #@ Checks if a terminal is configured. Shows an error if not.
 
-func CheckTerminal() {
-	if terminal == "" {
+func CheckTerminal()
+{
+	if terminal == ""
+	{
 		var configPath = GetConfigPath(CONFIGFILETERMINAL);
 
 		ShowError(screenWidth, screenHeight,
@@ -76,10 +71,9 @@ func CheckTerminal() {
 #@ <OpenTerminal()>
 #@ Opens a terminal in the current directory.
 
-func OpenTerminal() {
-	if not CheckTerminal() {
-		return;
-	}
+func OpenTerminal()
+{
+	if not CheckTerminal() { return; }
 
 	Spawn(terminal);
 }
@@ -87,10 +81,9 @@ func OpenTerminal() {
 #@ <OpenNewWindow()>
 #@ Opens a new dfn instance in the current directory.
 
-func OpenNewWindow() {
-	if not CheckTerminal() {
-		return;
-	}
+func OpenNewWindow()
+{
+	if not CheckTerminal() { return; }
 
 	Spawn(terminal + " -e " + PROGRAMNAMESHORT + " " + ShellEscape(currentPath));
 }
@@ -98,12 +91,11 @@ func OpenNewWindow() {
 #@ <ZeroPad(number, width)>
 #@ Returns ''number'' as a string left-padded with zeros to ''width''.
 
-func ZeroPad(number, width) {
+func ZeroPad(number, width)
+{
 	var s = str(number);
 
-	while len(s) < width {
-		s = "0" + s;
-	}
+	while len(s) < width { s = "0" + s; }
 
 	return s;
 }
@@ -111,13 +103,17 @@ func ZeroPad(number, width) {
 #@ <ApplyExtension(name, originalName)>
 #@ Replaces ''*'' in ''name'' with the file extension from ''originalName''.
 
-func ApplyExtension(name, originalName) {
+func ApplyExtension(name, originalName)
+{
 	var ext = FileExtension(originalName);
 
-	if ext == "" {
+	if ext == ""
+	{
 		name = replace(name, ".*", "");
 		name = replace(name, "*", "");
-	} else {
+	}
+	else
+	{
 		name = replace(name, "*", ext);
 	}
 
@@ -128,7 +124,8 @@ func ApplyExtension(name, originalName) {
 #@ Replaces ''#'' with zero-padded ''number'' and ''*'' with the original file
 #@ extension.
 
-func ApplyRenamePattern(pattern, number, padWidth, originalName) {
+func ApplyRenamePattern(pattern, number, padWidth, originalName)
+{
 	var result = replace(pattern, "#", ZeroPad(number, padWidth));
 
 	return ApplyExtension(result, originalName);
@@ -137,53 +134,48 @@ func ApplyRenamePattern(pattern, number, padWidth, originalName) {
 #@ <ActionRename()>
 #@ Handles the rename action for the selected file.
 
-func ActionRename() {
+func ActionRename()
+{
 	var markedCount = CountMarkedFiles(files);
 
-	if markedCount > 1 {
+	if markedCount > 1
+	{
 		ActionBulkRename();
 		return;
 	}
 
 	var renameIndex = selectedIndex;
 
-	if markedCount == 1 {
-		for i = 1 to len(files) {
-			if files[i]["marked"] {
-				renameIndex = i;
-			}
+	if markedCount == 1
+	{
+		for i = 1 to len(files)
+		{
+			if files[i]["marked"] { renameIndex = i; }
 		}
 	}
 
-	if renameIndex < 1 or renameIndex > len(files) {
-		return;
-	}
+	if renameIndex < 1 or renameIndex > len(files) { return; }
 
 	var entry = files[renameIndex];
 	var oldName = entry["name"];
 
-	if oldName == ".." {
-		return;
-	}
+	if oldName == ".." { return; }
 
 	var newName = ShowInput(screenWidth, screenHeight, "Rename", "New name: ", oldName);
 
-	if iserr(newName) or newName == "" {
-		return;
-	}
+	if iserr(newName) or newName == "" { return; }
 
 	newName = ApplyExtension(newName, oldName);
 
 	# ---
 
-	if newName == "" or newName == oldName {
-		return;
-	}
+	if newName == "" or newName == oldName { return; }
 
 	var oldPath = JoinPath(currentPath, oldName);
 	var newPath = JoinPath(currentPath, newName);
 
-	if IsSameFile(oldPath, newPath) {
+	if IsSameFile(oldPath, newPath)
+	{
 		ShowError(screenWidth, screenHeight,
 			"Cannot rename: source and destination are the same file");
 
@@ -192,19 +184,20 @@ func ActionRename() {
 
 	var doRename = true;
 
-	if PathExists(newPath) {
+	if PathExists(newPath)
+	{
 		var confirmOverwrite = ShowConfirm(screenWidth,
 			screenHeight, "'" + newName + "' exists. Overwrite?");
 
-		if iserr(confirmOverwrite) or not confirmOverwrite {
-			doRename = false;
-		}
+		if iserr(confirmOverwrite) or not confirmOverwrite { doRename = false; }
 	}
 
-	if doRename {
+	if doRename
+	{
 		var result = rename(oldPath, newPath);
 
-		if iserr(result) {
+		if iserr(result)
+		{
 			ShowError(screenWidth, screenHeight, "Failed to rename: " + oldName);
 		}
 	}
@@ -215,23 +208,21 @@ func ActionRename() {
 #@ <ActionBulkRename()>
 #@ Handles the bulk-rename action for the selected files.
 
-func ActionBulkRename() {
+func ActionBulkRename()
+{
 	var selected = GetSelectedFiles(files, currentPath, selectedIndex);
 	var total = len(selected);
 
-	if total == 0 {
-		return;
-	}
+	if total == 0 { return; }
 
 	var pattern = ShowRenameInput(screenWidth, screenHeight,
 		"Bulk Rename (" + str(total) + " files)",
 		"Pattern: ", Basename(selected[1]));
 
-	if iserr(pattern) or pattern == "" {
-		return;
-	}
+	if iserr(pattern) or pattern == "" { return; }
 
-	if not has(pattern, "#") {
+	if not has(pattern, "#")
+	{
 		ShowError(screenWidth, screenHeight,
 			"Pattern must contain # as a number placeholder");
 
@@ -241,23 +232,28 @@ func ActionBulkRename() {
 	var padWidth = len(str(total));
 
 	# Conflict pre-checks
-	for i = 1 to total {
+	for i = 1 to total
+	{
 		var newName = ApplyRenamePattern(pattern, i, padWidth, Basename(selected[i]));
 		var newPath = JoinPath(currentPath, newName);
 
-		if PathExists(newPath) {
+		if PathExists(newPath)
+		{
 			# Allow if target is a selected file that will be renamed at or
 			# before this index
 			var isHandled = false;
 
-			for j = 1 to i {
-				if IsSameFile(selected[j], newPath) {
+			for j = 1 to i
+			{
+				if IsSameFile(selected[j], newPath)
+				{
 					isHandled = true;
 					break;
 				}
 			}
 
-			if not isHandled {
+			if not isHandled
+			{
 				ShowError(screenWidth, screenHeight, "'" + newName + "' already exists");
 				return;
 			}
@@ -270,18 +266,18 @@ func ActionBulkRename() {
 	var preview = "Rename " + str(total) + " files? (" + first + " ... " + last + ")";
 	var confirmed = ShowConfirm(screenWidth, screenHeight, preview);
 
-	if iserr(confirmed) or not confirmed {
-		return;
-	}
+	if iserr(confirmed) or not confirmed { return; }
 
-	for i = 1 to total {
+	for i = 1 to total
+	{
 		var oldPath = selected[i];
 		var newName = ApplyRenamePattern(pattern, i, padWidth, Basename(oldPath));
 		var newPath = JoinPath(currentPath, newName);
 
 		var result = rename(oldPath, newPath);
 
-		if iserr(result) {
+		if iserr(result)
+		{
 			var displayName = BFTruncateMiddle(Basename(oldPath), DIALOGNAMEMAX);
 
 			ShowError(screenWidth, screenHeight, "Failed to rename: " + displayName);
@@ -300,40 +296,33 @@ func ActionBulkRename() {
 #@ Handles opening selected files with a custom command. Commands prefixed with
 #@ ''!'' run in terminal foreground.
 
-func ActionOpenWith() {
+func ActionOpenWith()
+{
 	var filesToOpen = GetSelectedFiles(files, currentPath, selectedIndex);
 
-	if len(filesToOpen) == 0 {
-		return;
-	}
+	if len(filesToOpen) == 0 { return; }
 
 	var cmd = ShowInput(screenWidth, screenHeight, "Open With", "Command: ", "");
 
-	if iserr(cmd) or cmd == "" {
-		return;
-	}
+	if iserr(cmd) or cmd == "" { return; }
 
 	# TUI prefix for foreground TUI programs
 	var isTui = StartsWith(cmd, "!");
 
-	if isTui {
-		cmd = slice(cmd, 2, len(cmd));
-	}
+	if isTui { cmd = slice(cmd, 2, len(cmd)); }
 
 	# NOTE: Otherwise programs like VLC etc. open files in the wrong order
 	sort(filesToOpen);
 
 	var fullCmd = cmd;
 
-	for i = 1 to len(filesToOpen) {
+	for i = 1 to len(filesToOpen)
+	{
 		fullCmd = fullCmd + " " + ShellEscape(filesToOpen[i]);
 	}
 
-	if isTui {
-		RunForeground(fullCmd);
-	} else {
-		Spawn(fullCmd);
-	}
+	if isTui { RunForeground(fullCmd); }
+	else { Spawn(fullCmd); }
 
 	files = ClearAllMarks(files);
 }
@@ -341,21 +330,24 @@ func ActionOpenWith() {
 #@ <ActionNewFile()>
 #@ Handles creating a new file.
 
-func ActionNewFile() {
+func ActionNewFile()
+{
 	var name = ShowInput(screenWidth, screenHeight, "New File", "Name: ", "");
 
-	if iserr(name) or name == "" {
-		return;
-	}
+	if iserr(name) or name == "" { return; }
 
 	var fullPath = JoinPath(currentPath, name);
 
-	if PathExists(fullPath) {
+	if PathExists(fullPath)
+	{
 		ShowError(screenWidth, screenHeight, "'" + name + "' already exists");
-	} else {
+	}
+	else
+	{
 		var result = WriteFile(fullPath, "", true, false);
 
-		if iserr(result) {
+		if iserr(result)
+		{
 			ShowError(screenWidth, screenHeight, "Failed to create file: " + name);
 		}
 	}
@@ -366,21 +358,24 @@ func ActionNewFile() {
 #@ <ActionNewDir()>
 #@ Handles creating a new directory.
 
-func ActionNewDir() {
+func ActionNewDir()
+{
 	var name = ShowInput(screenWidth, screenHeight, "New Directory", "Name: ", "");
 
-	if iserr(name) or name == "" {
-		return;
-	}
+	if iserr(name) or name == "" { return; }
 
 	var fullPath = JoinPath(currentPath, name);
 
-	if PathExists(fullPath) {
+	if PathExists(fullPath)
+	{
 		ShowError(screenWidth, screenHeight, "'" + name + "' already exists");
-	} else {
+	}
+	else
+	{
 		var result = CreateDir(fullPath);
 
-		if iserr(result) {
+		if iserr(result)
+		{
 			ShowError(screenWidth, screenHeight, "Failed to create directory: " + name);
 		}
 	}
@@ -391,20 +386,18 @@ func ActionNewDir() {
 #@ <ActionRunCommand()>
 #@ Handles running a shell command in the current directory.
 
-func ActionRunCommand() {
+func ActionRunCommand()
+{
 	var prompt = "$ ";
-	if RUNNINGASROOT {
-		prompt = "# ";
-	}
+	if RUNNINGASROOT { prompt = "# "; }
 
 	var cmd = ShowInput(screenWidth, screenHeight, "Run Command", prompt, "");
 
-	if iserr(cmd) or cmd == "" {
-		return;
-	}
+	if iserr(cmd) or cmd == "" { return; }
 
 	# Egg
-	if cmd == EGG {
+	if cmd == EGG
+	{
 		ShowAbout(screenWidth, screenHeight);
 		return;
 	}
@@ -415,35 +408,31 @@ func ActionRunCommand() {
 #@ <ActionAddBookmark()>
 #@ Handles adding the current directory as a bookmark.
 
-func ActionAddBookmark() {
+func ActionAddBookmark()
+{
 	var defaultName = Basename(currentPath);
 
-	if defaultName == "" {
-		defaultName = "/";
-	}
+	if defaultName == "" { defaultName = "/"; }
 
 	var bmName = ShowInput(screenWidth, screenHeight, "Add Bookmark", "Name: ", defaultName);
 
-	if iserr(bmName) or bmName == "" {
-		return;
-	}
+	if iserr(bmName) or bmName == "" { return; }
 
 	var result = AddBookmark(bookmarks, bmName, currentPath);
 
-	if not iserr(result) {
-		bookmarks = result;
-	} else {
-		ShowError(screenWidth, screenHeight, "Failed to save bookmark");
-	}
+	if not iserr(result) { bookmarks = result; }
+	else { ShowError(screenWidth, screenHeight, "Failed to save bookmark"); }
 }
 
 #@ <ActionSort()>
 #@ Handles showing the sort menu and applying sort settings.
 
-func ActionSort() {
+func ActionSort()
+{
 	var result = ShowSortMenu(screenWidth, screenHeight, sortMode, sortDirection);
 
-	if not iserr(result) {
+	if not iserr(result)
+	{
 		sortMode = result[1];
 		sortDirection = result[2];
 
@@ -454,19 +443,22 @@ func ActionSort() {
 #@ <ActionPaste()>
 #@ Handles pasting files from clipboard.
 
-func ActionPaste() {
-	if len(clipboard) == 0 {
-		return;
-	}
+func ActionPaste()
+{
+	if len(clipboard) == 0 { return; }
 
 	var result = err;
 
-	if clipboardMode == CLIPBOARDCOPY {
+	if clipboardMode == CLIPBOARDCOPY
+	{
 		result = CopyFiles(clipboard, currentPath, screenWidth, screenHeight);
-	} elseif clipboardMode == CLIPBOARDCUT {
+	}
+	elseif clipboardMode == CLIPBOARDCUT
+	{
 		result = MoveFiles(clipboard, currentPath, screenWidth, screenHeight);
 
-		if isok(result) {
+		if isok(result)
+		{
 			clipboard = [];
 			clipboardMode = CLIPBOARDNONE;
 		}
@@ -478,12 +470,11 @@ func ActionPaste() {
 #@ <ActionCompress()>
 #@ Handles compressing selected files into an archive.
 
-func ActionCompress() {
+func ActionCompress()
+{
 	var filesToCompress = GetSelectedFiles(files, currentPath, selectedIndex);
 
-	if len(filesToCompress) == 0 {
-		return;
-	}
+	if len(filesToCompress) == 0 { return; }
 
 	var width = 50;
 	var height = 8;
@@ -504,22 +495,16 @@ func ActionCompress() {
 
 	HideCursor();
 
-	if iserr(format) {
-		return;
-	}
+	if iserr(format) { return; }
 
 	var defaultName = "archive";
 
-	if len(filesToCompress) == 1 {
-		defaultName = Basename(filesToCompress[1]);
-	}
+	if len(filesToCompress) == 1 { defaultName = Basename(filesToCompress[1]); }
 
 	var archiveName = ShowInput(screenWidth, screenHeight, "Archive Name",
 		"Name: ", defaultName);
 
-	if iserr(archiveName) or archiveName == "" {
-		return;
-	}
+	if iserr(archiveName) or archiveName == "" { return; }
 
 	var result = CompressFiles(filesToCompress,
 		currentPath,
@@ -528,9 +513,7 @@ func ActionCompress() {
 		screenWidth,
 		screenHeight);
 
-	if isok(result) {
-		files = ClearAllMarks(files);
-	}
+	if isok(result) { files = ClearAllMarks(files); }
 
 	RefreshDirectory();
 }

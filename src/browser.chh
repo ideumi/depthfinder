@@ -8,7 +8,8 @@
 
 # We have constructors at home
 
-func CreateFileEntry(name, size, isDir, isSymlink, isExecutable, marked, mtime) {
+func CreateFileEntry(name, size, isDir, isSymlink, isExecutable, marked, mtime)
+{
 	return m[
 		"name": name,
 		"size": size,
@@ -24,22 +25,20 @@ func CreateFileEntry(name, size, isDir, isSymlink, isExecutable, marked, mtime) 
 #@ Loads and returns a sorted list of file entries for ''path''. Directories are
 #@ listed first. ''..'' is always added except in root.
 
-func LoadDirectory(path, showHidden, sortMode, sortDirection) {
+func LoadDirectory(path, showHidden, sortMode, sortDirection)
+{
 	var entries = ListDir(path);
 
-	if iserr(entries) {
-		return err;
-	}
+	if iserr(entries) { return err; }
 
 	var dirs = [];
 	var files = [];
 
-	for i = 1 to len(entries) {
+	for i = 1 to len(entries)
+	{
 		var name = entries[i];
 
-		if not showHidden and StartsWith(name, ".") {
-			continue;
-		}
+		if not showHidden and StartsWith(name, ".") { continue; }
 
 		var fullPath = JoinPath(path, name);
 		var linfo = lstat(fullPath);
@@ -47,16 +46,15 @@ func LoadDirectory(path, showHidden, sortMode, sortDirection) {
 
 		var isSymlink = not iserr(linfo) and StatType(linfo) == TYPESYMLINK;
 
-		if isSymlink {
-			info = stat(fullPath);
-		}
+		if isSymlink { info = stat(fullPath); }
 
 		var size = 0;
 		var isDir = false;
 		var isExecutable = false;
 		var mtime = 0;
 
-		if not iserr(info) {
+		if not iserr(info)
+		{
 			size = info["size"];
 			isDir = StatType(info) == TYPEDIR;
 			mtime = info["modified"];
@@ -67,11 +65,8 @@ func LoadDirectory(path, showHidden, sortMode, sortDirection) {
 
 		var entry = CreateFileEntry(name, size, isDir, isSymlink, isExecutable, false, mtime);
 
-		if isDir {
-			append(dirs, entry);
-		} else {
-			append(files, entry);
-		}
+		if isDir { append(dirs, entry); }
+		else { append(files, entry); }
 	}
 
 	var sortedDirs = SortFileEntries(dirs, sortMode, sortDirection);
@@ -79,19 +74,16 @@ func LoadDirectory(path, showHidden, sortMode, sortDirection) {
 
 	var result = [];
 
-	if path != "/" {
+	if path != "/"
+	{
 		var parentEntry = CreateFileEntry("..", 0, true, false, false, false, 0);
 
 		append(result, parentEntry);
 	}
 
-	for i = 1 to len(sortedDirs) {
-		append(result, sortedDirs[i]);
-	}
+	for i = 1 to len(sortedDirs) { append(result, sortedDirs[i]); }
 
-	for i = 1 to len(sortedFiles) {
-		append(result, sortedFiles[i]);
-	}
+	for i = 1 to len(sortedFiles) { append(result, sortedFiles[i]); }
 
 	return result;
 }
@@ -99,11 +91,10 @@ func LoadDirectory(path, showHidden, sortMode, sortDirection) {
 #@ <PadIndex(index)>
 #@ Pads an index with leading zeros.
 
-func PadIndex(index) {
+func PadIndex(index)
+{
 	var s = str(index);
-	while len(s) < 8 {
-		s = "0" + s;
-	}
+	while len(s) < 8 { s = "0" + s; }
 
 	return s;
 }
@@ -111,11 +102,10 @@ func PadIndex(index) {
 #@ <PadSortKey(value, width)>
 #@ Pads a numeric value.
 
-func PadSortKey(value, width) {
+func PadSortKey(value, width)
+{
 	var s = str(int(value));
-	while len(s) < width {
-		s = "0" + s;
-	}
+	while len(s) < width { s = "0" + s; }
 
 	return s;
 }
@@ -123,27 +113,22 @@ func PadSortKey(value, width) {
 #@ <SortFileEntries(entries, mode, direction)>
 #@ Sorts file entries by ''mode'' and ''direction''.
 
-func SortFileEntries(entries, mode, direction) {
-	if len(entries) <= 1 {
-		return entries;
-	}
+func SortFileEntries(entries, mode, direction)
+{
+	if len(entries) <= 1 { return entries; }
 
 	# Create "key|index" strings for sort(list)
 	var sortable = [];
 
-	for i = 1 to len(entries) {
+	for i = 1 to len(entries)
+	{
 		var entry = entries[i];
 		var key = "";
 
-		if mode == SORTNAME {
-			key = lower(entry["name"]);
-		} elseif mode == SORTSIZE {
-			key = PadSortKey(entry["size"], 20);
-		} elseif mode == SORTMTIME {
-			key = PadSortKey(entry["mtime"], 20);
-		} else {
-			key = lower(entry["name"]);
-		}
+		if mode == SORTNAME { key = lower(entry["name"]); }
+		elseif mode == SORTSIZE { key = PadSortKey(entry["size"], 20); }
+		elseif mode == SORTMTIME { key = PadSortKey(entry["mtime"], 20); }
+		else { key = lower(entry["name"]); }
 
 		append(sortable, key + "|" + PadIndex(i));
 	}
@@ -152,19 +137,19 @@ func SortFileEntries(entries, mode, direction) {
 
 	var sorted = [];
 
-	for i = 1 to len(sortable) {
+	for i = 1 to len(sortable)
+	{
 		var parts = split(sortable[i], "|");
 		var idx = num(parts[len(parts)]);
 
 		append(sorted, entries[idx]);
 	}
 
-	if direction == SORTDESC {
+	if direction == SORTDESC
+	{
 		var reversed = [];
 
-		for i = len(sorted) to 1 step -1 {
-			append(reversed, sorted[i]);
-		}
+		for i = len(sorted) to 1 step -1 { append(reversed, sorted[i]); }
 
 		return reversed;
 	}
@@ -176,10 +161,9 @@ func SortFileEntries(entries, mode, direction) {
 #@ Toggles the ''marked'' flag for the file at the given ''index''. Returns the
 #@ updated files list.
 
-func ToggleFileMark(files, index) {
-	if index < 1 or index > len(files) {
-		return files;
-	}
+func ToggleFileMark(files, index)
+{
+	if index < 1 or index > len(files) { return files; }
 
 	var entry = files[index];
 
@@ -191,13 +175,16 @@ func ToggleFileMark(files, index) {
 #@ <GetMarkedFiles(files, currentPath)>
 #@ Returns a list of full paths for all marked files.
 
-func GetMarkedFiles(files, currentPath) {
+func GetMarkedFiles(files, currentPath)
+{
 	var marked = [];
 
-	for i = 1 to len(files) {
+	for i = 1 to len(files)
+	{
 		var entry = files[i];
 
-		if entry["marked"] {
+		if entry["marked"]
+		{
 			append(marked, JoinPath(currentPath, entry["name"]));
 		}
 	}
@@ -208,8 +195,10 @@ func GetMarkedFiles(files, currentPath) {
 #@ <ClearAllMarks(files)>
 #@ Clears all file marks. Returns the updated files list.
 
-func ClearAllMarks(files) {
-	for i = 1 to len(files) {
+func ClearAllMarks(files)
+{
+	for i = 1 to len(files)
+	{
 		var entry = files[i];
 
 		entry["marked"] = false;
@@ -221,13 +210,13 @@ func ClearAllMarks(files) {
 #@ <CountMarkedFiles(files)>
 #@ Returns the number of marked files.
 
-func CountMarkedFiles(files) {
+func CountMarkedFiles(files)
+{
 	var count = 0;
 
-	for i = 1 to len(files) {
-		if files[i]["marked"] {
-			count = count + 1;
-		}
+	for i = 1 to len(files)
+	{
+		if files[i]["marked"] { count = count + 1; }
 	}
 
 	return count;
@@ -236,15 +225,15 @@ func CountMarkedFiles(files) {
 #@ <GetSelectedFiles(files, currentPath, selectedIndex)>
 #@ Returns marked files, or current file if none marked.
 
-func GetSelectedFiles(files, currentPath, selectedIndex) {
+func GetSelectedFiles(files, currentPath, selectedIndex)
+{
 	var selected = GetMarkedFiles(files, currentPath);
 
-	if len(selected) == 0 and selectedIndex >= 1 and selectedIndex <= len(files) {
+	if len(selected) == 0 and selectedIndex >= 1 and selectedIndex <= len(files)
+	{
 		var name = files[selectedIndex]["name"];
 
-		if name != ".." {
-			append(selected, JoinPath(currentPath, name));
-		}
+		if name != ".." { append(selected, JoinPath(currentPath, name)); }
 	}
 
 	return selected;
@@ -253,32 +242,33 @@ func GetSelectedFiles(files, currentPath, selectedIndex) {
 #@ <ToggleSelectAll(files)>
 #@ Toggles selection on all files except ''..''. Returns updated files list.
 
-func ToggleSelectAll(files) {
+func ToggleSelectAll(files)
+{
 	var allSelected = true;
 	var selectableCount = 0;
 
-	for i = 1 to len(files) {
+	for i = 1 to len(files)
+	{
 		var name = files[i]["name"];
 
-		if name != ".." {
+		if name != ".."
+		{
 			selectableCount = selectableCount + 1;
 
-			if not files[i]["marked"] {
-				allSelected = false;
-			}
+			if not files[i]["marked"] { allSelected = false; }
 		}
 	}
 
-	if selectableCount == 0 {
-		allSelected = false;
-	}
+	if selectableCount == 0 { allSelected = false; }
 
 	var newState = not allSelected;
 
-	for i = 1 to len(files) {
+	for i = 1 to len(files)
+	{
 		var name = files[i]["name"];
 
-		if name != ".." {
+		if name != ".."
+		{
 			var entry = files[i];
 
 			entry["marked"] = newState;
