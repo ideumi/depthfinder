@@ -6,14 +6,20 @@
 #@ <SetFileTypeColor(isSymlink, isDir, isExecutable)>
 #@ Sets text color based on file type.
 
-func SetFileTypeColor(isSymlink, isDir, isExecutable) {
-	if isSymlink {
+func SetFileTypeColor(isSymlink, isDir, isExecutable)
+{
+	if isSymlink
+	{
 		SetAttribute(COLORBOLD);
 		SetAttribute(COLORYELLOW);
-	} elseif isDir {
+	}
+	elseif isDir
+	{
 		SetAttribute(COLORBOLD);
 		SetAttribute(COLORCYAN);
-	} elseif isExecutable {
+	}
+	elseif isExecutable
+	{
 		SetAttribute(COLORBOLD);
 		SetAttribute(COLORMAGENTA);
 	}
@@ -22,8 +28,10 @@ func SetFileTypeColor(isSymlink, isDir, isExecutable) {
 #@ <FormatCompactDate(timestamp)>
 #@ Formats a unix ''timestamp'' as a compact date string.
 
-func FormatCompactDate(timestamp) {
-	if timestamp == 0 {
+func FormatCompactDate(timestamp)
+{
+	if timestamp == 0
+	{
 		return "";
 	}
 
@@ -32,7 +40,8 @@ func FormatCompactDate(timestamp) {
 
 	var parts = GregorianParseTime(timestamp);
 
-	if iserr(parts) {
+	if iserr(parts)
+	{
 		return "";
 	}
 
@@ -49,19 +58,16 @@ func FormatCompactDate(timestamp) {
 	var hourStr = str(hour);
 	var minStr = str(minute);
 
-	if day < 10 {
-		dayStr = " " + dayStr;
-	}
-	if hour < 10 {
-		hourStr = "0" + hourStr;
-	}
-	if minute < 10 {
-		minStr = "0" + minStr;
-	}
+	if day < 10 { dayStr = " " + dayStr; }
+	if hour < 10 { hourStr = "0" + hourStr; }
+	if minute < 10 { minStr = "0" + minStr; }
 
-	if timestamp >= sixMonthsAgo {
+	if timestamp >= sixMonthsAgo
+	{
 		return monthStr + " " + dayStr + " " + hourStr + ":" + minStr;
-	} else {
+	}
+	else
+	{
 		return monthStr + " " + dayStr + " " + str(year);
 	}
 }
@@ -69,23 +75,30 @@ func FormatCompactDate(timestamp) {
 #@ <DrawSidebar(x, y, width, height, bookmarks, selected, hasFocus, isMoving)>
 #@ Draws the sidebar with bookmarks list at position ''x'' and ''y''.
 
-func DrawSidebar(x, y, width, height, bookmarks, selected, hasFocus, isMoving) {
+func DrawSidebar(x, y, width, height, bookmarks, selected, hasFocus, isMoving)
+{
 	var contentY = y + 1;
 	var contentHeight = height - 1;
 
-	for row = 1 to contentHeight {
+	for row = 1 to contentHeight
+	{
 		var idx = row;
 
-		if idx <= len(bookmarks) {
+		if idx <= len(bookmarks)
+		{
 			var bm = bookmarks[idx];
 			var name = bm["name"];
 
 			var indicator = "  ";
 
-			if idx == selected and hasFocus {
-				if isMoving {
+			if idx == selected and hasFocus
+			{
+				if isMoving
+				{
 					indicator = "* ";
-				} else {
+				}
+				else
+				{
 					indicator = "> ";
 				}
 			}
@@ -95,15 +108,19 @@ func DrawSidebar(x, y, width, height, bookmarks, selected, hasFocus, isMoving) {
 			nameText = BFClipText(nameText, width - 4);
 			nameText = BFPadText(nameText, width - 4, BFALIGNLEFT);
 
-			if idx <= 9 {
+			if idx <= 9
+			{
 				SetAttribute(COLORBOLD);
 				BFDrawText(x, contentY + row - 1, str(idx));
 				SetAttribute(COLORRESET);
-			} else {
+			}
+			else
+			{
 				BFDrawText(x, contentY + row - 1, " ");
 			}
 
-			if idx == selected and hasFocus {
+			if idx == selected and hasFocus
+			{
 				SetAttribute(COLORBGWHITE);
 				SetAttribute(COLORBOLD);
 				SetAttribute(COLORBLACK);
@@ -111,10 +128,13 @@ func DrawSidebar(x, y, width, height, bookmarks, selected, hasFocus, isMoving) {
 
 			BFDrawText(x + 2, contentY + row - 1, nameText);
 
-			if idx == selected and hasFocus {
+			if idx == selected and hasFocus
+			{
 				SetAttribute(COLORRESET);
 			}
-		} else {
+		}
+		else
+		{
 			BFClearRegion(x, contentY + row - 1, width - 1, 1);
 		}
 	}
@@ -123,21 +143,14 @@ func DrawSidebar(x, y, width, height, bookmarks, selected, hasFocus, isMoving) {
 #@ <FormatSortIndicator(mode, direction)>
 #@ Returns a string indicating current sort ''mode'' and ''direction''.
 
-func FormatSortIndicator(mode, direction) {
+func FormatSortIndicator(mode, direction)
+{
 	var arrow = "↑";
-	if direction == SORTDESC {
-		arrow = "↓";
-	}
+	if direction == SORTDESC { arrow = "↓"; }
 
-	if mode == SORTNAME {
-		return "[Name" + arrow + "]";
-	}
-	if mode == SORTSIZE {
-		return "[Size" + arrow + "]";
-	}
-	if mode == SORTMTIME {
-		return "[Date" + arrow + "]";
-	}
+	if mode == SORTNAME { return "[Name" + arrow + "]"; }
+	if mode == SORTSIZE { return "[Size" + arrow + "]"; }
+	if mode == SORTMTIME { return "[Date" + arrow + "]"; }
 
 	return "[Name" + arrow + "]";
 }
@@ -145,20 +158,26 @@ func FormatSortIndicator(mode, direction) {
 #@ <DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, markedCount, clipboardMode, showHidden, sortMode, sortDirection)>
 #@ Draws the file browser panel.
 
-func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, markedCount, clipboardMode, showHidden, sortMode, sortDirection) {
+func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, markedCount, clipboardMode, showHidden, sortMode, sortDirection)
+{
 	var status = FormatSortIndicator(sortMode, sortDirection) + " ";
 
-	if showHidden {
+	if showHidden
+	{
 		status = status + "[HIDDEN] ";
 	}
 
-	if markedCount > 0 {
+	if markedCount > 0
+	{
 		status = status + "[" + str(markedCount) + " marked] ";
 	}
 
-	if clipboardMode == CLIPBOARDCOPY {
+	if clipboardMode == CLIPBOARDCOPY
+	{
 		status = status + "[COPY] ";
-	} elseif clipboardMode == CLIPBOARDCUT {
+	}
+	elseif clipboardMode == CLIPBOARDCUT
+	{
 		status = status + "[CUT] ";
 	}
 
@@ -168,18 +187,21 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 
 	var title = BFTruncateMiddle(path, titleWidth);
 
-	if hasFocus {
+	if hasFocus
+	{
 		SetAttribute(COLORBOLD);
 	}
 
 	BFDrawText(x, y, title);
 
-	if hasFocus {
+	if hasFocus
+	{
 		SetAttribute(COLORRESET);
 	}
 
 	# Draw status on right
-	if status != "" {
+	if status != ""
+	{
 		var statusX = x + width - lenv(status);
 
 		BFDrawText(statusX, y, status);
@@ -198,30 +220,36 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 	# Calculate how many files can fit
 	var visibleFiles = int(contentHeight / FILEROWHEIGHT);
 
-	for fileRow = 1 to visibleFiles {
+	for fileRow = 1 to visibleFiles
+	{
 		var idx = offset + fileRow - 1;
 		var baseY = contentY + (fileRow - 1) * FILEROWHEIGHT;
 
 		var isSelected = idx == selected and hasFocus;
 		var isMarked = false;
 
-		if idx <= len(files) {
+		if idx <= len(files)
+		{
 			isMarked = files[idx]["marked"];
 		}
 
 		var emptyRow = BFPadText("", contentWidth, BFALIGNLEFT);
 
-		if isSelected {
+		if isSelected
+		{
 			SetAttribute(COLORBLACK);
 			SetAttribute(COLORBOLD);
 			SetAttribute(COLORBGWHITE);
-		} elseif isMarked {
+		}
+		elseif isMarked
+		{
 			SetAttribute(COLORWHITE);
 			SetAttribute(COLORBOLD);
 			SetAttribute(COLORBGBLUE);
 		}
 
-		if idx <= len(files) {
+		if idx <= len(files)
+		{
 			var entry = files[idx];
 			var name = entry["name"];
 			var rawName = name;
@@ -231,24 +259,32 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 			var isExecutable = entry["isExecutable"];
 			var mtime = entry["mtime"];
 
-			if not isSelected and not isMarked and rawName != ".." {
+			if not isSelected and not isMarked and rawName != ".."
+			{
 				SetFileTypeColor(isSymlink, isDir, isExecutable);
 			}
 
 			# Format name with prefix
 			var prefix = "  ";
 
-			if isMarked {
+			if isMarked
+			{
 				prefix = "> ";
 			}
 
-			if isDir {
-				if isSymlink {
+			if isDir
+			{
+				if isSymlink
+				{
 					name = "~" + str(name) + "/";
-				} else {
+				}
+				else
+				{
 					name = str(name) + "/";
 				}
-			} elseif isSymlink {
+			}
+			elseif isSymlink
+			{
 				name = "~" + str(name);
 			}
 
@@ -260,7 +296,8 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 			# Format date
 			var dateStr = "";
 
-			if rawName != ".." {
+			if rawName != ".."
+			{
 				dateStr = FormatCompactDate(mtime);
 			}
 
@@ -269,9 +306,12 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 			# Format size
 			var sizeStr = "";
 
-			if isDir {
+			if isDir
+			{
 				sizeStr = "<DIR>";
-			} else {
+			}
+			else
+			{
 				sizeStr = SizeToString(size);
 			}
 
@@ -280,20 +320,25 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 			var rowText = displayName + " " + dateStr + " " + sizeStr;
 
 			# Content
-			if not isSelected and not isMarked and rawName != ".." and (isSymlink or isDir or isExecutable) {
+			if not isSelected and not isMarked and rawName != ".." and (isSymlink or isDir or isExecutable)
+			{
 				var nameText = slice(displayNameText, 3, len(displayNameText));
 				BFDrawText(x, baseY, prefix);
 				SetAttribute(COLORUNDERLINE);
 				BFDrawText(x + 2, baseY, nameText);
 				SetAttribute(COLORUNDERLINEOFF);
 				BFDrawText(x + lenv(displayNameText), baseY, BFPadText("", nameColWidth - lenv(displayNameText), BFALIGNLEFT) + " " + dateStr + " " + sizeStr);
-			} else {
+			}
+			else
+			{
 				BFDrawText(x, baseY, rowText);
 			}
 
 			# Spacing
 			BFDrawText(x, baseY + 1, emptyRow);
-		} else {
+		}
+		else
+		{
 			BFDrawText(x, baseY, emptyRow);
 			BFDrawText(x, baseY + 1, emptyRow);
 		}
@@ -305,7 +350,8 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 #@ <DrawVerticalSeparator(x, y, height)>
 #@ Draws a vertical line separator.
 
-func DrawVerticalSeparator(x, y, height) {
+func DrawVerticalSeparator(x, y, height)
+{
 	SetFGColor256(DFNCOLORDIM);
 	BFDrawVLine(x, y, height, "│");
 	SetAttribute(COLORRESET);
@@ -315,8 +361,10 @@ func DrawVerticalSeparator(x, y, height) {
 #@ Returns the number of rows reserved at the bottom of the screen. If not
 #@ KEYBINDSBARHEIGHT then 1 is returned for the ". binds" hint.
 
-func BottomReserve() {
-	if showKeybinds {
+func BottomReserve()
+{
+	if showKeybinds
+	{
 		return KEYBINDSBARHEIGHT;
 	}
 
@@ -326,7 +374,8 @@ func BottomReserve() {
 #@ <DrawBottomHint(y, sidebarWidth)>
 #@ Draws the ". binds" hint.
 
-func DrawBottomHint(y, sidebarWidth) {
+func DrawBottomHint(y, sidebarWidth)
+{
 	BFClearRegion(1, y, sidebarWidth - 1, 1);
 
 	SetFGColor256(DFNCOLORDIM);
@@ -337,57 +386,62 @@ func DrawBottomHint(y, sidebarWidth) {
 #@ <DrawKeybindsBar(y, width, focusPanel)>
 #@ Draws the keybinds help bar at the bottom of the screen.
 
-func DrawKeybindsBar(y, width, focusPanel) {
+func DrawKeybindsBar(y, width, focusPanel)
+{
 	var rows = [];
 
-	if focusPanel == FOCUSSIDEBAR {
+	if focusPanel == FOCUSSIDEBAR
+	{
 		append(rows, []);
 
 		append(rows, [
-				["Up/Down", "Navigate"],
-				["Enter", "Go"],
-				["Space", "Move"],
-				["Del", "Remove"],
-				["Tab", "Browser"],
-				["1-9", "Jump"],
-				["Esc", "Quit"]
-			]);
+			["Up/Down", "Navigate"],
+			["Enter", "Go"],
+			["Space", "Move"],
+			["Del", "Remove"],
+			["Tab", "Browser"],
+			["1-9", "Jump"],
+			["Esc", "Quit"]
+		]);
 
 		append(rows, []);
-	} else {
+
+	}
+	else
+	{
 		append(rows, [
-				["↑↓←→", "Navigate"],
-				["Alt+←", "Back"],
-				["Enter", "Open"],
-				["Tab", "Sidebar"],
-				["Space", "Mark"],
-				["a", "All"],
-				["s", "Search"],
-				["r", "Refresh"],
-				["Esc", "Quit"]
-			]);
+			["↑↓←→", "Navigate"],
+			["Alt+←", "Back"],
+			["Enter", "Open"],
+			["Tab", "Sidebar"],
+			["Space", "Mark"],
+			["a", "All"],
+			["s", "Search"],
+			["r", "Refresh"],
+			["Esc", "Quit"]
+		]);
 
 		append(rows, [
-				["Ctrl+C", "Copy"],
-				["Ctrl+X", "Cut"],
-				["Ctrl+V", "Paste"],
-				["Del", "Delete"],
-				["F2", "Rename"],
-				["o", "Open"],
-				["n", "New"],
-				["d", "Mkdir"]
-			]);
+			["Ctrl+C", "Copy"],
+			["Ctrl+X", "Cut"],
+			["Ctrl+V", "Paste"],
+			["Del", "Delete"],
+			["F2", "Rename"],
+			["o", "Open"],
+			["n", "New"],
+			["d", "Mkdir"]
+		]);
 
 		append(rows, [
-				["F1", "Term"],
-				["#", "Run"],
-				["h", "Hidden"],
-				["i", "Info"],
-				["c", "Compress"],
-				["t", "Sort"],
-				["p", "Path"],
-				["b", "Bookmark"]
-			]);
+			["F1", "Term"],
+			["#", "Run"],
+			["h", "Hidden"],
+			["i", "Info"],
+			["c", "Compress"],
+			["t", "Sort"],
+			["p", "Path"],
+			["b", "Bookmark"]
+		]);
 	}
 
 	BFKeybindsBar(1, y - 2, width, rows);
@@ -396,7 +450,8 @@ func DrawKeybindsBar(y, width, focusPanel) {
 #@ <DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, files, selectedFile, fileOffset, currentPath, focusPanel, markedCount, clipboardMode, showHidden, movingBookmark, sortMode, sortDirection)>
 #@ Draws the complete screen.
 
-func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, files, selectedFile, fileOffset, currentPath, focusPanel, markedCount, clipboardMode, showHidden, movingBookmark, sortMode, sortDirection) {
+func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, files, selectedFile, fileOffset, currentPath, focusPanel, markedCount, clipboardMode, showHidden, movingBookmark, sortMode, sortDirection)
+{
 	var sidebarWidth = SIDEBARWIDTH;
 	var separatorX = sidebarWidth;
 	var browserX = sidebarWidth + 2;
@@ -404,40 +459,44 @@ func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, files, s
 	var contentHeight = screenHeight - BottomReserve();
 
 	DrawSidebar(1,
-		1,
-		sidebarWidth,
-		contentHeight,
-		bookmarks,
-		selectedBookmark,
-		focusPanel == FOCUSSIDEBAR,
-		movingBookmark);
+				1,
+				sidebarWidth,
+				contentHeight,
+				bookmarks,
+				selectedBookmark,
+				focusPanel == FOCUSSIDEBAR,
+				movingBookmark);
 
 	var separatorHeight = screenHeight;
 
-	if showKeybinds {
+	if showKeybinds
+	{
 		separatorHeight = contentHeight;
 	}
 
 	DrawVerticalSeparator(separatorX, 1, separatorHeight);
 
 	DrawBrowser(browserX,
-		1,
-		browserWidth,
-		contentHeight,
-		files,
-		selectedFile,
-		fileOffset,
-		currentPath,
-		focusPanel == FOCUSBROWSER,
-		markedCount,
-		clipboardMode,
-		showHidden,
-		sortMode,
-		sortDirection);
+				1,
+				browserWidth,
+				contentHeight,
+				files,
+				selectedFile,
+				fileOffset,
+				currentPath,
+				focusPanel == FOCUSBROWSER,
+				markedCount,
+				clipboardMode,
+				showHidden,
+				sortMode,
+				sortDirection);
 
-	if showKeybinds {
+	if showKeybinds
+	{
 		DrawKeybindsBar(screenHeight, screenWidth, focusPanel);
-	} else {
+	}
+	else
+	{
 		DrawBottomHint(screenHeight, sidebarWidth);
 	}
 }

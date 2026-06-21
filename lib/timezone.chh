@@ -5,31 +5,32 @@
 
 load("libstrings.chh");
 
-func CheckIfNumber(number) {
+func CheckIfNumber(number)
+{
 	var numBin = pack(number)[1];
 
 	return numBin >= 48 and numBin <= 57;
 }
 
-func TimezoneToSeconds(offset, mode) {
+func TimezoneToSeconds(offset, mode)
+{
 	var setMode = "";
 
-	if mode == "-" {
+	if mode == "-"
+	{
 		setMode = "-";
 	}
 
-	if type(offset) == "string" {
-		if len(offset) == 4 {
+	if type(offset) == "string"
+	{
+		if len(offset) == 4
+		{
 			var nums = [charat(offset, 1),
-				charat(offset, 2),
-				charat(offset, 3),
-				charat(offset, 4)];
+						charat(offset, 2),
+						charat(offset, 3),
+						charat(offset, 4)];
 
-			for x = 1 to len(nums) {
-				if CheckIfNumber(nums[x]) == false {
-					return 0;
-				}
-			}
+			for x = 1 to len(nums) { if CheckIfNumber(nums[x]) == false { return 0; } }
 
 			var hours = int(num(join([nums[1], nums[2]], "")));
 
@@ -42,12 +43,11 @@ func TimezoneToSeconds(offset, mode) {
 	return 0;
 }
 
-func CalculateTimezone() {
+func CalculateTimezone()
+{
 	var dateHandle = popen("date +%z", "r");
 
-	if iserr(dateHandle) {
-		return 0;
-	}
+	if iserr(dateHandle) { return 0; }
 
 	var offset = unpack(fread(dateHandle, 0));
 
@@ -55,25 +55,29 @@ func CalculateTimezone() {
 
 	pclose(dateHandle);
 
-	if iserr(offset) {
-		return 0;
-	}
+	if iserr(offset) { return 0; }
 
 	# ---
 
 	var firstChar = err;
 
-	if len(offset) > 0 {
+	if len(offset) > 0
+	{
 		firstChar = charat(offset, 1);
 	}
 
-	if not iserr(firstChar) {
-		if CheckIfNumber(firstChar) == true {
+	if not iserr(firstChar)
+	{
+		if CheckIfNumber(firstChar) == true
+		{
 			return TimezoneToSeconds(offset, "");
-		} else {
+		}
+		else
+		{
 			var offsetNum = slice(offset, 2, len(offset));
 
-			if CheckIfNumber(charat(offsetNum, 1)) == true {
+			if CheckIfNumber(charat(offsetNum, 1)) == true
+			{
 				return TimezoneToSeconds(offsetNum, firstChar);
 			}
 		}

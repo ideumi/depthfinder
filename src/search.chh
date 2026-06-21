@@ -7,19 +7,20 @@
 #@ Filters ''files'' by name substring. Returns filtered list with original indices
 #@ preserved in ''origIndex''.
 
-func FilterFiles(files, query) {
-	if query == "" {
-		return [];
-	}
+func FilterFiles(files, query)
+{
+	if query == "" { return []; }
 
 	var results = [];
 	var lowerQuery = lower(query);
 
-	for i = 1 to len(files) {
+	for i = 1 to len(files)
+	{
 		var entry = files[i];
 		var name = lower(entry["name"]);
 
-		if has(name, lowerQuery) {
+		if has(name, lowerQuery)
+		{
 			var result = copy(entry);
 			result["origIndex"] = i;
 
@@ -34,7 +35,8 @@ func FilterFiles(files, query) {
 #@ Interactive search mode dialog. Returns the original index of the selected
 #@ file, or ''err'' on cancel.
 
-func SearchMode(x, y, width, height, files) {
+func SearchMode(x, y, width, height, files)
+{
 	var query = "";
 	var results = [];
 	var selected = 1;
@@ -44,24 +46,29 @@ func SearchMode(x, y, width, height, files) {
 
 	HideCursor();
 
-	while running {
+	while running
+	{
 		results = FilterFiles(files, query);
 
-		if selected > len(results) and len(results) > 0 {
+		if selected > len(results) and len(results) > 0
+		{
 			selected = len(results);
 		}
 
-		if selected < 1 and len(results) > 0 {
+		if selected < 1 and len(results) > 0
+		{
 			selected = 1;
 		}
 
-		if selected < offset {
+		if selected < offset
+		{
 			offset = selected;
 		}
 
 		var listHeight = height - 4;
 
-		if selected >= offset + listHeight {
+		if selected >= offset + listHeight
+		{
 			offset = selected - listHeight + 1;
 		}
 
@@ -85,34 +92,42 @@ func SearchMode(x, y, width, height, files) {
 		var listY = promptY + 2;
 		var listWidth = width - 2;
 
-		for row = 1 to listHeight {
+		for row = 1 to listHeight
+		{
 			var idx = offset + row - 1;
 
-			if idx <= len(results) {
+			if idx <= len(results)
+			{
 				var entry = results[idx];
 				var name = entry["name"];
 				var isDir = entry["isDir"];
 				var isSymlink = entry["isSymlink"];
 				var isExecutable = entry["isExecutable"];
 
-				if isDir {
+				if isDir
+				{
 					name = str(name) + "/";
 				}
 
 				var displayText = BFClipText(str(name), listWidth);
 				displayText = BFPadText(displayText, listWidth, BFALIGNLEFT);
 
-				if idx == selected {
+				if idx == selected
+				{
 					SetAttribute(COLORBLACK);
 					SetAttribute(COLORBOLD);
 					SetAttribute(COLORBGWHITE);
-				} else {
+				}
+				else
+				{
 					SetFileTypeColor(isSymlink, isDir, isExecutable);
 				}
 
 				BFDrawText(x + 1, listY + row - 1, displayText);
 				SetAttribute(COLORRESET);
-			} else {
+			}
+			else
+			{
 				BFClearRegion(x + 1, listY + row - 1, listWidth, 1);
 			}
 		}
@@ -129,36 +144,53 @@ func SearchMode(x, y, width, height, files) {
 
 		var key = getch();
 
-		if key == BFKEYESC {
+		if key == BFKEYESC
+		{
 			result = err;
 			running = false;
-		} elseif key == BFKEYENTER or key == BFKEYRIGHT {
-			if len(results) > 0 and selected >= 1 and selected <= len(results) {
+		}
+		elseif key == BFKEYENTER or key == BFKEYRIGHT
+		{
+			if len(results) > 0 and selected >= 1 and selected <= len(results)
+			{
 				result = results[selected]["origIndex"];
 			}
 
 			running = false;
-		} elseif key == BFKEYUP {
-			if selected > 1 {
+		}
+		elseif key == BFKEYUP
+		{
+			if selected > 1
+			{
 				selected = selected - 1;
 			}
-		} elseif key == BFKEYDOWN {
-			if selected < len(results) {
+		}
+		elseif key == BFKEYDOWN
+		{
+			if selected < len(results)
+			{
 				selected = selected + 1;
 			}
-		} elseif key == BFKEYBACKSPACE {
-			if len(query) > 0 {
+		}
+		elseif key == BFKEYBACKSPACE
+		{
+			if len(query) > 0
+			{
 				query = slice(query, 1, len(query) - 1);
 
 				selected = 1;
 				offset = 1;
 			}
-		} elseif key == BFKEYDELETE {
+		}
+		elseif key == BFKEYDELETE
+		{
 			query = "";
 
 			selected = 1;
 			offset = 1;
-		} elseif type(key) == "bytes" and len(key) == 1 and key[1] >= 32 and key[1] <= 126 {
+		}
+		elseif type(key) == "bytes" and len(key) == 1 and key[1] >= 32 and key[1] <= 126
+		{
 			query = query + unpack(key);
 
 			selected = 1;
