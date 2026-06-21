@@ -160,10 +160,7 @@ func LoadFileAssoc()
 			var ext = lower(Trim(parts[1]));
 			var cmd = Trim(parts[2]);
 
-			if ext != "" and cmd != ""
-			{
-				assoc[ext] = cmd;
-			}
+			if ext != "" and cmd != "" { assoc[ext] = cmd; }
 		}
 	}
 

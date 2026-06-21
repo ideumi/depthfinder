@@ -207,10 +207,7 @@ func HandleSidebarInput(key)
 	{
 		var bmIndex = key[1] - 48;
 
-		if NavigateToBookmark(bmIndex)
-		{
-			focusPanel = FOCUSBROWSER;
-		}
+		if NavigateToBookmark(bmIndex) { focusPanel = FOCUSBROWSER; }
 	}
 
 	return true;
@@ -269,10 +266,7 @@ func HandleBrowserInput(key)
 
 		selectedIndex = selectedIndex - pageSize;
 
-		if selectedIndex < 1
-		{
-			selectedIndex = 1;
-		}
+		if selectedIndex < 1 { selectedIndex = 1; }
 
 		AdjustScrollOffset();
 	}
@@ -283,10 +277,7 @@ func HandleBrowserInput(key)
 
 		selectedIndex = selectedIndex + pageSize;
 
-		if selectedIndex > len(files)
-		{
-			selectedIndex = len(files);
-		}
+		if selectedIndex > len(files) { selectedIndex = len(files); }
 
 		AdjustScrollOffset();
 	}
@@ -325,10 +316,7 @@ func HandleBrowserInput(key)
 		{
 			var name = files[selectedIndex]["name"];
 
-			if name != ".."
-			{
-				files = ToggleFileMark(files, selectedIndex);
-			}
+			if name != ".." { files = ToggleFileMark(files, selectedIndex); }
 		}
 	}
 	# a or A
@@ -410,10 +398,7 @@ func HandleBrowserInput(key)
 		{
 			var result = DeleteFiles(selected, screenWidth, screenHeight);
 
-			if isok(result)
-			{
-				files = ClearAllMarks(files);
-			}
+			if isok(result) { files = ClearAllMarks(files); }
 
 			RefreshDirectory();
 		}
@@ -543,10 +528,7 @@ func EnterDialog()
 {
 	inDialog = true;
 
-	if not iserr(winsizeHandle)
-	{
-		send(winsizeHandle, CurrentState());
-	}
+	if not iserr(winsizeHandle) { send(winsizeHandle, CurrentState()); }
 }
 
 #@ <ExitDialog()>
@@ -556,10 +538,7 @@ func ExitDialog()
 {
 	inDialog = false;
 
-	if not iserr(winsizeHandle)
-	{
-		send(winsizeHandle, CurrentState());
-	}
+	if not iserr(winsizeHandle) { send(winsizeHandle, CurrentState()); }
 }
 
 #@ <WinChangeActor()>
@@ -577,10 +556,7 @@ func WinChActor()
 
 		var msgs = receive(false);
 
-		if len(msgs) > 0
-		{
-			state = msgs[len(msgs)];
-		}
+		if len(msgs) > 0 { state = msgs[len(msgs)]; }
 
 		if len(state) == 0 { continue; }
 
@@ -593,7 +569,10 @@ func WinChActor()
 		screenHeight = size["rows"];
 		screenWidth = size["columns"];
 
-		if screenWidth < MINTERMWIDTH or screenHeight < MINTERMHEIGHT { continue; }
+		if screenWidth < MINTERMWIDTH or screenHeight < MINTERMHEIGHT
+		{
+			continue;
+		}
 
 		# Re-clamp against the new viewport before drawing.
 		files = state["files"];
@@ -605,20 +584,20 @@ func WinChActor()
 		ClearScreen();
 
 		DrawScreen(screenWidth,
-				   screenHeight,
-				   state["bookmarks"],
-				   state["selectedBookmark"],
-				   files,
-				   selectedIndex,
-				   scrollOffset,
-				   state["currentPath"],
-				   state["focusPanel"],
-				   CountMarkedFiles(files),
-				   state["clipboardMode"],
-				   state["showHidden"],
-				   state["movingBookmark"],
-				   state["sortMode"],
-				   state["sortDirection"]);
+			screenHeight,
+			state["bookmarks"],
+			state["selectedBookmark"],
+			files,
+			selectedIndex,
+			scrollOffset,
+			state["currentPath"],
+			state["focusPanel"],
+			CountMarkedFiles(files),
+			state["clipboardMode"],
+			state["showHidden"],
+			state["movingBookmark"],
+			state["sortMode"],
+			state["sortDirection"]);
 	}
 }
 
@@ -661,20 +640,20 @@ func MainLoop()
 		var markedCount = CountMarkedFiles(files);
 
 		DrawScreen(screenWidth,
-				   screenHeight,
-				   bookmarks,
-				   selectedBookmark,
-				   files,
-				   selectedIndex,
-				   scrollOffset,
-				   currentPath,
-				   focusPanel,
-				   markedCount,
-				   clipboardMode,
-				   showHidden,
-				   movingBookmark,
-				   sortMode,
-				   sortDirection);
+			screenHeight,
+			bookmarks,
+			selectedBookmark,
+			files,
+			selectedIndex,
+			scrollOffset,
+			currentPath,
+			focusPanel,
+			markedCount,
+			clipboardMode,
+			showHidden,
+			movingBookmark,
+			sortMode,
+			sortDirection);
 
 		send(winsizeHandle, CurrentState());
 
@@ -703,14 +682,8 @@ func MainLoop()
 			continue;
 		}
 
-		if focusPanel == FOCUSSIDEBAR
-		{
-			running = HandleSidebarInput(key);
-		}
-		else
-		{
-			running = HandleBrowserInput(key);
-		}
+		if focusPanel == FOCUSSIDEBAR { running = HandleSidebarInput(key); }
+		else { running = HandleBrowserInput(key); }
 	}
 }
 
@@ -748,10 +721,7 @@ func Init()
 	{
 		startPath = getenv("HOME");
 
-		if iserr(startPath)
-		{
-			startPath = "/";
-		}
+		if iserr(startPath) { startPath = "/"; }
 	}
 
 	# If we have a CLI arg and it is a directory, move to it
@@ -761,10 +731,7 @@ func Init()
 	{
 		var argPath = cmdArgs[1];
 
-		if IsDir(argPath)
-		{
-			startPath = AbsolutePath(argPath);
-		}
+		if IsDir(argPath) { startPath = AbsolutePath(argPath); }
 	}
 
 	NavigateTo(startPath);

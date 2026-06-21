@@ -70,10 +70,7 @@ func CopySymlink(source, dest)
 
 	if iserr(result) { return err; }
 
-	if not iserr(info)
-	{
-		lutime(dest, info["accessed"], info["modified"]);
-	}
+	if not iserr(info) { lutime(dest, info["accessed"], info["modified"]); }
 
 	return ok;
 }
@@ -120,10 +117,7 @@ func CopyFile(source, dest, screenWidth, screenHeight)
 			return err;
 		}
 
-		if len(chunk) == 0
-		{
-			break;
-		}
+		if len(chunk) == 0 { break; }
 
 		var written = fwrite(chunk, dstHandle);
 
@@ -226,38 +220,26 @@ func TransferItem(srcPath, dstPath, isMove, screenWidth, screenHeight)
 		# Rename file to new path
 		var result = rename(srcPath, dstPath);
 
-		if not iserr(result)
-		{
-			return ok;
-		}
+		if not iserr(result) { return ok; }
 
 		# Not the same device
 		if IsSymlink(srcPath)
 		{
 			result = CopySymlink(srcPath, dstPath);
 
-			if isok(result)
-			{
-				result = unlink(srcPath);
-			}
+			if isok(result) { result = unlink(srcPath); }
 		}
 		elseif IsDir(srcPath)
 		{
 			result = CopyDirectory(srcPath, dstPath, screenWidth, screenHeight);
 
-			if isok(result)
-			{
-				result = DeleteDirectory(srcPath);
-			}
+			if isok(result) { result = DeleteDirectory(srcPath); }
 		}
 		else
 		{
 			result = CopyFile(srcPath, dstPath, screenWidth, screenHeight);
 
-			if isok(result)
-			{
-				result = unlink(srcPath);
-			}
+			if isok(result) { result = unlink(srcPath); }
 		}
 
 		return result;
@@ -333,14 +315,8 @@ func TransferFiles(sources, dest, screenWidth, screenHeight, isMove)
 
 			if needsRename
 			{
-				if bulkAction == CONFLICTSKIPALL
-				{
-					choice = CONFLICTSKIP;
-				}
-				else
-				{
-					choice = CONFLICTRENAME;
-				}
+				if bulkAction == CONFLICTSKIPALL { choice = CONFLICTSKIP; }
+				else { choice = CONFLICTRENAME; }
 			}
 			elseif bulkAction == CONFLICTOVERWRITEALL
 			{
@@ -355,10 +331,7 @@ func TransferFiles(sources, dest, screenWidth, screenHeight, isMove)
 				choice = ShowConflictDialog(screenWidth, screenHeight, baseName);
 			}
 
-			if iserr(choice)
-			{
-				return err;
-			}
+			if iserr(choice) { return err; }
 
 			if choice == CONFLICTSKIP
 			{
@@ -378,14 +351,8 @@ func TransferFiles(sources, dest, screenWidth, screenHeight, isMove)
 
 				var delResult = err;
 
-				if IsDir(dstPath)
-				{
-					delResult = DeleteDirectory(dstPath);
-				}
-				else
-				{
-					delResult = unlink(dstPath);
-				}
+				if IsDir(dstPath) { delResult = DeleteDirectory(dstPath); }
+				else { delResult = unlink(dstPath); }
 
 				if iserr(delResult)
 				{
@@ -400,10 +367,7 @@ func TransferFiles(sources, dest, screenWidth, screenHeight, isMove)
 			{
 				var newName = ShowInput(screenWidth, screenHeight, "Rename", "New name: ", baseName);
 
-				if iserr(newName)
-				{
-					return err;
-				}
+				if iserr(newName) { return err; }
 
 				if newName != ""
 				{
@@ -419,10 +383,7 @@ func TransferFiles(sources, dest, screenWidth, screenHeight, isMove)
 		}
 
 		# Skip was selected
-		if needsConflictDialog
-		{
-			continue;
-		}
+		if needsConflictDialog { continue; }
 
 		# NOTE: This only deletes source after all the copies succeed to avoid data
 		# loss in case the dest device fails.
@@ -439,10 +400,7 @@ func TransferFiles(sources, dest, screenWidth, screenHeight, isMove)
 		}
 
 		# Track source for later deletion
-		if crossFSMove
-		{
-			append(sourcesToDelete, srcPath);
-		}
+		if crossFSMove { append(sourcesToDelete, srcPath); }
 	}
 
 	# Delete sources for cross-FS moves after copy succeeded
@@ -456,18 +414,9 @@ func TransferFiles(sources, dest, screenWidth, screenHeight, isMove)
 			var displayName = BFTruncateMiddle(Basename(path), DIALOGNAMEMAX);
 			var result = err;
 
-			if IsSymlink(path)
-			{
-				result = unlink(path);
-			}
-			elseif IsDir(path)
-			{
-				result = DeleteDirectory(path);
-			}
-			else
-			{
-				result = unlink(path);
-			}
+			if IsSymlink(path) { result = unlink(path); }
+			elseif IsDir(path) { result = DeleteDirectory(path); }
+			else { result = unlink(path); }
 
 			if iserr(result)
 			{
@@ -555,18 +504,9 @@ func DeleteFiles(paths, screenWidth, screenHeight)
 
 		var result = err;
 
-		if IsSymlink(path)
-		{
-			result = unlink(path);
-		}
-		elseif IsDir(path)
-		{
-			result = DeleteDirectory(path);
-		}
-		else
-		{
-			result = unlink(path);
-		}
+		if IsSymlink(path) { result = unlink(path); }
+		elseif IsDir(path) { result = DeleteDirectory(path); }
+		else { result = unlink(path); }
 
 		if iserr(result)
 		{
@@ -608,7 +548,7 @@ func CompressFiles(files, destDir, archiveName, format, screenWidth, screenHeigh
 		if Dirname(files[i]) != workDir
 		{
 			ShowError(screenWidth, screenHeight,
-					  "Cannot compress files from different directories");
+				"Cannot compress files from different directories");
 
 			return err;
 		}
@@ -637,34 +577,19 @@ func CompressFiles(files, destDir, archiveName, format, screenWidth, screenHeigh
 	{
 		var confirmOverwrite = ShowConfirm(screenWidth, screenHeight, "'" + Basename(archivePath) + "' exists. Overwrite?");
 
-		if iserr(confirmOverwrite) or not confirmOverwrite
-		{
-			return err;
-		}
+		if iserr(confirmOverwrite) or not confirmOverwrite { return err; }
 	}
 
 	ShowProgress(screenWidth, screenHeight, "Compressing...", 0, 1);
 
 	var cmd = "";
 
-	if format == 1
-	{
-		cmd = "tar --zstd -cf " + ShellEscape(archivePath);
-	}
-	elseif format == 2
-	{
-		cmd = "tar -cJf " + ShellEscape(archivePath);
-	}
-	elseif format == 3
-	{
-		cmd = "zip -r " + ShellEscape(archivePath);
-	}
+	if format == 1 { cmd = "tar --zstd -cf " + ShellEscape(archivePath); }
+	elseif format == 2 { cmd = "tar -cJf " + ShellEscape(archivePath); }
+	elseif format == 3 { cmd = "zip -r " + ShellEscape(archivePath); }
 
 	# Add all files
-	for i = 1 to total
-	{
-		cmd = cmd + " " + ShellEscape(Basename(files[i]));
-	}
+	for i = 1 to total { cmd = cmd + " " + ShellEscape(Basename(files[i])); }
 
 	var result = RunCheck(cmd);
 

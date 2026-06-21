@@ -55,15 +55,9 @@ func SearchMode(x, y, width, height, files)
 			selected = len(results);
 		}
 
-		if selected < 1 and len(results) > 0
-		{
-			selected = 1;
-		}
+		if selected < 1 and len(results) > 0 { selected = 1; }
 
-		if selected < offset
-		{
-			offset = selected;
-		}
+		if selected < offset { offset = selected; }
 
 		var listHeight = height - 4;
 
@@ -104,10 +98,7 @@ func SearchMode(x, y, width, height, files)
 				var isSymlink = entry["isSymlink"];
 				var isExecutable = entry["isExecutable"];
 
-				if isDir
-				{
-					name = str(name) + "/";
-				}
+				if isDir { name = str(name) + "/"; }
 
 				var displayText = BFClipText(str(name), listWidth);
 				displayText = BFPadText(displayText, listWidth, BFALIGNLEFT);
@@ -160,17 +151,11 @@ func SearchMode(x, y, width, height, files)
 		}
 		elseif key == BFKEYUP
 		{
-			if selected > 1
-			{
-				selected = selected - 1;
-			}
+			if selected > 1 { selected = selected - 1; }
 		}
 		elseif key == BFKEYDOWN
 		{
-			if selected < len(results)
-			{
-				selected = selected + 1;
-			}
+			if selected < len(results) { selected = selected + 1; }
 		}
 		elseif key == BFKEYBACKSPACE
 		{

@@ -38,10 +38,7 @@ func LoadDirectory(path, showHidden, sortMode, sortDirection)
 	{
 		var name = entries[i];
 
-		if not showHidden and StartsWith(name, ".")
-		{
-			continue;
-		}
+		if not showHidden and StartsWith(name, ".") { continue; }
 
 		var fullPath = JoinPath(path, name);
 		var linfo = lstat(fullPath);
@@ -49,10 +46,7 @@ func LoadDirectory(path, showHidden, sortMode, sortDirection)
 
 		var isSymlink = not iserr(linfo) and StatType(linfo) == TYPESYMLINK;
 
-		if isSymlink
-		{
-			info = stat(fullPath);
-		}
+		if isSymlink { info = stat(fullPath); }
 
 		var size = 0;
 		var isDir = false;
@@ -71,14 +65,8 @@ func LoadDirectory(path, showHidden, sortMode, sortDirection)
 
 		var entry = CreateFileEntry(name, size, isDir, isSymlink, isExecutable, false, mtime);
 
-		if isDir
-		{
-			append(dirs, entry);
-		}
-		else
-		{
-			append(files, entry);
-		}
+		if isDir { append(dirs, entry); }
+		else { append(files, entry); }
 	}
 
 	var sortedDirs = SortFileEntries(dirs, sortMode, sortDirection);
@@ -93,15 +81,9 @@ func LoadDirectory(path, showHidden, sortMode, sortDirection)
 		append(result, parentEntry);
 	}
 
-	for i = 1 to len(sortedDirs)
-	{
-		append(result, sortedDirs[i]);
-	}
+	for i = 1 to len(sortedDirs) { append(result, sortedDirs[i]); }
 
-	for i = 1 to len(sortedFiles)
-	{
-		append(result, sortedFiles[i]);
-	}
+	for i = 1 to len(sortedFiles) { append(result, sortedFiles[i]); }
 
 	return result;
 }
@@ -143,22 +125,10 @@ func SortFileEntries(entries, mode, direction)
 		var entry = entries[i];
 		var key = "";
 
-		if mode == SORTNAME
-		{
-			key = lower(entry["name"]);
-		}
-		elseif mode == SORTSIZE
-		{
-			key = PadSortKey(entry["size"], 20);
-		}
-		elseif mode == SORTMTIME
-		{
-			key = PadSortKey(entry["mtime"], 20);
-		}
-		else
-		{
-			key = lower(entry["name"]);
-		}
+		if mode == SORTNAME { key = lower(entry["name"]); }
+		elseif mode == SORTSIZE { key = PadSortKey(entry["size"], 20); }
+		elseif mode == SORTMTIME { key = PadSortKey(entry["mtime"], 20); }
+		else { key = lower(entry["name"]); }
 
 		append(sortable, key + "|" + PadIndex(i));
 	}
@@ -179,10 +149,7 @@ func SortFileEntries(entries, mode, direction)
 	{
 		var reversed = [];
 
-		for i = len(sorted) to 1 step -1
-		{
-			append(reversed, sorted[i]);
-		}
+		for i = len(sorted) to 1 step -1 { append(reversed, sorted[i]); }
 
 		return reversed;
 	}
@@ -249,10 +216,7 @@ func CountMarkedFiles(files)
 
 	for i = 1 to len(files)
 	{
-		if files[i]["marked"]
-		{
-			count = count + 1;
-		}
+		if files[i]["marked"] { count = count + 1; }
 	}
 
 	return count;
@@ -269,10 +233,7 @@ func GetSelectedFiles(files, currentPath, selectedIndex)
 	{
 		var name = files[selectedIndex]["name"];
 
-		if name != ".."
-		{
-			append(selected, JoinPath(currentPath, name));
-		}
+		if name != ".." { append(selected, JoinPath(currentPath, name)); }
 	}
 
 	return selected;
@@ -294,10 +255,7 @@ func ToggleSelectAll(files)
 		{
 			selectableCount = selectableCount + 1;
 
-			if not files[i]["marked"]
-			{
-				allSelected = false;
-			}
+			if not files[i]["marked"] { allSelected = false; }
 		}
 	}
 

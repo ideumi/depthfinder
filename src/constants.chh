@@ -382,7 +382,7 @@ var SIXMONTHSSECONDS = 15768000;
 #@ Short month names
 
 var SHORTMONTHNAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-					   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 #@ <DIRHISTORYMAX>
 #@ Maximum number of entries in the directory history

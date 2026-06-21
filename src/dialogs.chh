@@ -36,10 +36,7 @@ func GetUsernameByUID(uid)
 
 		var parts = split(line, ":");
 
-		if len(parts) >= 3 and parts[3] == str(uid)
-		{
-			return parts[1];
-		}
+		if len(parts) >= 3 and parts[3] == str(uid) { return parts[1]; }
 	}
 
 	return str(uid);
@@ -71,13 +68,10 @@ func ShowProgress(screenWidth, screenHeight, title, current, total)
 
 	var percent = 0;
 
-	if total > 0
-	{
-		percent = int((current / total) * 100);
-	}
+	if total > 0 { percent = int((current / total) * 100); }
 
 	var percentText = str(percent) +
-					  "% (" + str(int(current)) + "/" + str(int(total)) + ")";
+		"% (" + str(int(current)) + "/" + str(int(total)) + ")";
 
 	percentText = BFPadText(percentText, contentWidth, BFALIGNCENTER);
 
@@ -239,10 +233,7 @@ func FormatPermissions(mode)
 	if int(ownerPerm / 2) % 2 == 1 { append(parts, "write"); }
 	if ownerPerm % 2 == 1 { append(parts, "execute"); }
 
-	if len(parts) == 0
-	{
-		return "no access";
-	}
+	if len(parts) == 0 { return "no access"; }
 
 	return join(parts, ", ");
 }
@@ -402,17 +393,29 @@ func ShowSortMenu(screenWidth, screenHeight, currentMode, currentDirection)
 
 		var row = y + 2;
 
-		if selected == 1 { SetAttribute(COLORBLACK); SetAttribute(COLORBGWHITE); }
+		if selected == 1
+		{
+			SetAttribute(COLORBLACK);
+			SetAttribute(COLORBGWHITE);
+		}
 		BFDrawText(contentX, row, BFPadText(nameLabel, contentWidth, BFALIGNLEFT));
 		if selected == 1 { SetAttribute(COLORRESET); }
 
 		row = row + 1;
-		if selected == 2 { SetAttribute(COLORBLACK); SetAttribute(COLORBGWHITE); }
+		if selected == 2
+		{
+			SetAttribute(COLORBLACK);
+			SetAttribute(COLORBGWHITE);
+		}
 		BFDrawText(contentX, row, BFPadText(sizeLabel, contentWidth, BFALIGNLEFT));
 		if selected == 2 { SetAttribute(COLORRESET); }
 
 		row = row + 1;
-		if selected == 3 { SetAttribute(COLORBLACK); SetAttribute(COLORBGWHITE); }
+		if selected == 3
+		{
+			SetAttribute(COLORBLACK);
+			SetAttribute(COLORBGWHITE);
+		}
 		BFDrawText(contentX, row, BFPadText(mtimeLabel, contentWidth, BFALIGNLEFT));
 		if selected == 3 { SetAttribute(COLORRESET); }
 
@@ -421,12 +424,20 @@ func ShowSortMenu(screenWidth, screenHeight, currentMode, currentDirection)
 		BFDrawHLine(x + 1, row, width - 2, "─");
 
 		row = row + 1;
-		if selected == 4 { SetAttribute(COLORBLACK); SetAttribute(COLORBGWHITE); }
+		if selected == 4
+		{
+			SetAttribute(COLORBLACK);
+			SetAttribute(COLORBGWHITE);
+		}
 		BFDrawText(contentX, row, BFPadText(ascLabel, contentWidth, BFALIGNLEFT));
 		if selected == 4 { SetAttribute(COLORRESET); }
 
 		row = row + 1;
-		if selected == 5 { SetAttribute(COLORBLACK); SetAttribute(COLORBGWHITE); }
+		if selected == 5
+		{
+			SetAttribute(COLORBLACK);
+			SetAttribute(COLORBGWHITE);
+		}
 		BFDrawText(contentX, row, BFPadText(descLabel, contentWidth, BFALIGNLEFT));
 		if selected == 5 { SetAttribute(COLORRESET); }
 

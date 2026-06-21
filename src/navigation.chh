@@ -49,10 +49,7 @@ func RefreshDirectory()
 		selectedIndex = len(files);
 	}
 
-	if selectedIndex < 1 and len(files) > 0
-	{
-		selectedIndex = 1;
-	}
+	if selectedIndex < 1 and len(files) > 0 { selectedIndex = 1; }
 
 	AdjustScrollOffset();
 }
@@ -71,10 +68,7 @@ func NavigateTo(path)
 	{
 		append(dirHistory, currentPath);
 
-		if len(dirHistory) > DIRHISTORYMAX
-		{
-			dirHistory = dirHistory - 1;
-		}
+		if len(dirHistory) > DIRHISTORYMAX { dirHistory = dirHistory - 1; }
 	}
 
 	chdir(path);
@@ -83,14 +77,8 @@ func NavigateTo(path)
 
 	RefreshDirectory();
 
-	if path != "/" and len(files) > 1
-	{
-		selectedIndex = 2;
-	}
-	else
-	{
-		selectedIndex = 1;
-	}
+	if path != "/" and len(files) > 1 { selectedIndex = 2; }
+	else { selectedIndex = 1; }
 
 	scrollOffset = 1;
 
@@ -138,10 +126,7 @@ func NavigateInto()
 
 	if len(selectedFiles) > 1
 	{
-		for i = 1 to len(selectedFiles)
-		{
-			OpenFile(selectedFiles[i]);
-		}
+		for i = 1 to len(selectedFiles) { OpenFile(selectedFiles[i]); }
 
 		files = ClearAllMarks(files);
 
@@ -169,10 +154,7 @@ func NavigateInto()
 	{
 		OpenFile(fullPath);
 
-		if entry["marked"]
-		{
-			files = ToggleFileMark(files, selectedIndex);
-		}
+		if entry["marked"] { files = ToggleFileMark(files, selectedIndex); }
 	}
 }
 
@@ -193,10 +175,7 @@ func AdjustScrollOffset()
 {
 	var visibleFiles = GetVisibleFileCount();
 
-	if selectedIndex < scrollOffset
-	{
-		scrollOffset = selectedIndex;
-	}
+	if selectedIndex < scrollOffset { scrollOffset = selectedIndex; }
 
 	if selectedIndex >= scrollOffset + visibleFiles
 	{

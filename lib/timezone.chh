@@ -16,21 +16,21 @@ func TimezoneToSeconds(offset, mode)
 {
 	var setMode = "";
 
-	if mode == "-"
-	{
-		setMode = "-";
-	}
+	if mode == "-" { setMode = "-"; }
 
 	if type(offset) == "string"
 	{
 		if len(offset) == 4
 		{
 			var nums = [charat(offset, 1),
-						charat(offset, 2),
-						charat(offset, 3),
-						charat(offset, 4)];
+				charat(offset, 2),
+				charat(offset, 3),
+				charat(offset, 4)];
 
-			for x = 1 to len(nums) { if CheckIfNumber(nums[x]) == false { return 0; } }
+			for x = 1 to len(nums)
+			{
+				if CheckIfNumber(nums[x]) == false { return 0; }
+			}
 
 			var hours = int(num(join([nums[1], nums[2]], "")));
 
@@ -61,10 +61,7 @@ func CalculateTimezone()
 
 	var firstChar = err;
 
-	if len(offset) > 0
-	{
-		firstChar = charat(offset, 1);
-	}
+	if len(offset) > 0 { firstChar = charat(offset, 1); }
 
 	if not iserr(firstChar)
 	{

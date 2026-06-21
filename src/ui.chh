@@ -30,20 +30,14 @@ func SetFileTypeColor(isSymlink, isDir, isExecutable)
 
 func FormatCompactDate(timestamp)
 {
-	if timestamp == 0
-	{
-		return "";
-	}
+	if timestamp == 0 { return ""; }
 
 	var now = time();
 	var sixMonthsAgo = now - SIXMONTHSSECONDS;
 
 	var parts = GregorianParseTime(timestamp);
 
-	if iserr(parts)
-	{
-		return "";
-	}
+	if iserr(parts) { return ""; }
 
 	var months = SHORTMONTHNAMES;
 
@@ -93,14 +87,8 @@ func DrawSidebar(x, y, width, height, bookmarks, selected, hasFocus, isMoving)
 
 			if idx == selected and hasFocus
 			{
-				if isMoving
-				{
-					indicator = "* ";
-				}
-				else
-				{
-					indicator = "> ";
-				}
+				if isMoving { indicator = "* "; }
+				else { indicator = "> "; }
 			}
 
 			var nameText = indicator + str(name);
@@ -128,10 +116,7 @@ func DrawSidebar(x, y, width, height, bookmarks, selected, hasFocus, isMoving)
 
 			BFDrawText(x + 2, contentY + row - 1, nameText);
 
-			if idx == selected and hasFocus
-			{
-				SetAttribute(COLORRESET);
-			}
+			if idx == selected and hasFocus { SetAttribute(COLORRESET); }
 		}
 		else
 		{
@@ -162,24 +147,15 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 {
 	var status = FormatSortIndicator(sortMode, sortDirection) + " ";
 
-	if showHidden
-	{
-		status = status + "[HIDDEN] ";
-	}
+	if showHidden { status = status + "[HIDDEN] "; }
 
 	if markedCount > 0
 	{
 		status = status + "[" + str(markedCount) + " marked] ";
 	}
 
-	if clipboardMode == CLIPBOARDCOPY
-	{
-		status = status + "[COPY] ";
-	}
-	elseif clipboardMode == CLIPBOARDCUT
-	{
-		status = status + "[CUT] ";
-	}
+	if clipboardMode == CLIPBOARDCOPY { status = status + "[COPY] "; }
+	elseif clipboardMode == CLIPBOARDCUT { status = status + "[CUT] "; }
 
 	BFClearRegion(x, y, width, 1);
 
@@ -187,17 +163,11 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 
 	var title = BFTruncateMiddle(path, titleWidth);
 
-	if hasFocus
-	{
-		SetAttribute(COLORBOLD);
-	}
+	if hasFocus { SetAttribute(COLORBOLD); }
 
 	BFDrawText(x, y, title);
 
-	if hasFocus
-	{
-		SetAttribute(COLORRESET);
-	}
+	if hasFocus { SetAttribute(COLORRESET); }
 
 	# Draw status on right
 	if status != ""
@@ -228,10 +198,7 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 		var isSelected = idx == selected and hasFocus;
 		var isMarked = false;
 
-		if idx <= len(files)
-		{
-			isMarked = files[idx]["marked"];
-		}
+		if idx <= len(files) { isMarked = files[idx]["marked"]; }
 
 		var emptyRow = BFPadText("", contentWidth, BFALIGNLEFT);
 
@@ -267,21 +234,12 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 			# Format name with prefix
 			var prefix = "  ";
 
-			if isMarked
-			{
-				prefix = "> ";
-			}
+			if isMarked { prefix = "> "; }
 
 			if isDir
 			{
-				if isSymlink
-				{
-					name = "~" + str(name) + "/";
-				}
-				else
-				{
-					name = str(name) + "/";
-				}
+				if isSymlink { name = "~" + str(name) + "/"; }
+				else { name = str(name) + "/"; }
 			}
 			elseif isSymlink
 			{
@@ -296,24 +254,15 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 			# Format date
 			var dateStr = "";
 
-			if rawName != ".."
-			{
-				dateStr = FormatCompactDate(mtime);
-			}
+			if rawName != ".." { dateStr = FormatCompactDate(mtime); }
 
 			dateStr = BFPadText(dateStr, dateColWidth, BFALIGNRIGHT);
 
 			# Format size
 			var sizeStr = "";
 
-			if isDir
-			{
-				sizeStr = "<DIR>";
-			}
-			else
-			{
-				sizeStr = SizeToString(size);
-			}
+			if isDir { sizeStr = "<DIR>"; }
+			else { sizeStr = SizeToString(size); }
 
 			sizeStr = BFPadText(sizeStr, sizeColWidth, BFALIGNRIGHT);
 
@@ -363,10 +312,7 @@ func DrawVerticalSeparator(x, y, height)
 
 func BottomReserve()
 {
-	if showKeybinds
-	{
-		return KEYBINDSBARHEIGHT;
-	}
+	if showKeybinds { return KEYBINDSBARHEIGHT; }
 
 	return 1;
 }
@@ -395,53 +341,52 @@ func DrawKeybindsBar(y, width, focusPanel)
 		append(rows, []);
 
 		append(rows, [
-			["Up/Down", "Navigate"],
-			["Enter", "Go"],
-			["Space", "Move"],
-			["Del", "Remove"],
-			["Tab", "Browser"],
-			["1-9", "Jump"],
-			["Esc", "Quit"]
-		]);
+				["Up/Down", "Navigate"],
+				["Enter", "Go"],
+				["Space", "Move"],
+				["Del", "Remove"],
+				["Tab", "Browser"],
+				["1-9", "Jump"],
+				["Esc", "Quit"]
+			]);
 
 		append(rows, []);
-
 	}
 	else
 	{
 		append(rows, [
-			["↑↓←→", "Navigate"],
-			["Alt+←", "Back"],
-			["Enter", "Open"],
-			["Tab", "Sidebar"],
-			["Space", "Mark"],
-			["a", "All"],
-			["s", "Search"],
-			["r", "Refresh"],
-			["Esc", "Quit"]
-		]);
+				["↑↓←→", "Navigate"],
+				["Alt+←", "Back"],
+				["Enter", "Open"],
+				["Tab", "Sidebar"],
+				["Space", "Mark"],
+				["a", "All"],
+				["s", "Search"],
+				["r", "Refresh"],
+				["Esc", "Quit"]
+			]);
 
 		append(rows, [
-			["Ctrl+C", "Copy"],
-			["Ctrl+X", "Cut"],
-			["Ctrl+V", "Paste"],
-			["Del", "Delete"],
-			["F2", "Rename"],
-			["o", "Open"],
-			["n", "New"],
-			["d", "Mkdir"]
-		]);
+				["Ctrl+C", "Copy"],
+				["Ctrl+X", "Cut"],
+				["Ctrl+V", "Paste"],
+				["Del", "Delete"],
+				["F2", "Rename"],
+				["o", "Open"],
+				["n", "New"],
+				["d", "Mkdir"]
+			]);
 
 		append(rows, [
-			["F1", "Term"],
-			["#", "Run"],
-			["h", "Hidden"],
-			["i", "Info"],
-			["c", "Compress"],
-			["t", "Sort"],
-			["p", "Path"],
-			["b", "Bookmark"]
-		]);
+				["F1", "Term"],
+				["#", "Run"],
+				["h", "Hidden"],
+				["i", "Info"],
+				["c", "Compress"],
+				["t", "Sort"],
+				["p", "Path"],
+				["b", "Bookmark"]
+			]);
 	}
 
 	BFKeybindsBar(1, y - 2, width, rows);
@@ -459,44 +404,35 @@ func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, files, s
 	var contentHeight = screenHeight - BottomReserve();
 
 	DrawSidebar(1,
-				1,
-				sidebarWidth,
-				contentHeight,
-				bookmarks,
-				selectedBookmark,
-				focusPanel == FOCUSSIDEBAR,
-				movingBookmark);
+		1,
+		sidebarWidth,
+		contentHeight,
+		bookmarks,
+		selectedBookmark,
+		focusPanel == FOCUSSIDEBAR,
+		movingBookmark);
 
 	var separatorHeight = screenHeight;
 
-	if showKeybinds
-	{
-		separatorHeight = contentHeight;
-	}
+	if showKeybinds { separatorHeight = contentHeight; }
 
 	DrawVerticalSeparator(separatorX, 1, separatorHeight);
 
 	DrawBrowser(browserX,
-				1,
-				browserWidth,
-				contentHeight,
-				files,
-				selectedFile,
-				fileOffset,
-				currentPath,
-				focusPanel == FOCUSBROWSER,
-				markedCount,
-				clipboardMode,
-				showHidden,
-				sortMode,
-				sortDirection);
+		1,
+		browserWidth,
+		contentHeight,
+		files,
+		selectedFile,
+		fileOffset,
+		currentPath,
+		focusPanel == FOCUSBROWSER,
+		markedCount,
+		clipboardMode,
+		showHidden,
+		sortMode,
+		sortDirection);
 
-	if showKeybinds
-	{
-		DrawKeybindsBar(screenHeight, screenWidth, focusPanel);
-	}
-	else
-	{
-		DrawBottomHint(screenHeight, sidebarWidth);
-	}
+	if showKeybinds { DrawKeybindsBar(screenHeight, screenWidth, focusPanel); }
+	else { DrawBottomHint(screenHeight, sidebarWidth); }
 }

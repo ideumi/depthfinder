@@ -16,10 +16,7 @@ func RunForeground(command)
 	var exitCode = -1;
 	var handle = popen(tuiCmd, "r");
 
-	if not iserr(handle)
-	{
-		exitCode = pclose(handle);
-	}
+	if not iserr(handle) { exitCode = pclose(handle); }
 
 	Print("\n--- Exit " + str(exitCode) + ", press any key to continue ---");
 
@@ -40,29 +37,17 @@ func OpenFile(path)
 	var ext = FileExtension(path);
 	var cmd = GetAssocCommand(fileAssoc, ext);
 
-	if iserr(cmd) or cmd == ""
-	{
-		cmd = DEFAULTRUNNER;
-	}
+	if iserr(cmd) or cmd == "" { cmd = DEFAULTRUNNER; }
 
 	# Prefix handling
 	var isTui = StartsWith(cmd, "!");
 
-	if isTui
-	{
-		cmd = slice(cmd, 2, len(cmd));
-	}
+	if isTui { cmd = slice(cmd, 2, len(cmd)); }
 
 	var fullCmd = cmd + " " + ShellEscape(path);
 
-	if isTui
-	{
-		RunForeground(fullCmd);
-	}
-	else
-	{
-		Spawn(fullCmd);
-	}
+	if isTui { RunForeground(fullCmd); }
+	else { Spawn(fullCmd); }
 }
 
 #@ <CheckTerminal()>
@@ -75,7 +60,7 @@ func CheckTerminal()
 		var configPath = GetConfigPath(CONFIGFILETERMINAL);
 
 		ShowError(screenWidth, screenHeight,
-				  "No terminal configured in " + configPath);
+			"No terminal configured in " + configPath);
 
 		return false;
 	}
@@ -110,10 +95,7 @@ func ZeroPad(number, width)
 {
 	var s = str(number);
 
-	while len(s) < width
-	{
-		s = "0" + s;
-	}
+	while len(s) < width { s = "0" + s; }
 
 	return s;
 }
@@ -168,10 +150,7 @@ func ActionRename()
 	{
 		for i = 1 to len(files)
 		{
-			if files[i]["marked"]
-			{
-				renameIndex = i;
-			}
+			if files[i]["marked"] { renameIndex = i; }
 		}
 	}
 
@@ -198,7 +177,7 @@ func ActionRename()
 	if IsSameFile(oldPath, newPath)
 	{
 		ShowError(screenWidth, screenHeight,
-					"Cannot rename: source and destination are the same file");
+			"Cannot rename: source and destination are the same file");
 
 		return;
 	}
@@ -208,12 +187,9 @@ func ActionRename()
 	if PathExists(newPath)
 	{
 		var confirmOverwrite = ShowConfirm(screenWidth,
-						screenHeight, "'" + newName + "' exists. Overwrite?");
+			screenHeight, "'" + newName + "' exists. Overwrite?");
 
-		if iserr(confirmOverwrite) or not confirmOverwrite
-		{
-			doRename = false;
-		}
+		if iserr(confirmOverwrite) or not confirmOverwrite { doRename = false; }
 	}
 
 	if doRename
@@ -240,15 +216,15 @@ func ActionBulkRename()
 	if total == 0 { return; }
 
 	var pattern = ShowRenameInput(screenWidth, screenHeight,
-								  "Bulk Rename (" + str(total) + " files)",
-								  "Pattern: ", Basename(selected[1]));
+		"Bulk Rename (" + str(total) + " files)",
+		"Pattern: ", Basename(selected[1]));
 
 	if iserr(pattern) or pattern == "" { return; }
 
 	if not has(pattern, "#")
 	{
 		ShowError(screenWidth, screenHeight,
-				  "Pattern must contain # as a number placeholder");
+			"Pattern must contain # as a number placeholder");
 
 		return;
 	}
@@ -333,10 +309,7 @@ func ActionOpenWith()
 	# TUI prefix for foreground TUI programs
 	var isTui = StartsWith(cmd, "!");
 
-	if isTui
-	{
-		cmd = slice(cmd, 2, len(cmd));
-	}
+	if isTui { cmd = slice(cmd, 2, len(cmd)); }
 
 	# NOTE: Otherwise programs like VLC etc. open files in the wrong order
 	sort(filesToOpen);
@@ -348,14 +321,8 @@ func ActionOpenWith()
 		fullCmd = fullCmd + " " + ShellEscape(filesToOpen[i]);
 	}
 
-	if isTui
-	{
-		RunForeground(fullCmd);
-	}
-	else
-	{
-		Spawn(fullCmd);
-	}
+	if isTui { RunForeground(fullCmd); }
+	else { Spawn(fullCmd); }
 
 	files = ClearAllMarks(files);
 }
@@ -445,10 +412,7 @@ func ActionAddBookmark()
 {
 	var defaultName = Basename(currentPath);
 
-	if defaultName == ""
-	{
-		defaultName = "/";
-	}
+	if defaultName == "" { defaultName = "/"; }
 
 	var bmName = ShowInput(screenWidth, screenHeight, "Add Bookmark", "Name: ", defaultName);
 
@@ -456,14 +420,8 @@ func ActionAddBookmark()
 
 	var result = AddBookmark(bookmarks, bmName, currentPath);
 
-	if not iserr(result)
-	{
-		bookmarks = result;
-	}
-	else
-	{
-		ShowError(screenWidth, screenHeight, "Failed to save bookmark");
-	}
+	if not iserr(result) { bookmarks = result; }
+	else { ShowError(screenWidth, screenHeight, "Failed to save bookmark"); }
 }
 
 #@ <ActionSort()>
@@ -541,27 +499,21 @@ func ActionCompress()
 
 	var defaultName = "archive";
 
-	if len(filesToCompress) == 1
-	{
-		defaultName = Basename(filesToCompress[1]);
-	}
+	if len(filesToCompress) == 1 { defaultName = Basename(filesToCompress[1]); }
 
 	var archiveName = ShowInput(screenWidth, screenHeight, "Archive Name",
-								"Name: ", defaultName);
+		"Name: ", defaultName);
 
 	if iserr(archiveName) or archiveName == "" { return; }
 
 	var result = CompressFiles(filesToCompress,
-							   currentPath,
-							   archiveName,
-							   format,
-							   screenWidth,
-							   screenHeight);
+		currentPath,
+		archiveName,
+		format,
+		screenWidth,
+		screenHeight);
 
-	if isok(result)
-	{
-		files = ClearAllMarks(files);
-	}
+	if isok(result) { files = ClearAllMarks(files); }
 
 	RefreshDirectory();
 }
