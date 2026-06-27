@@ -3,8 +3,8 @@
 # depthfinder - depthfinder.chh
 #
 
-# Set timezone offset in libtime.chh
-TIMEZONEOFFSET = CalculateTimezone();
+# Set timezone offset in libgregorian.chh
+SetLocalTimezoneOffset();
 
 var currentPath = "";
 var files = [];
