@@ -13,7 +13,6 @@ load("libpaths.chh");
 load("libstrings.chh");
 load("libgregorian.chh");
 load("libsubprocess.chh");
-load("timezone.chh");
 load("libprint.chh");
 load("libsignals.chh");
 
