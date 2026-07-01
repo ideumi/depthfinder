@@ -75,7 +75,7 @@ dfn
 
 ## Requirements
 
-- [Chippy](https://codeberg.org/ideumi/chippy) >= 1.0.21
+- [Chippy](https://codeberg.org/ideumi/chippy) >= 1.0.22
 - make
 - git
 
