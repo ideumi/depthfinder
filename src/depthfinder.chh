@@ -630,6 +630,9 @@ func MainLoop()
 			Print("Terminal too small");
 			getch();
 
+			ClearScreen();
+			RefreshDirectory();
+
 			continue;
 		}
 
