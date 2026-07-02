@@ -516,6 +516,7 @@ func CurrentState()
 		"movingBookmark": movingBookmark,
 		"sortMode": sortMode,
 		"sortDirection": sortDirection,
+		"showKeybinds": showKeybinds,
 		"inDialog": inDialog
 	];
 }
@@ -578,6 +579,7 @@ func WinChActor()
 		files = state["files"];
 		selectedIndex = state["selectedIndex"];
 		scrollOffset = state["scrollOffset"];
+		showKeybinds = state["showKeybinds"];
 
 		AdjustScrollOffset();
 
