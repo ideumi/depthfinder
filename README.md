@@ -21,15 +21,16 @@ depthfinder is primarily meant to operate in a terminal emulator on top of an X1
 
 <p align="left">
 	<img src="media/screensh_browser.png" alt="File Browser" width="512">
-	<img src="media/screensh_marked.png" alt="Marked Files" width="512">
+	<img src="media/screensh_keybinds.png" alt="File Browser with Keybinds Bar" width="512">
 </p>
 
 <p align="left">
+    <img src="media/screensh_marked.png" alt="Marked Files" width="512">
 	<img src="media/screensh_search.png" alt="Search" width="512">
-	<img src="media/screensh_info.png" alt="File Info" width="512">
 </p>
 
 <p align="left">
+	<img src="media/screensh_info.png" alt="File Info" width="512">
 	<img src="media/screensh_sort.png" alt="Sort Menu" width="512">
 </p>
 
@@ -75,7 +76,7 @@ dfn
 
 ## Requirements
 
-- [Chippy](https://codeberg.org/ideumi/chippy) >= 1.0.21
+- [Chippy](https://codeberg.org/ideumi/chippy) >= 1.0.22
 - make
 - git
 
