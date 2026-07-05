@@ -140,6 +140,136 @@ func FormatSortIndicator(mode, direction)
 	return "[Name" + arrow + "]";
 }
 
+#@ <BrowserColumnWidths(width)>
+#@ Returns the browser column widths ''[nameColWidth, dateColWidth, sizeColWidth]''
+#@ for a content area of ''width'' columns.
+
+func BrowserColumnWidths(width)
+{
+	var sizeColWidth = 10;
+	var dateColWidth = 13;
+	var nameColWidth = width - sizeColWidth - dateColWidth - 2;
+
+	return [nameColWidth, dateColWidth, sizeColWidth];
+}
+
+#@ <GetBrowserRegion(screenWidth, screenHeight)>
+#@ Returns the browser region: ''[x, y, width, height]''.
+
+func GetBrowserRegion(screenWidth, screenHeight)
+{
+	var x = SIDEBARWIDTH + 2;
+	var y = 1;
+	var width = screenWidth - SIDEBARWIDTH - 2;
+	var height = screenHeight - BottomReserve();
+
+	return [x, y, width, height];
+}
+
+#@ <DrawBrowserRow(x, baseY, contentWidth, nameColWidth, dateColWidth, sizeColWidth, files, idx, isSelected)>
+#@ Draws a single file browser row at position ''baseY''.
+
+func DrawBrowserRow(x, baseY, contentWidth, nameColWidth, dateColWidth, sizeColWidth, files, idx, isSelected)
+{
+	var isMarked = false;
+
+	if idx <= len(files) { isMarked = files[idx]["marked"]; }
+
+	var emptyRow = BFPadText("", contentWidth, BFALIGNLEFT);
+
+	if isSelected
+	{
+		SetAttribute(COLORBLACK);
+		SetAttribute(COLORBOLD);
+		SetAttribute(COLORBGWHITE);
+	}
+	elseif isMarked
+	{
+		SetAttribute(COLORWHITE);
+		SetAttribute(COLORBOLD);
+		SetAttribute(COLORBGBLUE);
+	}
+
+	if idx <= len(files)
+	{
+		var entry = files[idx];
+		var name = entry["name"];
+		var rawName = name;
+		var size = entry["size"];
+		var isDir = entry["isDir"];
+		var isSymlink = entry["isSymlink"];
+		var isExecutable = entry["isExecutable"];
+		var mtime = entry["mtime"];
+
+		if not isSelected and not isMarked and rawName != ".."
+		{
+			SetFileTypeColor(isSymlink, isDir, isExecutable);
+		}
+
+		# Format name with prefix
+		var prefix = "  ";
+
+		if isMarked { prefix = "> "; }
+
+		if isDir
+		{
+			if isSymlink { name = "~" + str(name) + "/"; }
+			else { name = str(name) + "/"; }
+		}
+		elseif isSymlink
+		{
+			name = "~" + str(name);
+		}
+
+		var displayName = prefix + str(name);
+		displayName = BFClipText(displayName, nameColWidth);
+		var displayNameText = displayName;
+		displayName = BFPadText(displayName, nameColWidth, BFALIGNLEFT);
+
+		# Format date
+		var dateStr = "";
+
+		if rawName != ".." { dateStr = FormatCompactDate(mtime); }
+
+		dateStr = BFPadText(dateStr, dateColWidth, BFALIGNRIGHT);
+
+		# Format size
+		var sizeStr = "";
+
+		if isDir { sizeStr = "<DIR>"; }
+		else { sizeStr = SizeToString(size); }
+
+		sizeStr = BFPadText(sizeStr, sizeColWidth, BFALIGNRIGHT);
+
+		var rowText = displayName + " " + dateStr + " " + sizeStr;
+
+		# Content
+		if not isSelected and not isMarked and rawName != ".." and (isSymlink or isDir or isExecutable)
+		{
+			var nameText = slice(displayNameText, 3, len(displayNameText));
+			BFDrawText(x, baseY, prefix);
+			SetAttribute(COLORUNDERLINE);
+			BFDrawText(x + 2, baseY, nameText);
+			SetAttribute(COLORUNDERLINEOFF);
+			BFDrawText(x + lenv(displayNameText), baseY, BFPadText("", nameColWidth - lenv(displayNameText), BFALIGNLEFT) + " " + dateStr + " " + sizeStr);
+		}
+		else
+		{
+			BFDrawText(x, baseY, rowText);
+		}
+
+		# Spacing
+		BFDrawText(x, baseY + 1, emptyRow);
+	}
+	else
+	{
+		BFDrawText(x, baseY, emptyRow);
+		BFDrawText(x, baseY + 1, emptyRow);
+	}
+
+	SetAttribute(COLORRESET);
+}
+
 #@ <DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, markedCount, clipboardMode, showHidden, sortMode, sortDirection)>
 #@ Draws the file browser panel.
 
@@ -169,7 +299,7 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 
 	if hasFocus { SetAttribute(COLORRESET); }
 
-	# Draw status on right
+	# Draw status on the top right
 	if status != ""
 	{
 		var statusX = x + width - lenv(status);
@@ -182,10 +312,10 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 	var contentHeight = height - 2;
 	var contentWidth = width;
 
-	var sizeColWidth = 10;
-	var dateColWidth = 13;
-
-	var nameColWidth = contentWidth - sizeColWidth - dateColWidth - 2;
+	var cols = BrowserColumnWidths(contentWidth);
+	var nameColWidth = cols[1];
+	var dateColWidth = cols[2];
+	var sizeColWidth = cols[3];
 
 	# Calculate how many files can fit
 	var visibleFiles = int(contentHeight / FILEROWHEIGHT);
@@ -196,104 +326,38 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 		var baseY = contentY + (fileRow - 1) * FILEROWHEIGHT;
 
 		var isSelected = idx == selected and hasFocus;
-		var isMarked = false;
 
-		if idx <= len(files) { isMarked = files[idx]["marked"]; }
-
-		var emptyRow = BFPadText("", contentWidth, BFALIGNLEFT);
-
-		if isSelected
-		{
-			SetAttribute(COLORBLACK);
-			SetAttribute(COLORBOLD);
-			SetAttribute(COLORBGWHITE);
-		}
-		elseif isMarked
-		{
-			SetAttribute(COLORWHITE);
-			SetAttribute(COLORBOLD);
-			SetAttribute(COLORBGBLUE);
-		}
-
-		if idx <= len(files)
-		{
-			var entry = files[idx];
-			var name = entry["name"];
-			var rawName = name;
-			var size = entry["size"];
-			var isDir = entry["isDir"];
-			var isSymlink = entry["isSymlink"];
-			var isExecutable = entry["isExecutable"];
-			var mtime = entry["mtime"];
-
-			if not isSelected and not isMarked and rawName != ".."
-			{
-				SetFileTypeColor(isSymlink, isDir, isExecutable);
-			}
-
-			# Format name with prefix
-			var prefix = "  ";
-
-			if isMarked { prefix = "> "; }
-
-			if isDir
-			{
-				if isSymlink { name = "~" + str(name) + "/"; }
-				else { name = str(name) + "/"; }
-			}
-			elseif isSymlink
-			{
-				name = "~" + str(name);
-			}
-
-			var displayName = prefix + str(name);
-			displayName = BFClipText(displayName, nameColWidth);
-			var displayNameText = displayName;
-			displayName = BFPadText(displayName, nameColWidth, BFALIGNLEFT);
-
-			# Format date
-			var dateStr = "";
-
-			if rawName != ".." { dateStr = FormatCompactDate(mtime); }
-
-			dateStr = BFPadText(dateStr, dateColWidth, BFALIGNRIGHT);
-
-			# Format size
-			var sizeStr = "";
-
-			if isDir { sizeStr = "<DIR>"; }
-			else { sizeStr = SizeToString(size); }
-
-			sizeStr = BFPadText(sizeStr, sizeColWidth, BFALIGNRIGHT);
-
-			var rowText = displayName + " " + dateStr + " " + sizeStr;
-
-			# Content
-			if not isSelected and not isMarked and rawName != ".." and (isSymlink or isDir or isExecutable)
-			{
-				var nameText = slice(displayNameText, 3, len(displayNameText));
-				BFDrawText(x, baseY, prefix);
-				SetAttribute(COLORUNDERLINE);
-				BFDrawText(x + 2, baseY, nameText);
-				SetAttribute(COLORUNDERLINEOFF);
-				BFDrawText(x + lenv(displayNameText), baseY, BFPadText("", nameColWidth - lenv(displayNameText), BFALIGNLEFT) + " " + dateStr + " " + sizeStr);
-			}
-			else
-			{
-				BFDrawText(x, baseY, rowText);
-			}
-
-			# Spacing
-			BFDrawText(x, baseY + 1, emptyRow);
-		}
-		else
-		{
-			BFDrawText(x, baseY, emptyRow);
-			BFDrawText(x, baseY + 1, emptyRow);
-		}
-
-		SetAttribute(COLORRESET);
+		DrawBrowserRow(x, baseY, contentWidth, nameColWidth, dateColWidth, sizeColWidth, files, idx, isSelected);
 	}
+}
+
+#@ <RedrawBrowserRow(idx)>
+#@ Redraws the browser row for file ''idx'' in place if it is within the visible
+#@ viewport.
+
+func RedrawBrowserRow(idx)
+{
+	var region = GetBrowserRegion(screenWidth, screenHeight);
+
+	var browserX = region[1];
+	var contentWidth = region[3];
+
+	var contentHeight = region[4] - 2;
+	var visibleFiles = int(contentHeight / FILEROWHEIGHT);
+
+	var fileRow = idx - scrollOffset + 1;
+
+	if fileRow < 1 or fileRow > visibleFiles { return; }
+
+	var cols = BrowserColumnWidths(contentWidth);
+	var nameColWidth = cols[1];
+	var dateColWidth = cols[2];
+	var sizeColWidth = cols[3];
+
+	var baseY = region[2] + 2 + (fileRow - 1) * FILEROWHEIGHT;
+	var isSelected = idx == selectedIndex and focusPanel == FOCUSBROWSER;
+
+	DrawBrowserRow(browserX, baseY, contentWidth, nameColWidth, dateColWidth, sizeColWidth, files, idx, isSelected);
 }
 
 #@ <DrawVerticalSeparator(x, y, height)>
@@ -397,11 +461,13 @@ func DrawKeybindsBar(y, width, focusPanel)
 
 func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, files, selectedFile, fileOffset, currentPath, focusPanel, markedCount, clipboardMode, showHidden, movingBookmark, sortMode, sortDirection)
 {
+	var region = GetBrowserRegion(screenWidth, screenHeight);
+
 	var sidebarWidth = SIDEBARWIDTH;
 	var separatorX = sidebarWidth;
-	var browserX = sidebarWidth + 2;
-	var browserWidth = screenWidth - sidebarWidth - 2;
-	var contentHeight = screenHeight - BottomReserve();
+	var browserX = region[1];
+	var browserWidth = region[3];
+	var contentHeight = region[4];
 
 	DrawSidebar(1,
 		1,

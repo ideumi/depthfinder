@@ -16,6 +16,8 @@ var showHidden = false;
 var movingBookmark = false;
 var showKeybinds = false;
 
+var skipFullRedraw = false;
+
 var sortMode = SORTNAME;
 var sortDirection = SORTASC;
 
@@ -244,9 +246,25 @@ func HandleBrowserInput(key)
 	{
 		if selectedIndex > 1
 		{
+			var oldIndex = selectedIndex;
+			var oldOffset = scrollOffset;
+
 			selectedIndex = selectedIndex - 1;
 
 			AdjustScrollOffset();
+
+			# Repaint only the two changed rows when the list did not scroll.
+			if scrollOffset == oldOffset
+			{
+				RedrawBrowserRow(oldIndex);
+				RedrawBrowserRow(selectedIndex);
+
+				skipFullRedraw = true;
+			}
+		}
+		else
+		{
+			skipFullRedraw = true;
 		}
 	}
 	# Down Arrow
@@ -254,9 +272,24 @@ func HandleBrowserInput(key)
 	{
 		if selectedIndex < len(files)
 		{
+			var oldIndex = selectedIndex;
+			var oldOffset = scrollOffset;
+
 			selectedIndex = selectedIndex + 1;
 
 			AdjustScrollOffset();
+
+			if scrollOffset == oldOffset
+			{
+				RedrawBrowserRow(oldIndex);
+				RedrawBrowserRow(selectedIndex);
+
+				skipFullRedraw = true;
+			}
+		}
+		else
+		{
+			skipFullRedraw = true;
 		}
 	}
 	# PgUp
@@ -327,14 +360,16 @@ func HandleBrowserInput(key)
 	# s or S
 	elseif key == KEYS or key == KEYSS
 	{
-		var browserWidth = screenWidth - SIDEBARWIDTH - 2;
-		var browserHeight = screenHeight - BottomReserve() - 2;
+		var region = GetBrowserRegion(screenWidth, screenHeight);
+
+		var browserWidth = region[3];
+		var browserHeight = region[4] - 2;
 
 		var searchWidth = int(browserWidth * 80 / 100);
 		var searchHeight = int(browserHeight * 80 / 100);
 
-		var searchX = SIDEBARWIDTH + 2 + int((browserWidth - searchWidth) / 2);
-		var searchY = 1 + int((browserHeight - searchHeight) / 2);
+		var searchX = region[1] + int((browserWidth - searchWidth) / 2);
+		var searchY = region[2] + int((browserHeight - searchHeight) / 2);
 
 		var result = SearchMode(searchX, searchY, searchWidth, searchHeight, files);
 
@@ -635,6 +670,8 @@ func MainLoop()
 			ClearScreen();
 			RefreshDirectory();
 
+			skipFullRedraw = false;
+
 			continue;
 		}
 
@@ -642,23 +679,30 @@ func MainLoop()
 		# the selection stays visible.
 		AdjustScrollOffset();
 
-		var markedCount = CountMarkedFiles(files);
+		if skipFullRedraw
+		{
+			skipFullRedraw = false;
+		}
+		else
+		{
+			var markedCount = CountMarkedFiles(files);
 
-		DrawScreen(screenWidth,
-			screenHeight,
-			bookmarks,
-			selectedBookmark,
-			files,
-			selectedIndex,
-			scrollOffset,
-			currentPath,
-			focusPanel,
-			markedCount,
-			clipboardMode,
-			showHidden,
-			movingBookmark,
-			sortMode,
-			sortDirection);
+			DrawScreen(screenWidth,
+				screenHeight,
+				bookmarks,
+				selectedBookmark,
+				files,
+				selectedIndex,
+				scrollOffset,
+				currentPath,
+				focusPanel,
+				markedCount,
+				clipboardMode,
+				showHidden,
+				movingBookmark,
+				sortMode,
+				sortDirection);
+		}
 
 		send(winsizeHandle, CurrentState());
 
