@@ -163,9 +163,9 @@ func NavigateInto()
 
 func GetVisibleFileCount()
 {
-	var contentHeight = screenHeight - BottomReserve() - 2;
+	var region = GetBrowserRegion(screenWidth, screenHeight);
 
-	return int(contentHeight / FILEROWHEIGHT);
+	return int((region[4] - 2) / FILEROWHEIGHT);
 }
 
 #@ <AdjustScrollOffset()>

@@ -3,19 +3,6 @@
 # depthfinder - dialogs.chh
 #
 
-#@ <GetBrowserRegion(screenWidth, screenHeight)>
-#@ Returns the browser region: ''[x, y, width, height]''.
-
-func GetBrowserRegion(screenWidth, screenHeight)
-{
-	var x = SIDEBARWIDTH + 2;
-	var y = 1;
-	var width = screenWidth - SIDEBARWIDTH - 2;
-	var height = screenHeight - BottomReserve();
-
-	return [x, y, width, height];
-}
-
 #@ <GetUsernameByUID(uid)>
 #@ Looks up username from ''/etc/passwd'' by ''uid''. Returns ''uid'' as string
 #@ if not found.
