@@ -225,18 +225,29 @@ func FormatPermissions(mode)
 	return join(parts, ", ");
 }
 
-#@ <ShowFileInfo(screenWidth, screenHeight, path)>
+#@ <ShowFileInfo(screenWidth, screenHeight, paths)>
 #@ Shows the file information dialog.
 
-func ShowFileInfo(screenWidth, screenHeight, path)
+func ShowFileInfo(screenWidth, screenHeight, paths)
 {
 	EnterDialog();
 
 	var width = DIALOGWIDTH;
-	var height = 11;
+	var numFiles = len(paths);
+
+	var isMulti = numFiles > 1;
+
+	var height = 7;
+
+	var dirCount = 0;
+	var fileCount = 0;
+	var symlinkCount = 0;
+	var totalSize = 0;
+	var dirActors = [];
 
 	var region = GetBrowserRegion(screenWidth, screenHeight);
 	var origin = BFCenterRect(region, width, height);
+
 	var x = origin[1];
 	var y = origin[2];
 
@@ -247,11 +258,108 @@ func ShowFileInfo(screenWidth, screenHeight, path)
 	var contentWidth = width - 4;
 	var row = y + 1;
 
+	if isMulti
+	{
+		for i = 1 to numFiles
+		{
+			var path = paths[i];
+			var linfo = lstat(path);
+
+			if iserr(linfo) { continue; }
+
+			var lstatType = StatType(linfo);
+
+			if lstatType == TYPESYMLINK
+			{
+				symlinkCount = symlinkCount + 1;
+				continue;
+			}
+
+			var info = stat(path);
+
+			if iserr(info) { continue; }
+
+			var statType = StatType(info);
+
+			if statType == TYPEDIR
+			{
+				dirCount = dirCount + 1;
+				var a = actor(CalcDirSizeParallel, path);
+
+				append(dirActors, a);
+			}
+			else
+			{
+				fileCount = fileCount + 1;
+				totalSize = totalSize + info["size"];
+			}
+		}
+
+		BFDrawText(contentX, row, "(" + str(numFiles) + " files)");
+
+		row = row + 1;
+
+		var typeParts = [];
+		if dirCount > 0
+		{
+			var dirLabel = "dirs";
+			if dirCount == 1 { dirLabel = "dir"; }
+
+			append(typeParts, str(dirCount) + " " + dirLabel);
+		}
+		if fileCount > 0
+		{
+			var fileLabel = "files";
+			if fileCount == 1 { fileLabel = "file"; }
+
+			append(typeParts, str(fileCount) + " " + fileLabel);
+		}
+		if symlinkCount > 0
+		{
+			var linkLabel = "symlinks";
+			if symlinkCount == 1 { linkLabel = "symlink"; }
+
+			append(typeParts, str(symlinkCount) + " " + linkLabel);
+		}
+
+		var typeStr = join(typeParts, ", ");
+		if typeStr == "" { typeStr = "empty"; }
+
+		BFDrawText(contentX, row, "Type: " + typeStr);
+
+		row = row + 1;
+
+		var sizeRow = row;
+		BFDrawText(contentX, sizeRow, "Size: Calculating, standby...");
+
+		for i = 1 to len(dirActors)
+		{
+			totalSize = totalSize + wait(dirActors[i]);
+		}
+
+		BFClearRegion(contentX, sizeRow, contentWidth, 1);
+		BFDrawText(contentX, sizeRow, "Size: " + SizeToString(totalSize) + " (" + str(totalSize) + " bytes)");
+
+		row = row + 2;
+
+		BFDrawText(contentX, row, "Press any key...");
+
+		getch();
+
+		HideCursor();
+		ExitDialog();
+
+		return;
+	}
+
+	var path = paths[1];
+
 	var info = stat(path);
 	var linfo = lstat(path);
 
 	var isSymlink = not iserr(linfo) and StatType(linfo) == TYPESYMLINK;
-	var isDir = not iserr(info) and StatType(info) == TYPEDIR;
+	var isDir = not iserr(linfo) and StatType(linfo) == TYPEDIR;
+
 	var isExecutable = false;
 
 	if not iserr(info)
@@ -260,7 +368,14 @@ func ShowFileInfo(screenWidth, screenHeight, path)
 		isExecutable = not isDir and ownerPerm % 2 == 1;
 	}
 
-	# Name
+	height = 11;
+	y = origin[2] - 2;
+
+	BFClearRegion(x, y, width, height);
+	BFDrawFrame(x, y, width, height, "File Info", BFBOXROUNDED);
+
+	row = y + 1;
+
 	var name = BFTruncateMiddle(Basename(path), contentWidth - 6);
 
 	BFDrawText(contentX, row, "Name: ");
@@ -276,13 +391,13 @@ func ShowFileInfo(screenWidth, screenHeight, path)
 		BFDrawText(contentX, row + 2, "Press any key...");
 
 		getch();
+
 		HideCursor();
 		ExitDialog();
 
 		return;
 	}
 
-	# Check if symlink
 	var fileType = StatType(info);
 
 	if isSymlink
@@ -306,12 +421,6 @@ func ShowFileInfo(screenWidth, screenHeight, path)
 
 	row = row + 1;
 
-	# Size
-	var size = info["size"];
-	BFDrawText(contentX, row, "Size: " + SizeToString(size) + " (" + str(size) + " bytes)");
-	row = row + 1;
-
-	# Owner
 	var uid = info["userId"];
 	var owner = GetUsernameByUID(uid);
 	BFDrawText(contentX, row, "Owner: " + owner);
@@ -321,9 +430,28 @@ func ShowFileInfo(screenWidth, screenHeight, path)
 	BFDrawText(contentX, row, "Permissions: " + str(int(mode)) + " (" + FormatPermissions(mode) + ")");
 	row = row + 1;
 
-	# Modified time
 	var mtime = info["modified"];
 	BFDrawText(contentX, row, "Modified: " + GregorianFormatTime(mtime));
+	row = row + 1;
+
+	var size = info["size"];
+	var sizeRow = row;
+
+	if isDir
+	{
+		BFDrawText(contentX, sizeRow, "Size: Calculating, standby...");
+
+		var sizeActor = actor(CalcDirSizeParallel, path);
+		size = wait(sizeActor);
+
+		BFClearRegion(contentX, sizeRow, contentWidth, 1);
+		BFDrawText(contentX, sizeRow, "Size: " + SizeToString(size) + " (" + str(size) + " bytes)");
+	}
+	else
+	{
+		BFDrawText(contentX, sizeRow, "Size: " + SizeToString(size) + " (" + str(size) + " bytes)");
+	}
+
 	row = row + 3;
 
 	BFDrawText(contentX, row, "Press any key...");

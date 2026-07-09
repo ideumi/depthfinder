@@ -471,17 +471,11 @@ func HandleBrowserInput(key)
 	# i or I
 	elseif key == KEYI or key == KEYII
 	{
-		if selectedIndex >= 1 and selectedIndex <= len(files)
+		var selected = GetSelectedFiles(files, currentPath, selectedIndex);
+
+		if len(selected) > 0
 		{
-			var entry = files[selectedIndex];
-			var name = entry["name"];
-
-			if name != ".."
-			{
-				var fullPath = JoinPath(currentPath, name);
-
-				ShowFileInfo(screenWidth, screenHeight, fullPath);
-			}
+			ShowFileInfo(screenWidth, screenHeight, selected);
 		}
 	}
 	# Hash

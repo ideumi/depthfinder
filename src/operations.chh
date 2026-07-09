@@ -3,6 +3,49 @@
 # depthfinder - operations.chh
 #
 
+#@ <CalcDirSizeParallel(dirPath)>
+#@ Calculates the total size of ''dirPath'' recursively by using actors for
+#@ parallel subdirectory traversal. Symlinks are ignored. Returns the total byte
+#@ size.
+
+func CalcDirSizeParallel(dirPath)
+{
+	var entries = ListDir(dirPath);
+	if iserr(entries) { return 0; }
+
+	var totalSize = 0;
+	var subdirActors = [];
+
+	for i = 1 to len(entries)
+	{
+		var name = entries[i];
+		var fullPath = JoinPath(dirPath, name);
+
+		var linfo = lstat(fullPath);
+		if iserr(linfo) { continue; }
+
+		var isSymlink = StatType(linfo) == TYPESYMLINK;
+		if isSymlink { continue; }
+
+		if StatType(linfo) == TYPEDIR
+		{
+			var a = actor(CalcDirSizeParallel, fullPath);
+			append(subdirActors, a);
+		}
+		else
+		{
+			totalSize = totalSize + linfo["size"];
+		}
+	}
+
+	for i = 1 to len(subdirActors)
+	{
+		totalSize = totalSize + wait(subdirActors[i]);
+	}
+
+	return totalSize;
+}
+
 #@ <IsSameFile(path1, path2)>
 #@ Checks if two paths refer to the same file.
 
