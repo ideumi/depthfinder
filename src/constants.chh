@@ -147,6 +147,20 @@ var CONFLICTSKIP = 4;
 
 var CONFLICTSKIPALL = 5;
 
+# --- Compression ---
+
+#@ <COMPRESSFORMATS>
+#@ Archive extensions shown in the compress dialog. Important: the indexes in this
+#@ list must match with the associated entries in ''COMPRESSCOMMANDS''
+
+var COMPRESSFORMATS = [".tar.zst", ".tar.xz", ".zip"];
+
+#@ <COMPRESSCOMMANDS>
+#@ Archive creation commands. Important: the indexes in this list must match with
+#@ the associated entries in ''COMPRESSFORMATS''
+
+var COMPRESSCOMMANDS = ["tar --zstd -cf", "tar -cJf", "zip -r"];
+
 # --- Sort ---
 
 #@ <SORTNAME>

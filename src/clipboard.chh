@@ -1,0 +1,52 @@
+#!/usr/bin/chippy
+#
+# depthfinder - clipboard.chh
+#
+
+#@ <ClearClipboard()>
+#@ Drops the pending copy or cut.
+
+func ClearClipboard()
+{
+	clipboard = [];
+	clipboardMode = CLIPBOARDNONE;
+}
+
+#@ <SetClipboard(mode)>
+#@ Puts the selected files on the clipboard for a later paste in ''mode'', then
+#@ clears the marks. Does nothing when there is no selection.
+
+func SetClipboard(mode)
+{
+	var selected = GetSelectedFiles(files, currentPath, selectedIndex);
+
+	if len(selected) == 0 { return; }
+
+	clipboard = selected;
+	clipboardMode = mode;
+
+	files = ClearAllMarks(files);
+}
+
+#@ <ActionPaste()>
+#@ Handles pasting files from clipboard.
+
+func ActionPaste()
+{
+	if len(clipboard) == 0 { return; }
+
+	var result = err;
+
+	if clipboardMode == CLIPBOARDCOPY
+	{
+		result = CopyFiles(clipboard, currentPath, screenWidth, screenHeight);
+	}
+	elseif clipboardMode == CLIPBOARDCUT
+	{
+		result = MoveFiles(clipboard, currentPath, screenWidth, screenHeight);
+
+		if isok(result) { ClearClipboard(); }
+	}
+
+	RefreshDirectory();
+}

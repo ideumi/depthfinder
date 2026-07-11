@@ -190,6 +190,63 @@ func AdjustScrollOffset()
 	if scrollOffset < 1 { scrollOffset = 1; }
 }
 
+#@ <MoveSelection(delta)>
+#@ Moves the browser selection by ''delta'' rows.
+
+func MoveSelection(delta)
+{
+	var oldIndex = selectedIndex;
+	var oldOffset = scrollOffset;
+
+	if delta < 0 and selectedIndex <= 1
+	{
+		skipFullRedraw = true;
+
+		return;
+	}
+
+	if delta > 0 and selectedIndex >= len(files)
+	{
+		skipFullRedraw = true;
+
+		return;
+	}
+
+	selectedIndex = selectedIndex + delta;
+
+	AdjustScrollOffset();
+
+	# Repaint only the changed rows when the list did not scroll
+	if scrollOffset == oldOffset
+	{
+		var rowStart = oldIndex;
+		var rowEnd = selectedIndex;
+
+		if rowStart > rowEnd
+		{
+			rowStart = selectedIndex;
+			rowEnd = oldIndex;
+		}
+
+		for i = rowStart to rowEnd { RedrawBrowserRow(i); }
+
+		skipFullRedraw = true;
+	}
+}
+
+#@ <MoveSelectionPage(delta)>
+#@ Moves the browser selection by ''delta'' pages.
+
+func MoveSelectionPage(delta)
+{
+	selectedIndex = selectedIndex + delta * GetVisibleFileCount();
+
+	if delta < 0 and selectedIndex < 1 { selectedIndex = 1; }
+	if delta > 0 and selectedIndex > len(files) { selectedIndex = len(files); }
+
+	AdjustScrollOffset();
+}
+
 #@ <NavigateToBookmark(bmIndex)>
 #@ Navigates to the bookmark at ''bmIndex'' if valid.
 

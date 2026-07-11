@@ -3,103 +3,6 @@
 # depthfinder - actions.chh
 #
 
-#@ <RunForeground(command)>
-#@ Runs a command in the foreground with TTY redirect.
-
-func RunForeground(command)
-{
-	ShowCursor();
-	ClearScreen();
-	CursorTo(1, 1);
-
-	var tuiCmd = command + TTYREDIRECT;
-	var exitCode = -1;
-	var handle = popen(tuiCmd, "r");
-
-	if not iserr(handle) { exitCode = pclose(handle); }
-
-	Print("\n--- Exit " + str(exitCode) + ", press any key to continue ---");
-
-	HideCursor();
-	getch();
-
-	ClearScreen();
-}
-
-#@ <OpenFile(path)>
-#@ File opening logic that resolves the file-extension and associated command, if
-#@ the associated command is prefixed with ''!'', then it will be run in the
-#@ terminal foreground, otherwise it will be spawned in the background. If no
-#@ command is associated, then ''DEFAULTRUNNER'' will be used.
-
-func OpenFile(path)
-{
-	var ext = FileExtension(path);
-	var cmd = GetAssocCommand(fileAssoc, ext);
-
-	if iserr(cmd) or cmd == "" { cmd = DEFAULTRUNNER; }
-
-	# Prefix handling
-	var isTui = StartsWith(cmd, "!");
-
-	if isTui { cmd = slice(cmd, 2, len(cmd)); }
-
-	var fullCmd = cmd + " " + ShellEscape(path);
-
-	if isTui { RunForeground(fullCmd); }
-	else { Spawn(fullCmd); }
-}
-
-#@ <CheckTerminal()>
-#@ Checks if a terminal is configured. Shows an error if not.
-
-func CheckTerminal()
-{
-	if terminal == ""
-	{
-		var configPath = GetConfigPath(CONFIGFILETERMINAL);
-
-		ShowError(screenWidth, screenHeight,
-			"No terminal configured in " + configPath);
-
-		return false;
-	}
-
-	return true;
-}
-
-#@ <OpenTerminal()>
-#@ Opens a terminal in the current directory.
-
-func OpenTerminal()
-{
-	if not CheckTerminal() { return; }
-
-	Spawn(terminal);
-}
-
-#@ <OpenNewWindow()>
-#@ Opens a new dfn instance in the current directory.
-
-func OpenNewWindow()
-{
-	if not CheckTerminal() { return; }
-
-	Spawn(terminal + " -e " + PROGRAMNAMESHORT + " " + ShellEscape(currentPath));
-}
-
-#@ <ZeroPad(number, width)>
-#@ Returns ''number'' as a string left-padded with zeros to ''width''.
-
-func ZeroPad(number, width)
-{
-	var s = str(number);
-
-	while len(s) < width { s = "0" + s; }
-
-	return s;
-}
-
 #@ <ApplyExtension(name, originalName)>
 #@ Replaces ''*'' in ''name'' with the file extension from ''originalName''.
 
@@ -307,22 +210,18 @@ func ActionOpenWith()
 	if iserr(cmd) or cmd == "" { return; }
 
 	# TUI prefix for foreground TUI programs
-	var isTui = StartsWith(cmd, "!");
-
-	if isTui { cmd = slice(cmd, 2, len(cmd)); }
+	var parsed = StripTuiPrefix(cmd);
+	var fullCmd = parsed[1];
 
 	# NOTE: Otherwise programs like VLC etc. open files in the wrong order
 	sort(filesToOpen);
-
-	var fullCmd = cmd;
 
 	for i = 1 to len(filesToOpen)
 	{
 		fullCmd = fullCmd + " " + ShellEscape(filesToOpen[i]);
 	}
 
-	if isTui { RunForeground(fullCmd); }
-	else { Spawn(fullCmd); }
+	RunCommand(fullCmd, parsed[2]);
 
 	files = ClearAllMarks(files);
 }
@@ -440,31 +339,77 @@ func ActionSort()
 	}
 }
 
-#@ <ActionPaste()>
-#@ Handles pasting files from clipboard.
+#@ <ActionDelete()>
+#@ Handles deleting the selected files.
 
-func ActionPaste()
+func ActionDelete()
 {
-	if len(clipboard) == 0 { return; }
+	var selected = GetSelectedFiles(files, currentPath, selectedIndex);
 
-	var result = err;
-
-	if clipboardMode == CLIPBOARDCOPY
+	if len(selected) > 0
 	{
-		result = CopyFiles(clipboard, currentPath, screenWidth, screenHeight);
+		var result = DeleteFiles(selected, screenWidth, screenHeight);
+
+		if isok(result) { files = ClearAllMarks(files); }
+
+		RefreshDirectory();
 	}
-	elseif clipboardMode == CLIPBOARDCUT
-	{
-		result = MoveFiles(clipboard, currentPath, screenWidth, screenHeight);
+}
 
-		if isok(result)
+#@ <ActionFileInfo()>
+#@ Handles showing the info dialog for the selected files.
+
+func ActionFileInfo()
+{
+	var selected = GetSelectedFiles(files, currentPath, selectedIndex);
+
+	if len(selected) > 0 { ShowFileInfo(screenWidth, screenHeight, selected); }
+}
+
+#@ <ActionGoToPath()>
+#@ Handles prompting for a directory path and navigating to it.
+
+func ActionGoToPath()
+{
+	var newPath = ShowInput(screenWidth, screenHeight, "Go To", "Path: ", currentPath);
+
+	if not iserr(newPath) and newPath != ""
+	{
+		if IsDir(newPath)
 		{
-			clipboard = [];
-			clipboardMode = CLIPBOARDNONE;
+			NavigateTo(newPath);
+		}
+		else
+		{
+			ShowError(screenWidth, screenHeight, "Not a directory: " + newPath);
 		}
 	}
+}
 
-	RefreshDirectory();
+#@ <ActionSearch()>
+#@ Handles the search dialog and moves the selection to the chosen file.
+
+func ActionSearch()
+{
+	var region = GetBrowserRegion(screenWidth, screenHeight);
+
+	var browserWidth = region[3];
+	var browserHeight = region[4] - 2;
+
+	var searchWidth = int(browserWidth * 80 / 100);
+	var searchHeight = int(browserHeight * 80 / 100);
+
+	var searchX = region[1] + int((browserWidth - searchWidth) / 2);
+	var searchY = region[2] + int((browserHeight - searchHeight) / 2);
+
+	var result = SearchMode(searchX, searchY, searchWidth, searchHeight, files);
+
+	if not iserr(result)
+	{
+		selectedIndex = result;
+
+		AdjustScrollOffset();
+	}
 }
 
 #@ <ActionCompress()>
@@ -476,24 +421,7 @@ func ActionCompress()
 
 	if len(filesToCompress) == 0 { return; }
 
-	var width = 50;
-	var height = 8;
-
-	var region = GetBrowserRegion(screenWidth, screenHeight);
-	var origin = BFCenterRect(region, width, height);
-	var x = origin[1];
-	var y = origin[2];
-
-	BFClearRegion(x, y, width, height);
-	BFDrawFrame(x, y, width, height, "Compress", BFBOXROUNDED);
-
-	var contentX = x + 2;
-
-	var items = [".tar.zst", ".tar.xz", ".zip"];
-
-	var format = BFMenu(contentX, y + 2, items, 1);
-
-	HideCursor();
+	var format = ShowCompressMenu(screenWidth, screenHeight);
 
 	if iserr(format) { return; }
 

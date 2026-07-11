@@ -53,6 +53,29 @@ func ConfirmExit()
 	return not iserr(confirmed) and confirmed;
 }
 
+#@ <StopMovingBookmark()>
+#@ Leaves bookmark move mode and saves the new bookmark order.
+
+func StopMovingBookmark()
+{
+	movingBookmark = false;
+
+	SaveBookmarks(bookmarks);
+}
+
+#@ <SwapBookmarks(fromIndex, toIndex)>
+#@ Swaps the bookmarks at ''fromIndex'' and ''toIndex'' then selects ''toIndex''.
+
+func SwapBookmarks(fromIndex, toIndex)
+{
+	var temp = bookmarks[fromIndex];
+
+	bookmarks[fromIndex] = bookmarks[toIndex];
+	bookmarks[toIndex] = temp;
+
+	selectedBookmark = toIndex;
+}
+
 #@ <HandleSidebarInput(key)>
 #@ Handles key input when sidebar has focus.
 
@@ -63,13 +86,11 @@ func HandleSidebarInput(key)
 	{
 		if movingBookmark
 		{
-			movingBookmark = false;
-			SaveBookmarks(bookmarks);
+			StopMovingBookmark();
 		}
 		elseif len(clipboard) > 0
 		{
-			clipboard = [];
-			clipboardMode = CLIPBOARDNONE;
+			ClearClipboard();
 		}
 		else
 		{
@@ -79,11 +100,7 @@ func HandleSidebarInput(key)
 	# TAB
 	elseif key == BFKEYTAB
 	{
-		if movingBookmark
-		{
-			movingBookmark = false;
-			SaveBookmarks(bookmarks);
-		}
+		if movingBookmark { StopMovingBookmark(); }
 
 		focusPanel = FOCUSBROWSER;
 	}
@@ -93,12 +110,7 @@ func HandleSidebarInput(key)
 		if movingBookmark and selectedBookmark > 1
 		{
 			# Swap bookmark with one above
-			var temp = bookmarks[selectedBookmark];
-
-			bookmarks[selectedBookmark] = bookmarks[selectedBookmark - 1];
-			bookmarks[selectedBookmark - 1] = temp;
-
-			selectedBookmark = selectedBookmark - 1;
+			SwapBookmarks(selectedBookmark, selectedBookmark - 1);
 		}
 		elseif selectedBookmark > 1
 		{
@@ -111,12 +123,7 @@ func HandleSidebarInput(key)
 		if movingBookmark and selectedBookmark < len(bookmarks)
 		{
 			# Swap bookmark with one below
-			var temp = bookmarks[selectedBookmark];
-
-			bookmarks[selectedBookmark] = bookmarks[selectedBookmark + 1];
-			bookmarks[selectedBookmark + 1] = temp;
-
-			selectedBookmark = selectedBookmark + 1;
+			SwapBookmarks(selectedBookmark, selectedBookmark + 1);
 		}
 		elseif selectedBookmark < len(bookmarks)
 		{
@@ -128,16 +135,8 @@ func HandleSidebarInput(key)
 	{
 		if selectedBookmark >= 1 and selectedBookmark <= len(bookmarks)
 		{
-			if movingBookmark
-			{
-				movingBookmark = false;
-
-				SaveBookmarks(bookmarks);
-			}
-			else
-			{
-				movingBookmark = true;
-			}
+			if movingBookmark { StopMovingBookmark(); }
+			else { movingBookmark = true; }
 		}
 	}
 	# Enter, Right Arrow
@@ -205,11 +204,9 @@ func HandleSidebarInput(key)
 		}
 	}
 	# 1-9 keys
-	elseif type(key) == "bytes" and len(key) == 1 and key[1] >= 49 and key[1] <= 57
+	elseif DigitKey(key) > 0
 	{
-		var bmIndex = key[1] - 48;
-
-		if NavigateToBookmark(bmIndex) { focusPanel = FOCUSBROWSER; }
+		if NavigateToBookmark(DigitKey(key)) { focusPanel = FOCUSBROWSER; }
 	}
 
 	return true;
@@ -229,8 +226,7 @@ func HandleBrowserInput(key)
 		}
 		elseif len(clipboard) > 0
 		{
-			clipboard = [];
-			clipboardMode = CLIPBOARDNONE;
+			ClearClipboard();
 		}
 		else
 		{
@@ -244,75 +240,22 @@ func HandleBrowserInput(key)
 	}
 	elseif key == BFKEYUP
 	{
-		if selectedIndex > 1
-		{
-			var oldIndex = selectedIndex;
-			var oldOffset = scrollOffset;
-
-			selectedIndex = selectedIndex - 1;
-
-			AdjustScrollOffset();
-
-			# Repaint only the two changed rows when the list did not scroll.
-			if scrollOffset == oldOffset
-			{
-				RedrawBrowserRow(oldIndex);
-				RedrawBrowserRow(selectedIndex);
-
-				skipFullRedraw = true;
-			}
-		}
-		else
-		{
-			skipFullRedraw = true;
-		}
+		MoveSelection(-1);
 	}
 	# Down Arrow
 	elseif key == BFKEYDOWN
 	{
-		if selectedIndex < len(files)
-		{
-			var oldIndex = selectedIndex;
-			var oldOffset = scrollOffset;
-
-			selectedIndex = selectedIndex + 1;
-
-			AdjustScrollOffset();
-
-			if scrollOffset == oldOffset
-			{
-				RedrawBrowserRow(oldIndex);
-				RedrawBrowserRow(selectedIndex);
-
-				skipFullRedraw = true;
-			}
-		}
-		else
-		{
-			skipFullRedraw = true;
-		}
+		MoveSelection(1);
 	}
 	# PgUp
 	elseif key == BFKEYPAGEUP
 	{
-		var pageSize = GetVisibleFileCount();
-
-		selectedIndex = selectedIndex - pageSize;
-
-		if selectedIndex < 1 { selectedIndex = 1; }
-
-		AdjustScrollOffset();
+		MoveSelectionPage(-1);
 	}
 	# PgDown
 	elseif key == BFKEYPAGEDOWN
 	{
-		var pageSize = GetVisibleFileCount();
-
-		selectedIndex = selectedIndex + pageSize;
-
-		if selectedIndex > len(files) { selectedIndex = len(files); }
-
-		AdjustScrollOffset();
+		MoveSelectionPage(1);
 	}
 	# Home
 	elseif key == BFKEYHOME
@@ -360,25 +303,7 @@ func HandleBrowserInput(key)
 	# s or S
 	elseif key == KEYS or key == KEYSS
 	{
-		var region = GetBrowserRegion(screenWidth, screenHeight);
-
-		var browserWidth = region[3];
-		var browserHeight = region[4] - 2;
-
-		var searchWidth = int(browserWidth * 80 / 100);
-		var searchHeight = int(browserHeight * 80 / 100);
-
-		var searchX = region[1] + int((browserWidth - searchWidth) / 2);
-		var searchY = region[2] + int((browserHeight - searchHeight) / 2);
-
-		var result = SearchMode(searchX, searchY, searchWidth, searchHeight, files);
-
-		if not iserr(result)
-		{
-			selectedIndex = result;
-
-			AdjustScrollOffset();
-		}
+		ActionSearch();
 	}
 	# r or R
 	elseif key == KEYR or key == KEYRR
@@ -396,28 +321,12 @@ func HandleBrowserInput(key)
 	# Ctrl + C
 	elseif key == KEYCTRLC
 	{
-		var selected = GetSelectedFiles(files, currentPath, selectedIndex);
-
-		if len(selected) > 0
-		{
-			clipboard = selected;
-			clipboardMode = CLIPBOARDCOPY;
-
-			files = ClearAllMarks(files);
-		}
+		SetClipboard(CLIPBOARDCOPY);
 	}
 	# Ctrl + X
 	elseif key == KEYCTRLX
 	{
-		var selected = GetSelectedFiles(files, currentPath, selectedIndex);
-
-		if len(selected) > 0
-		{
-			clipboard = selected;
-			clipboardMode = CLIPBOARDCUT;
-
-			files = ClearAllMarks(files);
-		}
+		SetClipboard(CLIPBOARDCUT);
 	}
 	# Ctrl + V
 	elseif key == KEYCTRLV
@@ -427,16 +336,7 @@ func HandleBrowserInput(key)
 	# Del
 	elseif key == BFKEYDELETE
 	{
-		var selected = GetSelectedFiles(files, currentPath, selectedIndex);
-
-		if len(selected) > 0
-		{
-			var result = DeleteFiles(selected, screenWidth, screenHeight);
-
-			if isok(result) { files = ClearAllMarks(files); }
-
-			RefreshDirectory();
-		}
+		ActionDelete();
 	}
 	# Ctrl + N
 	elseif key == KEYCTRLN
@@ -471,12 +371,7 @@ func HandleBrowserInput(key)
 	# i or I
 	elseif key == KEYI or key == KEYII
 	{
-		var selected = GetSelectedFiles(files, currentPath, selectedIndex);
-
-		if len(selected) > 0
-		{
-			ShowFileInfo(screenWidth, screenHeight, selected);
-		}
+		ActionFileInfo();
 	}
 	# Hash
 	elseif key == KEYHASH
@@ -486,19 +381,7 @@ func HandleBrowserInput(key)
 	# p or P
 	elseif key == KEYP or key == KEYPP
 	{
-		var newPath = ShowInput(screenWidth, screenHeight, "Go To", "Path: ", currentPath);
-
-		if not iserr(newPath) and newPath != ""
-		{
-			if IsDir(newPath)
-			{
-				NavigateTo(newPath);
-			}
-			else
-			{
-				ShowError(screenWidth, screenHeight, "Not a directory: " + newPath);
-			}
-		}
+		ActionGoToPath();
 	}
 	# b or B
 	elseif key == KEYB or key == KEYBB
@@ -516,11 +399,9 @@ func HandleBrowserInput(key)
 		ActionCompress();
 	}
 	# 1-9 keys
-	elseif type(key) == "bytes" and len(key) == 1 and key[1] >= 49 and key[1] <= 57
+	elseif DigitKey(key) > 0
 	{
-		var bmIndex = key[1] - 48;
-
-		NavigateToBookmark(bmIndex);
+		NavigateToBookmark(DigitKey(key));
 	}
 
 	return true;
