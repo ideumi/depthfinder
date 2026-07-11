@@ -84,20 +84,38 @@ func ShowProgress(screenWidth, screenHeight, title, current, total)
 	BFDrawText(contentX, barY + 1, percentText);
 }
 
-#@ <ShowConfirm(screenWidth, screenHeight, message)>
-#@ Shows a centered confirmation dialog with Yes/No buttons.
+#@ <ShowConfirmDialog(screenWidth, screenHeight, message, defaultYes)>
+#@ Shows a centered Yes/No confirmation dialog, with Yes preselected when
+#@ ''defaultYes'' == ''true''. Returns the choice, or ''err'' when the dialog is
+#@ cancelled.
 
-func ShowConfirm(screenWidth, screenHeight, message)
+func ShowConfirmDialog(screenWidth, screenHeight, message, defaultYes)
 {
 	EnterDialog();
 
 	var region = GetBrowserRegion(screenWidth, screenHeight);
 
-	var result = BFShowConfirm(region, DIALOGWIDTH, "Confirm", message, true);
+	var result = BFShowConfirm(region, DIALOGWIDTH, "Confirm", message, defaultYes);
 
 	CloseDialog();
 
 	return result;
+}
+
+#@ <ShowConfirm(screenWidth, screenHeight, message)>
+#@ Shows a confirmation dialog with Yes preselected.
+
+func ShowConfirm(screenWidth, screenHeight, message)
+{
+	return ShowConfirmDialog(screenWidth, screenHeight, message, true);
+}
+
+#@ <ShowConfirmDefaultNo(screenWidth, screenHeight, message)>
+#@ Shows a confirmation dialog with No preselected.
+
+func ShowConfirmDefaultNo(screenWidth, screenHeight, message)
+{
+	return ShowConfirmDialog(screenWidth, screenHeight, message, false);
 }
 
 #@ <ShowError(screenWidth, screenHeight, message)>

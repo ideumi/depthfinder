@@ -524,7 +524,7 @@ func DeleteFiles(paths, screenWidth, screenHeight)
 	{
 		var dirMsg = "This will recursively delete. Are you sure?";
 
-		confirmed = ShowConfirm(screenWidth, screenHeight, dirMsg);
+		confirmed = ShowConfirmDefaultNo(screenWidth, screenHeight, dirMsg);
 
 		if iserr(confirmed) or not confirmed { return err; }
 	}
