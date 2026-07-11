@@ -190,6 +190,42 @@ func AdjustScrollOffset()
 	if scrollOffset < 1 { scrollOffset = 1; }
 }
 
+#@ <MoveSelection(delta)>
+#@ Moves the browser selection by ''delta'' rows.
+
+func MoveSelection(delta)
+{
+	if len(files) == 0 { return; }
+
+	selectedIndex = selectedIndex + delta;
+
+	if selectedIndex < 1 { selectedIndex = 1; }
+	if selectedIndex > len(files) { selectedIndex = len(files); }
+
+	AdjustScrollOffset();
+}
+
+#@ <MoveSelectionRedraw(delta)>
+#@ Moves the selection by ''delta'' and repaints only the two changed rows when the
+#@ list did not scroll, in which case the main loop is told to skip its full redraw.
+
+func MoveSelectionRedraw(delta)
+{
+	var oldIndex = selectedIndex;
+	var oldOffset = scrollOffset;
+
+	MoveSelection(delta);
+
+	# Repaint only the two changed rows when the list did not scroll.
+	if scrollOffset == oldOffset
+	{
+		RedrawBrowserRow(oldIndex);
+		RedrawBrowserRow(selectedIndex);
+
+		skipFullRedraw = true;
+	}
+}
+
 #@ <NavigateToBookmark(bmIndex)>
 #@ Navigates to the bookmark at ''bmIndex'' if valid.
 

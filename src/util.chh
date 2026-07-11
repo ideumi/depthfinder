@@ -1,0 +1,74 @@
+#!/usr/bin/chippy
+#
+# depthfinder - util.chh
+#
+
+#@ <ZeroPad(number, width)>
+#@ Returns ''number'' as a string left-padded with zeros to at least ''width''
+#@ characters. Fractional parts are truncated.
+
+func ZeroPad(number, width)
+{
+	var s = str(int(number));
+
+	while len(s) < width { s = "0" + s; }
+
+	return s;
+}
+
+#@ <OwnerPermBits(mode)>
+#@ Returns the owner number of the permission ''mode''.
+
+func OwnerPermBits(mode)
+{
+	return int(mode / 100) % 10;
+}
+
+#@ <IsExecutableMode(mode, isDir)>
+#@ Returns if ''mode'' grants the owner execute permission on a non dir.
+
+func IsExecutableMode(mode, isDir)
+{
+	return not isDir and OwnerPermBits(mode) % 2 == 1;
+}
+
+#@ <IsSingleByteKey(key)>
+#@ Returns if ''key'' is a single byte keypress (ASCII).
+
+func IsSingleByteKey(key)
+{
+	return type(key) == "bytes" and len(key) == 1;
+}
+
+#@ <DigitKey(key)>
+#@ Returns the digit 1-9 for a ''1''-''9'' keypress, or 0 for any other key.
+
+func DigitKey(key)
+{
+	if not IsSingleByteKey(key) { return 0; }
+
+	if key[1] < 49 or key[1] > 57 { return 0; }
+
+	return key[1] - 48;
+}
+
+#@ <IsTextKey(key)>
+#@ Returns if ''key'' is a text keypress (printable ASCII or UTF-8) and not a
+#@ control byte or an escape sequence.
+
+func IsTextKey(key)
+{
+	if type(key) != "bytes" or len(key) == 0 { return false; }
+
+	return key[1] >= 32;
+}
+
+#@ <ShellEscape(s)>
+#@ Escapes a string for safe use in shell commands.
+
+func ShellEscape(s)
+{
+	var escaped = replace(s, "'", "'\\''");
+
+	return "'" + escaped + "'";
+}

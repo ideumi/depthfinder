@@ -59,8 +59,7 @@ func LoadDirectory(path, showHidden, sortMode, sortDirection)
 			isDir = StatType(info) == TYPEDIR;
 			mtime = info["modified"];
 
-			var ownerPerm = int(info["mode"] / 100) % 10;
-			isExecutable = not isDir and ownerPerm % 2 == 1;
+			isExecutable = IsExecutableMode(info["mode"], isDir);
 		}
 
 		var entry = CreateFileEntry(name, size, isDir, isSymlink, isExecutable, false, mtime);
@@ -88,28 +87,6 @@ func LoadDirectory(path, showHidden, sortMode, sortDirection)
 	return result;
 }
 
-#@ <PadIndex(index)>
-#@ Pads an index with leading zeros.
-
-func PadIndex(index)
-{
-	var s = str(index);
-	while len(s) < 8 { s = "0" + s; }
-
-	return s;
-}
-
-#@ <PadSortKey(value, width)>
-#@ Pads a numeric value.
-
-func PadSortKey(value, width)
-{
-	var s = str(int(value));
-	while len(s) < width { s = "0" + s; }
-
-	return s;
-}
-
 #@ <SortFileEntries(entries, mode, direction)>
 #@ Sorts file entries by ''mode'' and ''direction''.
 
@@ -126,11 +103,11 @@ func SortFileEntries(entries, mode, direction)
 		var key = "";
 
 		if mode == SORTNAME { key = lower(entry["name"]); }
-		elseif mode == SORTSIZE { key = PadSortKey(entry["size"], 20); }
-		elseif mode == SORTMTIME { key = PadSortKey(entry["mtime"], 20); }
+		elseif mode == SORTSIZE { key = ZeroPad(entry["size"], 20); }
+		elseif mode == SORTMTIME { key = ZeroPad(entry["mtime"], 20); }
 		else { key = lower(entry["name"]); }
 
-		append(sortable, key + "|" + PadIndex(i));
+		append(sortable, key + "|" + ZeroPad(i, 8));
 	}
 
 	sort(sortable);

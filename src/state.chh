@@ -1,0 +1,41 @@
+#!/usr/bin/chippy
+#
+# depthfinder - state.chh
+#
+
+var currentPath = "";
+var files = [];
+
+var selectedIndex = 1;
+var scrollOffset = 1;
+
+var showHidden = false;
+var movingBookmark = false;
+var showKeybinds = false;
+
+var skipFullRedraw = false;
+
+var sortMode = SORTNAME;
+var sortDirection = SORTASC;
+
+var clipboard = [];
+var clipboardMode = CLIPBOARDNONE;
+
+var focusPanel = FOCUSBROWSER;
+
+var bookmarks = [];
+var selectedBookmark = 1;
+
+var fileAssoc = [];
+
+var terminal = "";
+
+var screenWidth = MINTERMWIDTH;
+var screenHeight = MINTERMHEIGHT;
+
+var dirHistory = [];
+var navigatingBack = false;
+
+var winsizeHandle = err;
+
+var inDialog = false;

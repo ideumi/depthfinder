@@ -19,12 +19,16 @@ load("libsignals.chh");
 # ---
 
 load("constants.chh");
+load("util.chh");
+load("state.chh");
 load("config.chh");
 load("browser.chh");
 load("ui.chh");
 load("search.chh");
 load("dialogs.chh");
 load("operations.chh");
+load("launch.chh");
 load("navigation.chh");
 load("actions.chh");
+load("clipboard.chh");
 load("depthfinder.chh");

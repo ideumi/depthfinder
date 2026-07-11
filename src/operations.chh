@@ -3,6 +3,49 @@
 # depthfinder - operations.chh
 #
 
+#@ <CalcDirSizeParallel(dirPath)>
+#@ Calculates the total size of ''dirPath'' recursively by using actors for
+#@ parallel subdirectory traversal. Symlinks are ignored. Returns the total byte
+#@ size.
+
+func CalcDirSizeParallel(dirPath)
+{
+	var entries = ListDir(dirPath);
+	if iserr(entries) { return 0; }
+
+	var totalSize = 0;
+	var subdirActors = [];
+
+	for i = 1 to len(entries)
+	{
+		var name = entries[i];
+		var fullPath = JoinPath(dirPath, name);
+
+		var linfo = lstat(fullPath);
+		if iserr(linfo) { continue; }
+
+		var isSymlink = StatType(linfo) == TYPESYMLINK;
+		if isSymlink { continue; }
+
+		if StatType(linfo) == TYPEDIR
+		{
+			var a = actor(CalcDirSizeParallel, fullPath);
+			append(subdirActors, a);
+		}
+		else
+		{
+			totalSize = totalSize + linfo["size"];
+		}
+	}
+
+	for i = 1 to len(subdirActors)
+	{
+		totalSize = totalSize + wait(subdirActors[i]);
+	}
+
+	return totalSize;
+}
+
 #@ <IsSameFile(path1, path2)>
 #@ Checks if two paths refer to the same file.
 
@@ -18,6 +61,18 @@ func IsSameFile(path1, path2)
 	return stat1["inode"] == stat2["inode"] and stat1["device"] == stat2["device"];
 }
 
+#@ <RemovePath(path)>
+#@ Removes ''path''. Directories are deleted recursively, symlinks are unlinked.
+
+func RemovePath(path)
+{
+	if IsSymlink(path) { return unlink(path); }
+
+	if IsDir(path) { return DeleteDirectory(path); }
+
+	return unlink(path);
+}
+
 #@ <DeleteDirectory(path)>
 #@ Recursively deletes a directory.
 
@@ -29,27 +84,9 @@ func DeleteDirectory(path)
 
 	for i = 1 to len(entries)
 	{
-		var name = entries[i];
-		var fullPath = JoinPath(path, name);
+		var result = RemovePath(JoinPath(path, entries[i]));
 
-		if IsSymlink(fullPath)
-		{
-			var result = unlink(fullPath);
-
-			if iserr(result) { return err; }
-		}
-		elseif IsDir(fullPath)
-		{
-			var result = DeleteDirectory(fullPath);
-
-			if iserr(result) { return err; }
-		}
-		else
-		{
-			var result = unlink(fullPath);
-
-			if iserr(result) { return err; }
-		}
+		if iserr(result) { return err; }
 	}
 
 	return unlink(path);
@@ -412,11 +449,8 @@ func TransferFiles(sources, dest, screenWidth, screenHeight, isMove)
 		{
 			var path = sourcesToDelete[i];
 			var displayName = BFTruncateMiddle(Basename(path), DIALOGNAMEMAX);
-			var result = err;
 
-			if IsSymlink(path) { result = unlink(path); }
-			elseif IsDir(path) { result = DeleteDirectory(path); }
-			else { result = unlink(path); }
+			var result = RemovePath(path);
 
 			if iserr(result)
 			{
@@ -490,7 +524,7 @@ func DeleteFiles(paths, screenWidth, screenHeight)
 	{
 		var dirMsg = "This will recursively delete. Are you sure?";
 
-		confirmed = ShowConfirm(screenWidth, screenHeight, dirMsg);
+		confirmed = ShowConfirmDefaultNo(screenWidth, screenHeight, dirMsg);
 
 		if iserr(confirmed) or not confirmed { return err; }
 	}
@@ -502,11 +536,7 @@ func DeleteFiles(paths, screenWidth, screenHeight)
 
 		ShowProgress(screenWidth, screenHeight, "Deleting...", i, total);
 
-		var result = err;
-
-		if IsSymlink(path) { result = unlink(path); }
-		elseif IsDir(path) { result = DeleteDirectory(path); }
-		else { result = unlink(path); }
+		var result = RemovePath(path);
 
 		if iserr(result)
 		{
@@ -519,19 +549,8 @@ func DeleteFiles(paths, screenWidth, screenHeight)
 	return ok;
 }
 
-#@ <ShellEscape(s)>
-#@ Escapes a string for safe use in shell commands.
-
-func ShellEscape(s)
-{
-	var escaped = replace(s, "'", "'\\''");
-
-	return "'" + escaped + "'";
-}
-
 #@ <CompressFiles(files, destDir, archiveName, format, screenWidth, screenHeight)>
-#@ Compresses files into an archive. ''format'': 1 = ''tar.zst'', 2 = ''tar.xz'',
-#@ 3 = ''zip''.
+#@ Compresses files into an archive. ''format'' is an index into ''COMPRESSFORMATS''.
 
 func CompressFiles(files, destDir, archiveName, format, screenWidth, screenHeight)
 {
@@ -554,24 +573,9 @@ func CompressFiles(files, destDir, archiveName, format, screenWidth, screenHeigh
 		}
 	}
 
-	var archivePath = "";
+	if format < 1 or format > len(COMPRESSFORMATS) { return err; }
 
-	if format == 1
-	{
-		archivePath = JoinPath(destDir, archiveName + ".tar.zst");
-	}
-	elseif format == 2
-	{
-		archivePath = JoinPath(destDir, archiveName + ".tar.xz");
-	}
-	elseif format == 3
-	{
-		archivePath = JoinPath(destDir, archiveName + ".zip");
-	}
-	else
-	{
-		return err;
-	}
+	var archivePath = JoinPath(destDir, archiveName + COMPRESSFORMATS[format]);
 
 	if PathExists(archivePath)
 	{
@@ -582,11 +586,7 @@ func CompressFiles(files, destDir, archiveName, format, screenWidth, screenHeigh
 
 	ShowProgress(screenWidth, screenHeight, "Compressing...", 0, 1);
 
-	var cmd = "";
-
-	if format == 1 { cmd = "tar --zstd -cf " + ShellEscape(archivePath); }
-	elseif format == 2 { cmd = "tar -cJf " + ShellEscape(archivePath); }
-	elseif format == 3 { cmd = "zip -r " + ShellEscape(archivePath); }
+	var cmd = COMPRESSCOMMANDS[format] + " " + ShellEscape(archivePath);
 
 	# Add all files
 	for i = 1 to total { cmd = cmd + " " + ShellEscape(Basename(files[i])); }

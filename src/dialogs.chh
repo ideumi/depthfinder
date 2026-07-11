@@ -3,6 +3,35 @@
 # depthfinder - dialogs.chh
 #
 
+#@ <OpenDialog(screenWidth, screenHeight, width, height, title)>
+#@ Enters dialog mode and draws the frame for a ''width'' x ''height'' dialog
+#@ centered in the browser region. Returns ''[x, y, contentX, contentWidth]''.
+
+func OpenDialog(screenWidth, screenHeight, width, height, title)
+{
+	EnterDialog();
+
+	var region = GetBrowserRegion(screenWidth, screenHeight);
+	var origin = BFCenterRect(region, width, height);
+
+	var x = origin[1];
+	var y = origin[2];
+
+	BFClearRegion(x, y, width, height);
+	BFDrawFrame(x, y, width, height, title, BFBOXROUNDED);
+
+	return [x, y, x + 2, width - 4];
+}
+
+#@ <CloseDialog()>
+#@ Hides the cursor and leaves dialog mode.
+
+func CloseDialog()
+{
+	HideCursor();
+	ExitDialog();
+}
+
 #@ <GetUsernameByUID(uid)>
 #@ Looks up username from ''/etc/passwd'' by ''uid''. Returns ''uid'' as string
 #@ if not found.
@@ -34,21 +63,11 @@ func GetUsernameByUID(uid)
 
 func ShowProgress(screenWidth, screenHeight, title, current, total)
 {
-	EnterDialog();
+	var dialog = OpenDialog(screenWidth, screenHeight, DIALOGWIDTH, 8, title);
 
-	var width = DIALOGWIDTH;
-	var height = 8;
-
-	var region = GetBrowserRegion(screenWidth, screenHeight);
-	var origin = BFCenterRect(region, width, height);
-	var x = origin[1];
-	var y = origin[2];
-
-	BFClearRegion(x, y, width, height);
-	BFDrawFrame(x, y, width, height, title, BFBOXROUNDED);
-
-	var contentX = x + 2;
-	var contentWidth = width - 4;
+	var y = dialog[2];
+	var contentX = dialog[3];
+	var contentWidth = dialog[4];
 	var barY = y + 3;
 
 	BFDrawProgressBar(contentX, barY, contentWidth, current, total, BFBOXROUNDED);
@@ -65,22 +84,38 @@ func ShowProgress(screenWidth, screenHeight, title, current, total)
 	BFDrawText(contentX, barY + 1, percentText);
 }
 
-#@ <ShowConfirm(screenWidth, screenHeight, message)>
-#@ Shows a centered confirmation dialog with Yes/No buttons.
+#@ <ShowConfirmDialog(screenWidth, screenHeight, message, defaultYes)>
+#@ Shows a centered Yes/No confirmation dialog, with Yes preselected when
+#@ ''defaultYes'' == ''true''. Returns the choice, or ''err'' when the dialog is
+#@ cancelled.
 
-func ShowConfirm(screenWidth, screenHeight, message)
+func ShowConfirmDialog(screenWidth, screenHeight, message, defaultYes)
 {
 	EnterDialog();
 
 	var region = GetBrowserRegion(screenWidth, screenHeight);
 
-	var result = BFShowConfirm(region, DIALOGWIDTH, "Confirm", message, true);
+	var result = BFShowConfirm(region, DIALOGWIDTH, "Confirm", message, defaultYes);
 
-	HideCursor();
-
-	ExitDialog();
+	CloseDialog();
 
 	return result;
+}
+
+#@ <ShowConfirm(screenWidth, screenHeight, message)>
+#@ Shows a confirmation dialog with Yes preselected.
+
+func ShowConfirm(screenWidth, screenHeight, message)
+{
+	return ShowConfirmDialog(screenWidth, screenHeight, message, true);
+}
+
+#@ <ShowConfirmDefaultNo(screenWidth, screenHeight, message)>
+#@ Shows a confirmation dialog with No preselected.
+
+func ShowConfirmDefaultNo(screenWidth, screenHeight, message)
+{
+	return ShowConfirmDialog(screenWidth, screenHeight, message, false);
 }
 
 #@ <ShowError(screenWidth, screenHeight, message)>
@@ -94,9 +129,7 @@ func ShowError(screenWidth, screenHeight, message)
 
 	BFShowMessage(region, DIALOGWIDTH, "Error", message, COLORRED);
 
-	HideCursor();
-
-	ExitDialog();
+	CloseDialog();
 }
 
 #@ <ShowConflictDialog(screenWidth, screenHeight, filename)>
@@ -106,21 +139,11 @@ func ShowError(screenWidth, screenHeight, message)
 
 func ShowConflictDialog(screenWidth, screenHeight, filename)
 {
-	EnterDialog();
+	var dialog = OpenDialog(screenWidth, screenHeight, DIALOGWIDTH, 12, "File Exists");
 
-	var width = DIALOGWIDTH;
-	var height = 12;
-
-	var region = GetBrowserRegion(screenWidth, screenHeight);
-	var origin = BFCenterRect(region, width, height);
-	var x = origin[1];
-	var y = origin[2];
-
-	BFClearRegion(x, y, width, height);
-	BFDrawFrame(x, y, width, height, "File Exists", BFBOXROUNDED);
-
-	var contentX = x + 2;
-	var contentWidth = width - 4;
+	var y = dialog[2];
+	var contentX = dialog[3];
+	var contentWidth = dialog[4];
 
 	var displayName = BFTruncateMiddle(filename, contentWidth - 2);
 	BFDrawText(contentX, y + 2, "'" + displayName + "' already exists.");
@@ -131,10 +154,62 @@ func ShowConflictDialog(screenWidth, screenHeight, filename)
 
 	var selected = BFMenu(contentX, y + 5, items, 1);
 
-	HideCursor();
-	ExitDialog();
+	CloseDialog();
 
 	return selected;
+}
+
+#@ <ShowCompressMenu(screenWidth, screenHeight)>
+#@ Shows the archive format menu. Returns an index in ''COMPRESSFORMATS'', or
+#@ ''err'' if the dialog is cancelled.
+
+func ShowCompressMenu(screenWidth, screenHeight)
+{
+	var dialog = OpenDialog(screenWidth, screenHeight, 50, 8, "Compress");
+
+	var format = BFMenu(dialog[3], dialog[2] + 2, COMPRESSFORMATS, 1);
+
+	CloseDialog();
+
+	return format;
+}
+
+#@ <DrawRenamePatternHint(contentX, row)>
+#@ Draws the bulk rename placeholder hint at ''row''.
+
+func DrawRenamePatternHint(contentX, row)
+{
+	SetAttribute(COLORBOLD);
+	BFDrawText(contentX, row, "#");
+	SetAttribute(COLORRESET);
+	BFDrawText(contentX + 1, row, " Number ");
+	SetAttribute(COLORBOLD);
+	BFDrawText(contentX + 9, row, "*");
+	SetAttribute(COLORRESET);
+	BFDrawText(contentX + 10, row, " Extension");
+}
+
+#@ <ShowInputDialog(screenWidth, screenHeight, title, prompt, defaultValue, patternHint)>
+#@ Shows a centered input dialog, with the bulk rename hint when ''patternHint''
+#@ == ''true''. Returns the entered text, or ''err'' if the dialog is cancelled.
+
+func ShowInputDialog(screenWidth, screenHeight, title, prompt, defaultValue, patternHint)
+{
+	var dialog = OpenDialog(screenWidth, screenHeight, DIALOGWIDTH, 8, title);
+
+	var y = dialog[2];
+	var contentX = dialog[3];
+	var contentWidth = dialog[4];
+
+	if patternHint { DrawRenamePatternHint(contentX, y + 6); }
+
+	var inputWidth = contentWidth - lenv(prompt) - 2;
+
+	var result = BFTextInput(contentX, y + 3, inputWidth, prompt, defaultValue);
+
+	CloseDialog();
+
+	return result;
 }
 
 #@ <ShowInput(screenWidth, screenHeight, title, prompt, defaultValue)>
@@ -142,30 +217,7 @@ func ShowConflictDialog(screenWidth, screenHeight, filename)
 
 func ShowInput(screenWidth, screenHeight, title, prompt, defaultValue)
 {
-	EnterDialog();
-
-	var width = DIALOGWIDTH;
-	var height = 8;
-
-	var region = GetBrowserRegion(screenWidth, screenHeight);
-	var origin = BFCenterRect(region, width, height);
-	var x = origin[1];
-	var y = origin[2];
-
-	BFClearRegion(x, y, width, height);
-	BFDrawFrame(x, y, width, height, title, BFBOXROUNDED);
-
-	var contentX = x + 2;
-	var contentWidth = width - 4;
-
-	var inputWidth = contentWidth - lenv(prompt) - 2;
-
-	var result = BFTextInput(contentX, y + 3, inputWidth, prompt, defaultValue);
-
-	HideCursor();
-	ExitDialog();
-
-	return result;
+	return ShowInputDialog(screenWidth, screenHeight, title, prompt, defaultValue, false);
 }
 
 #@ <ShowRenameInput(screenWidth, screenHeight, title, prompt, defaultValue)>
@@ -173,39 +225,7 @@ func ShowInput(screenWidth, screenHeight, title, prompt, defaultValue)
 
 func ShowRenameInput(screenWidth, screenHeight, title, prompt, defaultValue)
 {
-	EnterDialog();
-
-	var width = DIALOGWIDTH;
-	var height = 8;
-
-	var region = GetBrowserRegion(screenWidth, screenHeight);
-	var origin = BFCenterRect(region, width, height);
-	var x = origin[1];
-	var y = origin[2];
-
-	BFClearRegion(x, y, width, height);
-	BFDrawFrame(x, y, width, height, title, BFBOXROUNDED);
-
-	var contentX = x + 2;
-	var contentWidth = width - 4;
-
-	SetAttribute(COLORBOLD);
-	BFDrawText(contentX, y + 6, "#");
-	SetAttribute(COLORRESET);
-	BFDrawText(contentX + 1, y + 6, " Number ");
-	SetAttribute(COLORBOLD);
-	BFDrawText(contentX + 9, y + 6, "*");
-	SetAttribute(COLORRESET);
-	BFDrawText(contentX + 10, y + 6, " Extension");
-
-	var inputWidth = contentWidth - lenv(prompt) - 2;
-
-	var result = BFTextInput(contentX, y + 3, inputWidth, prompt, defaultValue);
-
-	HideCursor();
-	ExitDialog();
-
-	return result;
+	return ShowInputDialog(screenWidth, screenHeight, title, prompt, defaultValue, true);
 }
 
 #@ <FormatPermissions(mode)>
@@ -213,7 +233,7 @@ func ShowRenameInput(screenWidth, screenHeight, title, prompt, defaultValue)
 
 func FormatPermissions(mode)
 {
-	var ownerPerm = int(mode / 100) % 10;
+	var ownerPerm = OwnerPermBits(mode);
 	var parts = [];
 
 	if int(ownerPerm / 4) % 2 == 1 { append(parts, "read"); }
@@ -225,18 +245,29 @@ func FormatPermissions(mode)
 	return join(parts, ", ");
 }
 
-#@ <ShowFileInfo(screenWidth, screenHeight, path)>
+#@ <ShowFileInfo(screenWidth, screenHeight, paths)>
 #@ Shows the file information dialog.
 
-func ShowFileInfo(screenWidth, screenHeight, path)
+func ShowFileInfo(screenWidth, screenHeight, paths)
 {
 	EnterDialog();
 
 	var width = DIALOGWIDTH;
-	var height = 11;
+	var numFiles = len(paths);
+
+	var isMulti = numFiles > 1;
+
+	var height = 7;
+
+	var dirCount = 0;
+	var fileCount = 0;
+	var symlinkCount = 0;
+	var totalSize = 0;
+	var dirActors = [];
 
 	var region = GetBrowserRegion(screenWidth, screenHeight);
 	var origin = BFCenterRect(region, width, height);
+
 	var x = origin[1];
 	var y = origin[2];
 
@@ -247,20 +278,120 @@ func ShowFileInfo(screenWidth, screenHeight, path)
 	var contentWidth = width - 4;
 	var row = y + 1;
 
+	if isMulti
+	{
+		for i = 1 to numFiles
+		{
+			var path = paths[i];
+			var linfo = lstat(path);
+
+			if iserr(linfo) { continue; }
+
+			var lstatType = StatType(linfo);
+
+			if lstatType == TYPESYMLINK
+			{
+				symlinkCount = symlinkCount + 1;
+				continue;
+			}
+
+			var info = stat(path);
+
+			if iserr(info) { continue; }
+
+			var statType = StatType(info);
+
+			if statType == TYPEDIR
+			{
+				dirCount = dirCount + 1;
+				var a = actor(CalcDirSizeParallel, path);
+
+				append(dirActors, a);
+			}
+			else
+			{
+				fileCount = fileCount + 1;
+				totalSize = totalSize + info["size"];
+			}
+		}
+
+		BFDrawText(contentX, row, "(" + str(numFiles) + " files)");
+
+		row = row + 1;
+
+		var typeParts = [];
+		if dirCount > 0
+		{
+			var dirLabel = "dirs";
+			if dirCount == 1 { dirLabel = "dir"; }
+
+			append(typeParts, str(dirCount) + " " + dirLabel);
+		}
+		if fileCount > 0
+		{
+			var fileLabel = "files";
+			if fileCount == 1 { fileLabel = "file"; }
+
+			append(typeParts, str(fileCount) + " " + fileLabel);
+		}
+		if symlinkCount > 0
+		{
+			var linkLabel = "symlinks";
+			if symlinkCount == 1 { linkLabel = "symlink"; }
+
+			append(typeParts, str(symlinkCount) + " " + linkLabel);
+		}
+
+		var typeStr = join(typeParts, ", ");
+		if typeStr == "" { typeStr = "empty"; }
+
+		BFDrawText(contentX, row, "Type: " + typeStr);
+
+		row = row + 1;
+
+		var sizeRow = row;
+		BFDrawText(contentX, sizeRow, "Size: Calculating, standby...");
+
+		for i = 1 to len(dirActors)
+		{
+			totalSize = totalSize + wait(dirActors[i]);
+		}
+
+		BFClearRegion(contentX, sizeRow, contentWidth, 1);
+		BFDrawText(contentX, sizeRow, "Size: " + SizeToString(totalSize) + " (" + str(totalSize) + " bytes)");
+
+		row = row + 2;
+
+		BFDrawText(contentX, row, "Press any key...");
+
+		getch();
+
+		HideCursor();
+		ExitDialog();
+
+		return;
+	}
+
+	var path = paths[1];
+
 	var info = stat(path);
 	var linfo = lstat(path);
 
 	var isSymlink = not iserr(linfo) and StatType(linfo) == TYPESYMLINK;
-	var isDir = not iserr(info) and StatType(info) == TYPEDIR;
+	var isDir = not iserr(linfo) and StatType(linfo) == TYPEDIR;
+
 	var isExecutable = false;
 
-	if not iserr(info)
-	{
-		var ownerPerm = int(info["mode"] / 100) % 10;
-		isExecutable = not isDir and ownerPerm % 2 == 1;
-	}
+	if not iserr(info) { isExecutable = IsExecutableMode(info["mode"], isDir); }
 
-	# Name
+	height = 11;
+	y = origin[2] - 2;
+
+	BFClearRegion(x, y, width, height);
+	BFDrawFrame(x, y, width, height, "File Info", BFBOXROUNDED);
+
+	row = y + 1;
+
 	var name = BFTruncateMiddle(Basename(path), contentWidth - 6);
 
 	BFDrawText(contentX, row, "Name: ");
@@ -276,13 +407,13 @@ func ShowFileInfo(screenWidth, screenHeight, path)
 		BFDrawText(contentX, row + 2, "Press any key...");
 
 		getch();
+
 		HideCursor();
 		ExitDialog();
 
 		return;
 	}
 
-	# Check if symlink
 	var fileType = StatType(info);
 
 	if isSymlink
@@ -306,12 +437,6 @@ func ShowFileInfo(screenWidth, screenHeight, path)
 
 	row = row + 1;
 
-	# Size
-	var size = info["size"];
-	BFDrawText(contentX, row, "Size: " + SizeToString(size) + " (" + str(size) + " bytes)");
-	row = row + 1;
-
-	# Owner
 	var uid = info["userId"];
 	var owner = GetUsernameByUID(uid);
 	BFDrawText(contentX, row, "Owner: " + owner);
@@ -321,9 +446,28 @@ func ShowFileInfo(screenWidth, screenHeight, path)
 	BFDrawText(contentX, row, "Permissions: " + str(int(mode)) + " (" + FormatPermissions(mode) + ")");
 	row = row + 1;
 
-	# Modified time
 	var mtime = info["modified"];
 	BFDrawText(contentX, row, "Modified: " + GregorianFormatTime(mtime));
+	row = row + 1;
+
+	var size = info["size"];
+	var sizeRow = row;
+
+	if isDir
+	{
+		BFDrawText(contentX, sizeRow, "Size: Calculating, standby...");
+
+		var sizeActor = actor(CalcDirSizeParallel, path);
+		size = wait(sizeActor);
+
+		BFClearRegion(contentX, sizeRow, contentWidth, 1);
+		BFDrawText(contentX, sizeRow, "Size: " + SizeToString(size) + " (" + str(size) + " bytes)");
+	}
+	else
+	{
+		BFDrawText(contentX, sizeRow, "Size: " + SizeToString(size) + " (" + str(size) + " bytes)");
+	}
+
 	row = row + 3;
 
 	BFDrawText(contentX, row, "Press any key...");
@@ -331,6 +475,22 @@ func ShowFileInfo(screenWidth, screenHeight, path)
 	getch();
 	HideCursor();
 	ExitDialog();
+}
+
+#@ <DrawSortMenuRow(contentX, row, contentWidth, label, highlighted)>
+#@ Draws one row in the sort dialog / menu.
+
+func DrawSortMenuRow(contentX, row, contentWidth, label, highlighted)
+{
+	if highlighted
+	{
+		SetAttribute(COLORBLACK);
+		SetAttribute(COLORBGWHITE);
+	}
+
+	BFDrawText(contentX, row, BFPadText(label, contentWidth, BFALIGNLEFT));
+
+	if highlighted { SetAttribute(COLORRESET); }
 }
 
 #@ <ShowSortMenu(screenWidth, screenHeight, currentMode, currentDirection)>
@@ -356,89 +516,51 @@ func ShowSortMenu(screenWidth, screenHeight, currentMode, currentDirection)
 	var contentX = x + 2;
 	var contentWidth = width - 4;
 
+	# Indexes 1-3 pick the mode, 4-5 pick the direction.
+	var modes = [SORTNAME, SORTSIZE, SORTMTIME];
+	var directions = [SORTASC, SORTDESC];
+
+	var names = ["Name", "Size", "Modified", "Ascending", "Descending"];
+
 	while running
 	{
 		BFClearRegion(x, y, width, height);
 		BFDrawFrame(x, y, width, height, "Sort", BFBOXROUNDED);
 
-		# Mode options
-		var nameLabel = "  Name";
-		var sizeLabel = "  Size";
-		var mtimeLabel = "  Modified";
-
-		if mode == SORTNAME { nameLabel = "> Name"; }
-		if mode == SORTSIZE { sizeLabel = "> Size"; }
-		if mode == SORTMTIME { mtimeLabel = "> Modified"; }
-
-		var ascLabel = "  Ascending";
-		var descLabel = "  Descending";
-
-		if direction == SORTASC { ascLabel = "> Ascending"; }
-		if direction == SORTDESC { descLabel = "> Descending"; }
-
-		# ---
-
-		var row = y + 2;
-
-		if selected == 1
+		# Mode and direction options
+		for item = 1 to len(names)
 		{
-			SetAttribute(COLORBLACK);
-			SetAttribute(COLORBGWHITE);
-		}
-		BFDrawText(contentX, row, BFPadText(nameLabel, contentWidth, BFALIGNLEFT));
-		if selected == 1 { SetAttribute(COLORRESET); }
+			var active = false;
 
-		row = row + 1;
-		if selected == 2
-		{
-			SetAttribute(COLORBLACK);
-			SetAttribute(COLORBGWHITE);
-		}
-		BFDrawText(contentX, row, BFPadText(sizeLabel, contentWidth, BFALIGNLEFT));
-		if selected == 2 { SetAttribute(COLORRESET); }
+			if item <= len(modes) { active = mode == modes[item]; }
+			else { active = direction == directions[item - len(modes)]; }
 
-		row = row + 1;
-		if selected == 3
-		{
-			SetAttribute(COLORBLACK);
-			SetAttribute(COLORBGWHITE);
+			# Padding for the separator between modes and directions
+			var row = y + 1 + item;
+
+			if item > len(modes) { row = row + 1; }
+
+			var label = "  " + names[item];
+
+			if active { label = "> " + names[item]; }
+
+			DrawSortMenuRow(contentX, row, contentWidth, label, selected == item);
 		}
-		BFDrawText(contentX, row, BFPadText(mtimeLabel, contentWidth, BFALIGNLEFT));
-		if selected == 3 { SetAttribute(COLORRESET); }
 
 		# Separator
-		row = row + 1;
-		BFDrawHLine(x + 1, row, width - 2, "─");
-
-		row = row + 1;
-		if selected == 4
-		{
-			SetAttribute(COLORBLACK);
-			SetAttribute(COLORBGWHITE);
-		}
-		BFDrawText(contentX, row, BFPadText(ascLabel, contentWidth, BFALIGNLEFT));
-		if selected == 4 { SetAttribute(COLORRESET); }
-
-		row = row + 1;
-		if selected == 5
-		{
-			SetAttribute(COLORBLACK);
-			SetAttribute(COLORBGWHITE);
-		}
-		BFDrawText(contentX, row, BFPadText(descLabel, contentWidth, BFALIGNLEFT));
-		if selected == 5 { SetAttribute(COLORRESET); }
+		BFDrawHLine(x + 1, y + 1 + len(modes) + 1, width - 2, "─");
 
 		# Render help text
-		row = row + 2;
+		var helpRow = y + len(names) + 4;
 
 		SetAttribute(COLORBOLD);
-		BFDrawText(contentX, row, "Space");
+		BFDrawText(contentX, helpRow, "Space");
 		SetAttribute(COLORRESET);
-		BFDrawText(contentX + 5, row, " Select ");
+		BFDrawText(contentX + 5, helpRow, " Select ");
 		SetAttribute(COLORBOLD);
-		BFDrawText(contentX + 13, row, "Enter");
+		BFDrawText(contentX + 13, helpRow, "Enter");
 		SetAttribute(COLORRESET);
-		BFDrawText(contentX + 18, row, " Confirm");
+		BFDrawText(contentX + 18, helpRow, " Confirm");
 
 		# ---
 
@@ -446,18 +568,14 @@ func ShowSortMenu(screenWidth, screenHeight, currentMode, currentDirection)
 
 		if key == BFKEYESC
 		{
-			HideCursor();
-			ExitDialog();
+			CloseDialog();
 
 			return err;
 		}
 		elseif key == KEYSPACE
 		{
-			if selected == 1 { mode = SORTNAME; }
-			elseif selected == 2 { mode = SORTSIZE; }
-			elseif selected == 3 { mode = SORTMTIME; }
-			elseif selected == 4 { direction = SORTASC; }
-			elseif selected == 5 { direction = SORTDESC; }
+			if selected <= len(modes) { mode = modes[selected]; }
+			else { direction = directions[selected - len(modes)]; }
 		}
 		elseif key == BFKEYUP
 		{
@@ -465,7 +583,7 @@ func ShowSortMenu(screenWidth, screenHeight, currentMode, currentDirection)
 		}
 		elseif key == BFKEYDOWN
 		{
-			if selected < 5 { selected = selected + 1; }
+			if selected < len(names) { selected = selected + 1; }
 		}
 		elseif key == BFKEYENTER
 		{
@@ -474,8 +592,7 @@ func ShowSortMenu(screenWidth, screenHeight, currentMode, currentDirection)
 		}
 	}
 
-	HideCursor();
-	ExitDialog();
+	CloseDialog();
 
 	return [mode, direction];
 }

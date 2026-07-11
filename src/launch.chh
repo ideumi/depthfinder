@@ -1,0 +1,105 @@
+#!/usr/bin/chippy
+#
+# depthfinder - launch.chh
+#
+
+#@ <RunForeground(command)>
+#@ Runs a command in the foreground with TTY redirect.
+
+func RunForeground(command)
+{
+	ShowCursor();
+	ClearScreen();
+	CursorTo(1, 1);
+
+	var tuiCmd = command + TTYREDIRECT;
+	var exitCode = -1;
+	var handle = popen(tuiCmd, "r");
+
+	if not iserr(handle) { exitCode = pclose(handle); }
+
+	Print("\n--- Exit " + str(exitCode) + ", press any key to continue ---");
+
+	HideCursor();
+	getch();
+
+	ClearScreen();
+}
+
+#@ <RunCommand(command, isTui)>
+#@ Runs ''command'' in the terminal foreground if ''isTui'', otherwise spawns it
+#@ in the background.
+
+func RunCommand(command, isTui)
+{
+	if isTui { RunForeground(command); }
+	else { Spawn(command); }
+}
+
+#@ <StripTuiPrefix(command)>
+#@ Strips a leading ''"!"'' from ''command'' and determines if ''command'' should
+#@ be run in foreground mode. Returns ''[command, isTui]''.
+
+func StripTuiPrefix(command)
+{
+	if not StartsWith(command, "!") { return [command, false]; }
+
+	return [slice(command, 2, len(command)), true];
+}
+
+#@ <OpenFile(path)>
+#@ File opening logic that resolves the file-extension and associated command, if
+#@ the associated command is prefixed with ''!'', then it will be run in the
+#@ terminal foreground, otherwise it will be spawned in the background. If no
+#@ command is associated, then ''DEFAULTRUNNER'' will be used.
+
+func OpenFile(path)
+{
+	var ext = FileExtension(path);
+	var cmd = GetAssocCommand(fileAssoc, ext);
+
+	if iserr(cmd) or cmd == "" { cmd = DEFAULTRUNNER; }
+
+	# Prefix handling
+	var parsed = StripTuiPrefix(cmd);
+
+	RunCommand(parsed[1] + " " + ShellEscape(path), parsed[2]);
+}
+
+#@ <CheckTerminal()>
+#@ Checks if a terminal is configured. Shows an error if not.
+
+func CheckTerminal()
+{
+	if terminal == ""
+	{
+		var configPath = GetConfigPath(CONFIGFILETERMINAL);
+
+		ShowError(screenWidth, screenHeight,
+			"No terminal configured in " + configPath);
+
+		return false;
+	}
+
+	return true;
+}
+
+#@ <OpenTerminal()>
+#@ Opens a terminal in the current directory.
+
+func OpenTerminal()
+{
+	if not CheckTerminal() { return; }
+
+	Spawn(terminal);
+}
+
+#@ <OpenNewWindow()>
+#@ Opens a new dfn instance in the current directory.
+
+func OpenNewWindow()
+{
+	if not CheckTerminal() { return; }
+
+	Spawn(terminal + " -e " + PROGRAMNAMESHORT + " " + ShellEscape(currentPath));
+}
