@@ -195,56 +195,35 @@ func AdjustScrollOffset()
 
 func MoveSelection(delta)
 {
-	var oldIndex = selectedIndex;
-	var oldOffset = scrollOffset;
-
-	if delta < 0 and selectedIndex <= 1
-	{
-		skipFullRedraw = true;
-
-		return;
-	}
-
-	if delta > 0 and selectedIndex >= len(files)
-	{
-		skipFullRedraw = true;
-
-		return;
-	}
+	if len(files) == 0 { return; }
 
 	selectedIndex = selectedIndex + delta;
 
-	AdjustScrollOffset();
+	if selectedIndex < 1 { selectedIndex = 1; }
+	if selectedIndex > len(files) { selectedIndex = len(files); }
 
-	# Repaint only the changed rows when the list did not scroll
+	AdjustScrollOffset();
+}
+
+#@ <MoveSelectionRedraw(delta)>
+#@ Moves the selection by ''delta'' and repaints only the two changed rows when the
+#@ list did not scroll, in which case the main loop is told to skip its full redraw.
+
+func MoveSelectionRedraw(delta)
+{
+	var oldIndex = selectedIndex;
+	var oldOffset = scrollOffset;
+
+	MoveSelection(delta);
+
+	# Repaint only the two changed rows when the list did not scroll.
 	if scrollOffset == oldOffset
 	{
-		var rowStart = oldIndex;
-		var rowEnd = selectedIndex;
-
-		if rowStart > rowEnd
-		{
-			rowStart = selectedIndex;
-			rowEnd = oldIndex;
-		}
-
-		for i = rowStart to rowEnd { RedrawBrowserRow(i); }
+		RedrawBrowserRow(oldIndex);
+		RedrawBrowserRow(selectedIndex);
 
 		skipFullRedraw = true;
 	}
-}
-
-#@ <MoveSelectionPage(delta)>
-#@ Moves the browser selection by ''delta'' pages.
-
-func MoveSelectionPage(delta)
-{
-	selectedIndex = selectedIndex + delta * GetVisibleFileCount();
-
-	if delta < 0 and selectedIndex < 1 { selectedIndex = 1; }
-	if delta > 0 and selectedIndex > len(files) { selectedIndex = len(files); }
-
-	AdjustScrollOffset();
 }
 
 #@ <NavigateToBookmark(bmIndex)>

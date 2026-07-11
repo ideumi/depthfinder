@@ -6,43 +6,6 @@
 # Set timezone offset in libgregorian.chh
 SetLocalTimezoneOffset();
 
-var currentPath = "";
-var files = [];
-
-var selectedIndex = 1;
-var scrollOffset = 1;
-
-var showHidden = false;
-var movingBookmark = false;
-var showKeybinds = false;
-
-var skipFullRedraw = false;
-
-var sortMode = SORTNAME;
-var sortDirection = SORTASC;
-
-var clipboard = [];
-var clipboardMode = CLIPBOARDNONE;
-
-var focusPanel = FOCUSBROWSER;
-
-var bookmarks = [];
-var selectedBookmark = 1;
-
-var fileAssoc = [];
-
-var terminal = "";
-
-var screenWidth = MINTERMWIDTH;
-var screenHeight = MINTERMHEIGHT;
-
-var dirHistory = [];
-var navigatingBack = false;
-
-var winsizeHandle = err;
-
-var inDialog = false;
-
 #@ <ConfirmExit()>
 #@ The exit confirmation dialog.
 
@@ -240,22 +203,22 @@ func HandleBrowserInput(key)
 	}
 	elseif key == BFKEYUP
 	{
-		MoveSelection(-1);
+		MoveSelectionRedraw(-1);
 	}
 	# Down Arrow
 	elseif key == BFKEYDOWN
 	{
-		MoveSelection(1);
+		MoveSelectionRedraw(1);
 	}
 	# PgUp
 	elseif key == BFKEYPAGEUP
 	{
-		MoveSelectionPage(-1);
+		MoveSelection(-GetVisibleFileCount());
 	}
 	# PgDown
 	elseif key == BFKEYPAGEDOWN
 	{
-		MoveSelectionPage(1);
+		MoveSelection(GetVisibleFileCount());
 	}
 	# Home
 	elseif key == BFKEYHOME
