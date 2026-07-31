@@ -1,0 +1,5 @@
+What's New:
+
+	- bump to boxflinger V-1.0.11
+
+878bdf302ebbe0d60999748253c1d94fa072fe81e330e2ffc3f1938ad58712a6  dfn

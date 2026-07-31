@@ -1,0 +1,6 @@
+What's New:
+
+	- bumped boxflinger version to V-1.0.8
+	- removed (now) duplicate widget implementations and moved to new boxflinger widgets
+
+fcc106c607e0a49b7ac8d1e47866e54cb8c047ac3c80a60009492369ec6b89cc  dfn

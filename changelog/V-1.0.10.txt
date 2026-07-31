@@ -1,0 +1,6 @@
+What's New:
+
+	- selective redrawing of browser file list rows
+	- some refactoring/cleanups in the ui code
+
+2a299cf360f05f3fa57b9e906084e6db9302f6216a50642a245d5775f0ecb5b6  dfn

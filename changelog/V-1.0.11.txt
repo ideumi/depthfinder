@@ -1,0 +1,10 @@
+What's New:
+
+	- opening the info dialog on a directory now calculates the complete size of that directory
+	- opening the info dialog on multiple selected files now displays the complete size of those selected files
+	- the search dialog now accepts UTF-8 characters as input and not just ascii
+	- bug: the compress menu previously didnt enter dialog mode which led to corruption when resizing the window
+	- the "This will recursively delete." dialog now defaults to No.
+	- various code quality improvements and refactorings
+
+5e94c326c774433a5605f1fdec0c73d553af944edae112cf36cca4bb4988414b  dfn

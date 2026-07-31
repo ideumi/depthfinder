@@ -1,0 +1,5 @@
+What's New:
+
+	- dropped timezone.chh in favor of SetLocalTimezoneOffset for improved timezone handling
+
+c5efc7fd808afc31c1ac58c16d8b80fc88c87615c3106d098dd907e9e58cafc5  dfn

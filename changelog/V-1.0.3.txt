@@ -1,0 +1,5 @@
+What's New:
+
+	- updated to ChipLang V-1.0.17 conventions
+
+4a1e577b74cacf30efbb9291abacec1ac832cfb39d85ab1d0b891c885da3c4e5  dfn

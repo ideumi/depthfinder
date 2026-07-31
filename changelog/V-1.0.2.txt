@@ -1,0 +1,5 @@
+What's New:
+
+	- upgrade boxflinger to V-1.0.7
+
+b9ca69f4842b51404e8de61ab78e9b25191a35a019c837be1e283f77f4fe341a  dfn
