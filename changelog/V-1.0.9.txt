@@ -1,0 +1,4 @@
+What's New:
+
+	- bug: redraw properly after exiting out of "Terminal too small" state
+	- bug: winsize actor was unaware of keybinds bar state which caused display bugs

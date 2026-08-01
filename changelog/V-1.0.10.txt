@@ -1,0 +1,4 @@
+What's New:
+
+	- selective redrawing of browser file list rows
+	- some refactoring/cleanups in the ui code

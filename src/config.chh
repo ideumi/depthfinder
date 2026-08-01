@@ -79,16 +79,13 @@ func SaveBookmarks(bookmarks)
 	for i = 1 to len(bookmarks)
 	{
 		var bm = bookmarks[i];
-		var name = bm["name"];
-		var bmPath = bm["path"];
 
-		if not iserr(name) and not iserr(bmPath)
-		{
-			name = replace(name, ";", "");
-			bmPath = replace(bmPath, ";", "");
+		if not has(bm, "name") or not has(bm, "path") { continue; }
 
-			append(lines, name + ";" + bmPath);
-		}
+		var name = replace(bm["name"], ";", "");
+		var bmPath = replace(bm["path"], ";", "");
+
+		append(lines, name + ";" + bmPath);
 	}
 
 	return WriteLines(path, lines, true);
@@ -173,6 +170,8 @@ func LoadFileAssoc()
 func GetAssocCommand(fileAssoc, extension)
 {
 	var ext = lower(extension);
+
+	if not has(fileAssoc, ext) { return err; }
 
 	return fileAssoc[ext];
 }

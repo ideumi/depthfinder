@@ -1,0 +1,4 @@
+What's New:
+
+	- bumped boxflinger version to V-1.0.8
+	- removed (now) duplicate widget implementations and moved to new boxflinger widgets

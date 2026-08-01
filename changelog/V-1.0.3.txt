@@ -1,0 +1,3 @@
+What's New:
+
+	- updated to ChipLang V-1.0.17 conventions

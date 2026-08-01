@@ -1,0 +1,6 @@
+What's New:
+
+	- bumped to boxflinger V-1.0.10
+	- updated to Chippy V-1.0.20 conventions
+	- removed the side bar DEPTHFINDER text as it was cluttering up the UI
+	- the keybinds bar is now hidden by default and can be raised by hitting "."
