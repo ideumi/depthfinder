@@ -2,5 +2,3 @@ What's New:
 
 	- bug: redraw properly after exiting out of "Terminal too small" state
 	- bug: winsize actor was unaware of keybinds bar state which caused display bugs
-
-895137c667aea3395a195b18fce8eedce5d547c03148073e36ab632796aaebe5  dfn

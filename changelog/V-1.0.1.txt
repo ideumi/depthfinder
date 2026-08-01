@@ -1,5 +1,3 @@
 What's New:
 
 	- bug: fix scroll desync on WINCH resize
-
-a7448290ac7252a91801af20f5ef014d31b9916bcb5d68eda16592313d58ebb8  dfn

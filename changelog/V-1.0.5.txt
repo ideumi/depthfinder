@@ -2,5 +2,3 @@ What's New:
 
 	- bumped to boxflinger V-1.0.9
 	- updated to ChipLang V-1.0.19 conventions
-
-2e4e96d5fb645e0d3f7172defec205b15da5cd700c733ed1856927a70ccc7ebc  dfn

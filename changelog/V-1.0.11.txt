@@ -6,5 +6,3 @@ What's New:
 	- bug: the compress menu previously didnt enter dialog mode which led to corruption when resizing the window
 	- the "This will recursively delete." dialog now defaults to No.
 	- various code quality improvements and refactorings
-
-5e94c326c774433a5605f1fdec0c73d553af944edae112cf36cca4bb4988414b  dfn
