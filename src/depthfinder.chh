@@ -6,16 +6,6 @@
 # Set timezone offset in libgregorian.chh
 SetLocalTimezoneOffset();
 
-#@ <ConfirmExit()>
-#@ The exit confirmation dialog.
-
-func ConfirmExit()
-{
-	var confirmed = ShowConfirm(screenWidth, screenHeight, "Do you really want to exit?");
-
-	return not iserr(confirmed) and confirmed;
-}
-
 #@ <StopMovingBookmark()>
 #@ Leaves bookmark move mode and saves the new bookmark order.
 
@@ -393,27 +383,6 @@ func CurrentState()
 		"showKeybinds": showKeybinds,
 		"inDialog": inDialog
 	];
-}
-
-#@ <EnterDialog()>
-#@ Sets the in-dialog flag and tells the winsize actor to suppress repaints
-#@ until the dialog returns.
-
-func EnterDialog()
-{
-	inDialog = true;
-
-	if not iserr(winsizeHandle) { send(winsizeHandle, CurrentState()); }
-}
-
-#@ <ExitDialog()>
-#@ Clears the in-dialog flag.
-
-func ExitDialog()
-{
-	inDialog = false;
-
-	if not iserr(winsizeHandle) { send(winsizeHandle, CurrentState()); }
 }
 
 #@ <WinChangeActor()>

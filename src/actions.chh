@@ -339,6 +339,29 @@ func ActionSort()
 	}
 }
 
+#@ <ActionPaste()>
+#@ Handles pasting files from clipboard.
+
+func ActionPaste()
+{
+	if len(clipboard) == 0 { return; }
+
+	var result = err;
+
+	if clipboardMode == CLIPBOARDCOPY
+	{
+		result = CopyFiles(clipboard, currentPath, screenWidth, screenHeight);
+	}
+	elseif clipboardMode == CLIPBOARDCUT
+	{
+		result = MoveFiles(clipboard, currentPath, screenWidth, screenHeight);
+
+		if isok(result) { ClearClipboard(); }
+	}
+
+	RefreshDirectory();
+}
+
 #@ <ActionDelete()>
 #@ Handles deleting the selected files.
 

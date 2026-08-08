@@ -3,6 +3,27 @@
 # depthfinder - dialogs.chh
 #
 
+#@ <EnterDialog()>
+#@ Sets the in-dialog flag and tells the winsize actor to suppress repaints
+#@ until the dialog returns.
+
+func EnterDialog()
+{
+	inDialog = true;
+
+	if not iserr(winsizeHandle) { send(winsizeHandle, CurrentState()); }
+}
+
+#@ <ExitDialog()>
+#@ Clears the in-dialog flag.
+
+func ExitDialog()
+{
+	inDialog = false;
+
+	if not iserr(winsizeHandle) { send(winsizeHandle, CurrentState()); }
+}
+
 #@ <OpenDialog(screenWidth, screenHeight, width, height, title)>
 #@ Enters dialog mode and draws the frame for a ''width'' x ''height'' dialog
 #@ centered in the browser region. Returns ''[x, y, contentX, contentWidth]''.
@@ -30,32 +51,6 @@ func CloseDialog()
 {
 	HideCursor();
 	ExitDialog();
-}
-
-#@ <GetUsernameByUID(uid)>
-#@ Looks up username from ''/etc/passwd'' by ''uid''. Returns ''uid'' as string
-#@ if not found.
-
-func GetUsernameByUID(uid)
-{
-	var content = ReadFile("/etc/passwd", true);
-
-	if iserr(content) { return str(uid); }
-
-	var lines = split(content, "\n");
-
-	for lineIndex = 1 to len(lines)
-	{
-		var line = lines[lineIndex];
-
-		if line == "" { continue; }
-
-		var parts = split(line, ":");
-
-		if len(parts) >= 3 and parts[3] == str(uid) { return parts[1]; }
-	}
-
-	return str(uid);
 }
 
 #@ <ShowProgress(screenWidth, screenHeight, title, current, total)>
@@ -116,6 +111,16 @@ func ShowConfirm(screenWidth, screenHeight, message)
 func ShowConfirmDefaultNo(screenWidth, screenHeight, message)
 {
 	return ShowConfirmDialog(screenWidth, screenHeight, message, false);
+}
+
+#@ <ConfirmExit()>
+#@ The exit confirmation dialog.
+
+func ConfirmExit()
+{
+	var confirmed = ShowConfirm(screenWidth, screenHeight, "Do you really want to exit?");
+
+	return not iserr(confirmed) and confirmed;
 }
 
 #@ <ShowError(screenWidth, screenHeight, message)>
@@ -233,23 +238,6 @@ func ShowInput(screenWidth, screenHeight, title, prompt, defaultValue)
 func ShowRenameInput(screenWidth, screenHeight, title, prompt, defaultValue)
 {
 	return ShowInputDialog(screenWidth, screenHeight, title, prompt, defaultValue, true);
-}
-
-#@ <FormatPermissions(mode)>
-#@ Formats permission ''mode'' as human readable string.
-
-func FormatPermissions(mode)
-{
-	var ownerPerm = OwnerPermBits(mode);
-	var parts = [];
-
-	if int(ownerPerm / 4) % 2 == 1 { append(parts, "read"); }
-	if int(ownerPerm / 2) % 2 == 1 { append(parts, "write"); }
-	if ownerPerm % 2 == 1 { append(parts, "execute"); }
-
-	if len(parts) == 0 { return "no access"; }
-
-	return join(parts, ", ");
 }
 
 #@ <ShowFileInfo(screenWidth, screenHeight, paths)>
