@@ -167,7 +167,14 @@ func ShowCompressMenu(screenWidth, screenHeight)
 {
 	var dialog = OpenDialog(screenWidth, screenHeight, 50, 8, "Compress");
 
-	var format = BFMenu(dialog[3], dialog[2] + 2, COMPRESSFORMATS, 1);
+	var extensions = [];
+
+	for i = 1 to len(COMPRESSFORMATS)
+	{
+		append(extensions, COMPRESSFORMATS[i]["extension"]);
+	}
+
+	var format = BFMenu(dialog[3], dialog[2] + 2, extensions, 1);
 
 	CloseDialog();
 

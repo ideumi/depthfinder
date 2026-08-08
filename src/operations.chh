@@ -575,7 +575,7 @@ func CompressFiles(files, destDir, archiveName, format, screenWidth, screenHeigh
 
 	if format < 1 or format > len(COMPRESSFORMATS) { return err; }
 
-	var archivePath = JoinPath(destDir, archiveName + COMPRESSFORMATS[format]);
+	var archivePath = JoinPath(destDir, archiveName + COMPRESSFORMATS[format]["extension"]);
 
 	if PathExists(archivePath)
 	{
@@ -586,7 +586,7 @@ func CompressFiles(files, destDir, archiveName, format, screenWidth, screenHeigh
 
 	ShowProgress(screenWidth, screenHeight, "Compressing...", 0, 1);
 
-	var cmd = COMPRESSCOMMANDS[format] + " " + ShellEscape(archivePath);
+	var cmd = COMPRESSFORMATS[format]["command"] + " " + ShellEscape(archivePath);
 
 	# Add all files
 	for i = 1 to total { cmd = cmd + " " + ShellEscape(Basename(files[i])); }
