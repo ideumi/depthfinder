@@ -34,9 +34,9 @@ func LoadDirectory(path, showHidden, sortMode, sortDirection)
 	var dirs = [];
 	var files = [];
 
-	for i = 1 to len(entries)
+	for entryIndex = 1 to len(entries)
 	{
-		var name = entries[i];
+		var name = entries[entryIndex];
 
 		if not showHidden and StartsWith(name, ".") { continue; }
 
@@ -80,9 +80,15 @@ func LoadDirectory(path, showHidden, sortMode, sortDirection)
 		append(result, parentEntry);
 	}
 
-	for i = 1 to len(sortedDirs) { append(result, sortedDirs[i]); }
+	for dirIndex = 1 to len(sortedDirs)
+	{
+		append(result, sortedDirs[dirIndex]);
+	}
 
-	for i = 1 to len(sortedFiles) { append(result, sortedFiles[i]); }
+	for fileIndex = 1 to len(sortedFiles)
+	{
+		append(result, sortedFiles[fileIndex]);
+	}
 
 	return result;
 }
@@ -97,9 +103,9 @@ func SortFileEntries(entries, mode, direction)
 	# Create "key|index" strings for sort(list)
 	var sortable = [];
 
-	for i = 1 to len(entries)
+	for entryIndex = 1 to len(entries)
 	{
-		var entry = entries[i];
+		var entry = entries[entryIndex];
 		var key = "";
 
 		if mode == SORTNAME { key = lower(entry["name"]); }
@@ -107,16 +113,16 @@ func SortFileEntries(entries, mode, direction)
 		elseif mode == SORTMTIME { key = ZeroPad(entry["mtime"], 20); }
 		else { key = lower(entry["name"]); }
 
-		append(sortable, key + "|" + ZeroPad(i, 8));
+		append(sortable, key + "|" + ZeroPad(entryIndex, 8));
 	}
 
 	sort(sortable);
 
 	var sorted = [];
 
-	for i = 1 to len(sortable)
+	for sortableIndex = 1 to len(sortable)
 	{
-		var parts = split(sortable[i], "|");
+		var parts = split(sortable[sortableIndex], "|");
 		var idx = num(parts[len(parts)]);
 
 		append(sorted, entries[idx]);
@@ -126,7 +132,10 @@ func SortFileEntries(entries, mode, direction)
 	{
 		var reversed = [];
 
-		for i = len(sorted) to 1 step -1 { append(reversed, sorted[i]); }
+		for sortedIndex = len(sorted) to 1 step -1
+		{
+			append(reversed, sorted[sortedIndex]);
+		}
 
 		return reversed;
 	}
@@ -156,9 +165,9 @@ func GetMarkedFiles(files, currentPath)
 {
 	var marked = [];
 
-	for i = 1 to len(files)
+	for fileIndex = 1 to len(files)
 	{
-		var entry = files[i];
+		var entry = files[fileIndex];
 
 		if entry["marked"]
 		{
@@ -174,9 +183,9 @@ func GetMarkedFiles(files, currentPath)
 
 func ClearAllMarks(files)
 {
-	for i = 1 to len(files)
+	for fileIndex = 1 to len(files)
 	{
-		var entry = files[i];
+		var entry = files[fileIndex];
 
 		entry["marked"] = false;
 	}
@@ -191,9 +200,9 @@ func CountMarkedFiles(files)
 {
 	var count = 0;
 
-	for i = 1 to len(files)
+	for fileIndex = 1 to len(files)
 	{
-		if files[i]["marked"] { count = count + 1; }
+		if files[fileIndex]["marked"] { count = count + 1; }
 	}
 
 	return count;
@@ -224,15 +233,15 @@ func ToggleSelectAll(files)
 	var allSelected = true;
 	var selectableCount = 0;
 
-	for i = 1 to len(files)
+	for fileIndex = 1 to len(files)
 	{
-		var name = files[i]["name"];
+		var name = files[fileIndex]["name"];
 
 		if name != ".."
 		{
 			selectableCount = selectableCount + 1;
 
-			if not files[i]["marked"] { allSelected = false; }
+			if not files[fileIndex]["marked"] { allSelected = false; }
 		}
 	}
 
@@ -240,13 +249,13 @@ func ToggleSelectAll(files)
 
 	var newState = not allSelected;
 
-	for i = 1 to len(files)
+	for fileIndex = 1 to len(files)
 	{
-		var name = files[i]["name"];
+		var name = files[fileIndex]["name"];
 
 		if name != ".."
 		{
-			var entry = files[i];
+			var entry = files[fileIndex];
 
 			entry["marked"] = newState;
 		}

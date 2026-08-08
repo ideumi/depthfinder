@@ -44,9 +44,9 @@ func GetUsernameByUID(uid)
 
 	var lines = split(content, "\n");
 
-	for i = 1 to len(lines)
+	for lineIndex = 1 to len(lines)
 	{
-		var line = lines[i];
+		var line = lines[lineIndex];
 
 		if line == "" { continue; }
 
@@ -169,9 +169,9 @@ func ShowCompressMenu(screenWidth, screenHeight)
 
 	var extensions = [];
 
-	for i = 1 to len(COMPRESSFORMATS)
+	for formatIndex = 1 to len(COMPRESSFORMATS)
 	{
-		append(extensions, COMPRESSFORMATS[i]["extension"]);
+		append(extensions, COMPRESSFORMATS[formatIndex]["extension"]);
 	}
 
 	var format = BFMenu(dialog[3], dialog[2] + 2, extensions, 1);
@@ -281,9 +281,9 @@ func ShowFileInfo(screenWidth, screenHeight, paths)
 
 	if isMulti
 	{
-		for i = 1 to numFiles
+		for pathIndex = 1 to numFiles
 		{
-			var path = paths[i];
+			var path = paths[pathIndex];
 			var linfo = lstat(path);
 
 			if iserr(linfo) { continue; }
@@ -305,9 +305,9 @@ func ShowFileInfo(screenWidth, screenHeight, paths)
 			if statType == TYPEDIR
 			{
 				dirCount = dirCount + 1;
-				var a = actor(CalcDirSizeParallel, path);
+				var dirActor = actor(CalcDirSizeParallel, path);
 
-				append(dirActors, a);
+				append(dirActors, dirActor);
 			}
 			else
 			{
@@ -353,9 +353,9 @@ func ShowFileInfo(screenWidth, screenHeight, paths)
 		var sizeRow = row;
 		BFDrawText(contentX, sizeRow, "Size: Calculating, standby...");
 
-		for i = 1 to len(dirActors)
+		for actorIndex = 1 to len(dirActors)
 		{
-			totalSize = totalSize + wait(dirActors[i]);
+			totalSize = totalSize + wait(dirActors[actorIndex]);
 		}
 
 		BFClearRegion(contentX, sizeRow, contentWidth, 1);

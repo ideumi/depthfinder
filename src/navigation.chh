@@ -99,11 +99,11 @@ func NavigateUp()
 		NavigateTo(parent);
 
 		# Try to select the directory we came from
-		for i = 1 to len(files)
+		for fileIndex = 1 to len(files)
 		{
-			if files[i]["name"] == oldName
+			if files[fileIndex]["name"] == oldName
 			{
-				selectedIndex = i;
+				selectedIndex = fileIndex;
 
 				AdjustScrollOffset();
 
@@ -126,7 +126,10 @@ func NavigateInto()
 
 	if len(selectedFiles) > 1
 	{
-		for i = 1 to len(selectedFiles) { OpenFile(selectedFiles[i]); }
+		for fileIndex = 1 to len(selectedFiles)
+		{
+			OpenFile(selectedFiles[fileIndex]);
+		}
 
 		files = ClearAllMarks(files);
 

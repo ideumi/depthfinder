@@ -9,11 +9,11 @@
 
 func ZeroPad(number, width)
 {
-	var s = str(int(number));
+	var padded = str(int(number));
 
-	while len(s) < width { s = "0" + s; }
+	while len(padded) < width { padded = "0" + padded; }
 
-	return s;
+	return padded;
 }
 
 #@ <OwnerPermBits(mode)>
@@ -63,12 +63,12 @@ func IsTextKey(key)
 	return key[1] >= 32;
 }
 
-#@ <ShellEscape(s)>
+#@ <ShellEscape(text)>
 #@ Escapes a string for safe use in shell commands.
 
-func ShellEscape(s)
+func ShellEscape(text)
 {
-	var escaped = replace(s, "'", "'\\''");
+	var escaped = replace(text, "'", "'\\''");
 
 	return "'" + escaped + "'";
 }
