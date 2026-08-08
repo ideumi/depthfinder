@@ -250,8 +250,6 @@ func FormatPermissions(mode)
 
 func ShowFileInfo(screenWidth, screenHeight, paths)
 {
-	EnterDialog();
-
 	var width = DIALOGWIDTH;
 	var numFiles = len(paths);
 
@@ -265,17 +263,13 @@ func ShowFileInfo(screenWidth, screenHeight, paths)
 	var totalSize = 0;
 	var dirActors = [];
 
-	var region = GetBrowserRegion(screenWidth, screenHeight);
-	var origin = BFCenterRect(region, width, height);
+	var dialog = OpenDialog(screenWidth, screenHeight, width, height, "File Info");
 
-	var x = origin[1];
-	var y = origin[2];
+	var x = dialog[1];
+	var y = dialog[2];
 
-	BFClearRegion(x, y, width, height);
-	BFDrawFrame(x, y, width, height, "File Info", BFBOXROUNDED);
-
-	var contentX = x + 2;
-	var contentWidth = width - 4;
+	var contentX = dialog[3];
+	var contentWidth = dialog[4];
 	var row = y + 1;
 
 	if isMulti
@@ -385,7 +379,7 @@ func ShowFileInfo(screenWidth, screenHeight, paths)
 	if not iserr(info) { isExecutable = IsExecutableMode(info["mode"], isDir); }
 
 	height = 11;
-	y = origin[2] - 2;
+	y = dialog[2] - 2;
 
 	BFClearRegion(x, y, width, height);
 	BFDrawFrame(x, y, width, height, "File Info", BFBOXROUNDED);
@@ -498,23 +492,20 @@ func DrawSortMenuRow(contentX, row, contentWidth, label, highlighted)
 
 func ShowSortMenu(screenWidth, screenHeight, currentMode, currentDirection)
 {
-	EnterDialog();
-
 	var width = 30;
 	var height = 11;
 
-	var region = GetBrowserRegion(screenWidth, screenHeight);
-	var origin = BFCenterRect(region, width, height);
-	var x = origin[1];
-	var y = origin[2];
+	var dialog = OpenDialog(screenWidth, screenHeight, width, height, "Sort");
+	var x = dialog[1];
+	var y = dialog[2];
 
 	var mode = currentMode;
 	var direction = currentDirection;
 	var selected = 1;
 	var running = true;
 
-	var contentX = x + 2;
-	var contentWidth = width - 4;
+	var contentX = dialog[3];
+	var contentWidth = dialog[4];
 
 	# Indexes 1-3 pick the mode, 4-5 pick the direction.
 	var modes = [SORTNAME, SORTSIZE, SORTMTIME];
@@ -602,21 +593,11 @@ func ShowSortMenu(screenWidth, screenHeight, currentMode, currentDirection)
 
 func ShowAbout(screenWidth, screenHeight)
 {
-	EnterDialog();
+	var dialog = OpenDialog(screenWidth, screenHeight, DIALOGWIDTH, 13, "About");
 
-	var width = DIALOGWIDTH;
-	var height = 13;
-
-	var region = GetBrowserRegion(screenWidth, screenHeight);
-	var origin = BFCenterRect(region, width, height);
-	var x = origin[1];
-	var y = origin[2];
-
-	BFClearRegion(x, y, width, height);
-	BFDrawFrame(x, y, width, height, "About", BFBOXROUNDED);
-
-	var contentX = x + 2;
-	var contentWidth = width - 4;
+	var y = dialog[2];
+	var contentX = dialog[3];
+	var contentWidth = dialog[4];
 
 	var title = PROGRAMNAME + " V-" + VERSION;
 	title = BFPadText(title, contentWidth, BFALIGNCENTER);
@@ -644,6 +625,5 @@ func ShowAbout(screenWidth, screenHeight)
 
 	getch();
 
-	HideCursor();
-	ExitDialog();
+	CloseDialog();
 }

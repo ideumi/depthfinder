@@ -25,6 +25,7 @@ var focusPanel = FOCUSBROWSER;
 
 var bookmarks = [];
 var selectedBookmark = 1;
+var bookmarkScrollOffset = 1;
 
 var fileAssoc = [];
 

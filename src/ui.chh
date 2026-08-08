@@ -66,26 +66,30 @@ func FormatCompactDate(timestamp)
 	}
 }
 
-#@ <DrawSidebar(x, y, width, height, bookmarks, selected, hasFocus, isMoving)>
-#@ Draws the sidebar with bookmarks list at position ''x'' and ''y''.
+#@ <DrawSidebar(x, y, width, height, bookmarks, selected, offset, currentPath, hasFocus, isMoving)>
+#@ Draws the sidebar with bookmarks list at position ''x'' and ''y'' starting at
+#@ ''offset''.
 
-func DrawSidebar(x, y, width, height, bookmarks, selected, hasFocus, isMoving)
+func DrawSidebar(x, y, width, height, bookmarks, selected, offset, currentPath, hasFocus, isMoving)
 {
 	var contentY = y + 1;
 	var contentHeight = height - 1;
 
 	for row = 1 to contentHeight
 	{
-		var idx = row;
+		var idx = offset + row - 1;
 
 		if idx <= len(bookmarks)
 		{
 			var bm = bookmarks[idx];
 			var name = bm["name"];
 
+			var isSelected = idx == selected and hasFocus;
+			var isActive = bm["path"] == currentPath;
+
 			var indicator = "  ";
 
-			if idx == selected and hasFocus
+			if isSelected
 			{
 				if isMoving { indicator = "* "; }
 				else { indicator = "> "; }
@@ -107,16 +111,22 @@ func DrawSidebar(x, y, width, height, bookmarks, selected, hasFocus, isMoving)
 				BFDrawText(x, contentY + row - 1, " ");
 			}
 
-			if idx == selected and hasFocus
+			if isSelected
 			{
 				SetAttribute(COLORBGWHITE);
 				SetAttribute(COLORBOLD);
 				SetAttribute(COLORBLACK);
 			}
+			elseif isActive
+			{
+				SetAttribute(COLORWHITE);
+				SetAttribute(COLORBOLD);
+				SetBGColorRGB(DFNCOLORACCENT["r"], DFNCOLORACCENT["g"], DFNCOLORACCENT["b"]);
+			}
 
 			BFDrawText(x + 2, contentY + row - 1, nameText);
 
-			if idx == selected and hasFocus { SetAttribute(COLORRESET); }
+			if isSelected or isActive { SetAttribute(COLORRESET); }
 		}
 		else
 		{
@@ -187,7 +197,7 @@ func DrawBrowserRow(x, baseY, contentWidth, nameColWidth, dateColWidth, sizeColW
 	{
 		SetAttribute(COLORWHITE);
 		SetAttribute(COLORBOLD);
-		SetAttribute(COLORBGBLUE);
+		SetBGColorRGB(DFNCOLORACCENT["r"], DFNCOLORACCENT["g"], DFNCOLORACCENT["b"]);
 	}
 
 	if idx <= len(files)
@@ -275,21 +285,42 @@ func DrawBrowserRow(x, baseY, contentWidth, nameColWidth, dateColWidth, sizeColW
 
 func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, markedCount, clipboardMode, showHidden, sortMode, sortDirection)
 {
-	var status = FormatSortIndicator(sortMode, sortDirection) + " ";
+	var segments = [];
 
-	if showHidden { status = status + "[HIDDEN] "; }
+	append(segments, m[
+			"text": FormatSortIndicator(sortMode, sortDirection),
+			"highlighted": sortMode != SORTNAME or sortDirection != SORTASC
+		]);
+
+	if showHidden
+	{
+		append(segments, m["text": "[HIDDEN]", "highlighted": true]);
+	}
 
 	if markedCount > 0
 	{
-		status = status + "[" + str(markedCount) + " marked] ";
+		append(segments, m["text": "[" + str(markedCount) + " marked]", "highlighted": true]);
 	}
 
-	if clipboardMode == CLIPBOARDCOPY { status = status + "[COPY] "; }
-	elseif clipboardMode == CLIPBOARDCUT { status = status + "[CUT] "; }
+	if clipboardMode == CLIPBOARDCOPY
+	{
+		append(segments, m["text": "[COPY]", "highlighted": true]);
+	}
+	elseif clipboardMode == CLIPBOARDCUT
+	{
+		append(segments, m["text": "[CUT]", "highlighted": true]);
+	}
+
+	var statusWidth = 0;
+
+	for i = 1 to len(segments)
+	{
+		statusWidth = statusWidth + lenv(segments[i]["text"]) + 1;
+	}
 
 	BFClearRegion(x, y, width, 1);
 
-	var titleWidth = width - lenv(status) - 1;
+	var titleWidth = width - statusWidth - 1;
 
 	var title = BFTruncateMiddle(path, titleWidth);
 
@@ -300,11 +331,24 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 	if hasFocus { SetAttribute(COLORRESET); }
 
 	# Draw status on the top right
-	if status != ""
-	{
-		var statusX = x + width - lenv(status);
+	var statusX = x + width - statusWidth;
 
-		BFDrawText(statusX, y, status);
+	for i = 1 to len(segments)
+	{
+		var segment = segments[i];
+		var segmentText = segment["text"];
+
+		if segment["highlighted"]
+		{
+			SetAttribute(COLORWHITE);
+			SetAttribute(COLORBOLD);
+			SetBGColorRGB(DFNCOLORACCENT["r"], DFNCOLORACCENT["g"], DFNCOLORACCENT["b"]);
+		}
+
+		BFDrawText(statusX, y, segmentText);
+		SetAttribute(COLORRESET);
+
+		statusX = statusX + lenv(segmentText) + 1;
 	}
 
 	# File list below path with one blank line after path
@@ -456,10 +500,10 @@ func DrawKeybindsBar(y, width, focusPanel)
 	BFKeybindsBar(1, y - 2, width, rows);
 }
 
-#@ <DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, files, selectedFile, fileOffset, currentPath, focusPanel, markedCount, clipboardMode, showHidden, movingBookmark, sortMode, sortDirection)>
+#@ <DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, bookmarkOffset, files, selectedFile, fileOffset, currentPath, focusPanel, markedCount, clipboardMode, showHidden, movingBookmark, sortMode, sortDirection)>
 #@ Draws the complete screen.
 
-func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, files, selectedFile, fileOffset, currentPath, focusPanel, markedCount, clipboardMode, showHidden, movingBookmark, sortMode, sortDirection)
+func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, bookmarkOffset, files, selectedFile, fileOffset, currentPath, focusPanel, markedCount, clipboardMode, showHidden, movingBookmark, sortMode, sortDirection)
 {
 	var region = GetBrowserRegion(screenWidth, screenHeight);
 
@@ -475,6 +519,8 @@ func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, files, s
 		contentHeight,
 		bookmarks,
 		selectedBookmark,
+		bookmarkOffset,
+		currentPath,
 		focusPanel == FOCUSSIDEBAR,
 		movingBookmark);
 

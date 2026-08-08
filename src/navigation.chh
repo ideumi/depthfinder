@@ -168,6 +168,41 @@ func GetVisibleFileCount()
 	return int((region[4] - 2) / FILEROWHEIGHT);
 }
 
+#@ <GetVisibleBookmarkCount()>
+#@ Returns how many bookmarks can be displayed at once.
+
+func GetVisibleBookmarkCount()
+{
+	var region = GetBrowserRegion(screenWidth, screenHeight);
+
+	return region[4] - 1;
+}
+
+#@ <AdjustBookmarkScroll()>
+#@ Adjusts the sidebar scroll offset to keep the selected bookmark visible.
+
+func AdjustBookmarkScroll()
+{
+	var visibleBookmarks = GetVisibleBookmarkCount();
+
+	if selectedBookmark < bookmarkScrollOffset
+	{
+		bookmarkScrollOffset = selectedBookmark;
+	}
+
+	if selectedBookmark >= bookmarkScrollOffset + visibleBookmarks
+	{
+		bookmarkScrollOffset = selectedBookmark - visibleBookmarks + 1;
+	}
+
+	# Avoid empty rows below the last bookmark when bookmarks fit the viewport.
+	var maxOffset = len(bookmarks) - visibleBookmarks + 1;
+
+	if maxOffset < 1 { maxOffset = 1; }
+	if bookmarkScrollOffset > maxOffset { bookmarkScrollOffset = maxOffset; }
+	if bookmarkScrollOffset < 1 { bookmarkScrollOffset = 1; }
+}
+
 #@ <AdjustScrollOffset()>
 #@ Adjusts scroll offset to keep selection visible.
 
