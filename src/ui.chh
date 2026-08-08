@@ -373,6 +373,13 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 
 		DrawBrowserRow(x, baseY, contentWidth, nameColWidth, dateColWidth, sizeColWidth, files, idx, isSelected);
 	}
+
+	var painted = visibleFiles * FILEROWHEIGHT;
+
+	if painted < contentHeight
+	{
+		BFClearRegion(x, contentY + painted, contentWidth, contentHeight - painted);
+	}
 }
 
 #@ <RedrawBrowserRow(idx)>
