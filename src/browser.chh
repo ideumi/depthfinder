@@ -100,47 +100,29 @@ func SortFileEntries(entries, mode, direction)
 {
 	if len(entries) <= 1 { return entries; }
 
-	# Create "key|index" strings for sort(list)
-	var sortable = [];
-
-	for entryIndex = 1 to len(entries)
+	var keySelector = func(entry)
 	{
-		var entry = entries[entryIndex];
-		var key = "";
+		return lower(entry["name"]);
+	};
 
-		if mode == SORTNAME { key = lower(entry["name"]); }
-		elseif mode == SORTSIZE { key = ZeroPad(entry["size"], 20); }
-		elseif mode == SORTMTIME { key = ZeroPad(entry["mtime"], 20); }
-		else { key = lower(entry["name"]); }
-
-		append(sortable, key + "|" + ZeroPad(entryIndex, 8));
-	}
-
-	sort(sortable);
-
-	var sorted = [];
-
-	for sortableIndex = 1 to len(sortable)
+	if mode == SORTSIZE
 	{
-		var parts = split(sortable[sortableIndex], "|");
-		var idx = num(parts[len(parts)]);
-
-		append(sorted, entries[idx]);
-	}
-
-	if direction == SORTDESC
-	{
-		var reversed = [];
-
-		for sortedIndex = len(sorted) to 1 step -1
+		keySelector = func(entry)
 		{
-			append(reversed, sorted[sortedIndex]);
-		}
-
-		return reversed;
+			return entry["size"];
+		};
+	}
+	elseif mode == SORTMTIME
+	{
+		keySelector = func(entry)
+		{
+			return entry["mtime"];
+		};
 	}
 
-	return sorted;
+	if direction == SORTDESC { return OrderByDescending(entries, keySelector); }
+
+	return OrderBy(entries, keySelector);
 }
 
 #@ <ToggleFileMark(files, index)>
