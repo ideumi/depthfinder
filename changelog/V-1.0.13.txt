@@ -8,3 +8,4 @@ What's New:
 	- minimum terminal height is now 16 rows [due to the omelette not fitting in the oven x)]
 	- the sidebar now scrolls when all bookmarks don't fit on the screen
 	- some other minor code quality improvements and streamlining
+	- file sorting has been reworked and improved / cleaned up
