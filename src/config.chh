@@ -33,9 +33,9 @@ func LoadBookmarks()
 
 	if iserr(lines) { return err; }
 
-	for i = 1 to len(lines)
+	for lineIndex = 1 to len(lines)
 	{
-		var line = Trim(lines[i]);
+		var line = Trim(lines[lineIndex]);
 
 		if line == "" { continue; }
 
@@ -76,9 +76,9 @@ func SaveBookmarks(bookmarks)
 
 	var lines = [];
 
-	for i = 1 to len(bookmarks)
+	for bookmarkIndex = 1 to len(bookmarks)
 	{
-		var bm = bookmarks[i];
+		var bm = bookmarks[bookmarkIndex];
 
 		if not has(bm, "name") or not has(bm, "path") { continue; }
 
@@ -144,9 +144,9 @@ func LoadFileAssoc()
 
 	if iserr(lines) { return err; }
 
-	for i = 1 to len(lines)
+	for lineIndex = 1 to len(lines)
 	{
-		var line = Trim(lines[i]);
+		var line = Trim(lines[lineIndex]);
 
 		if line == "" { continue; }
 

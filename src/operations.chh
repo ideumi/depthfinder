@@ -16,9 +16,9 @@ func CalcDirSizeParallel(dirPath)
 	var totalSize = 0;
 	var subdirActors = [];
 
-	for i = 1 to len(entries)
+	for entryIndex = 1 to len(entries)
 	{
-		var name = entries[i];
+		var name = entries[entryIndex];
 		var fullPath = JoinPath(dirPath, name);
 
 		var linfo = lstat(fullPath);
@@ -29,8 +29,8 @@ func CalcDirSizeParallel(dirPath)
 
 		if StatType(linfo) == TYPEDIR
 		{
-			var a = actor(CalcDirSizeParallel, fullPath);
-			append(subdirActors, a);
+			var subdirActor = actor(CalcDirSizeParallel, fullPath);
+			append(subdirActors, subdirActor);
 		}
 		else
 		{
@@ -38,9 +38,9 @@ func CalcDirSizeParallel(dirPath)
 		}
 	}
 
-	for i = 1 to len(subdirActors)
+	for actorIndex = 1 to len(subdirActors)
 	{
-		totalSize = totalSize + wait(subdirActors[i]);
+		totalSize = totalSize + wait(subdirActors[actorIndex]);
 	}
 
 	return totalSize;
@@ -82,9 +82,9 @@ func DeleteDirectory(path)
 
 	if iserr(entries) { return err; }
 
-	for i = 1 to len(entries)
+	for entryIndex = 1 to len(entries)
 	{
-		var result = RemovePath(JoinPath(path, entries[i]));
+		var result = RemovePath(JoinPath(path, entries[entryIndex]));
 
 		if iserr(result) { return err; }
 	}
@@ -207,9 +207,9 @@ func CopyDirectory(source, dest, screenWidth, screenHeight)
 
 	if iserr(entries) { return err; }
 
-	for i = 1 to len(entries)
+	for entryIndex = 1 to len(entries)
 	{
-		var name = entries[i];
+		var name = entries[entryIndex];
 		var srcPath = JoinPath(source, name);
 		var dstPath = JoinPath(dest, name);
 
@@ -334,14 +334,14 @@ func TransferFiles(sources, dest, screenWidth, screenHeight, isMove)
 	# Track bulk action for "All" options (0 = none)
 	var bulkAction = 0;
 
-	for i = 1 to total
+	for sourceIndex = 1 to total
 	{
-		var srcPath = sources[i];
+		var srcPath = sources[sourceIndex];
 		var baseName = Basename(srcPath);
 		var displayName = BFTruncateMiddle(baseName, DIALOGNAMEMAX);
 		var dstPath = JoinPath(dest, baseName);
 
-		ShowProgress(screenWidth, screenHeight, actionName, i, total);
+		ShowProgress(screenWidth, screenHeight, actionName, sourceIndex, total);
 
 		var needsRename = IsSameFile(srcPath, dstPath);
 		var needsConflictDialog = needsRename or PathExists(dstPath);
@@ -445,9 +445,9 @@ func TransferFiles(sources, dest, screenWidth, screenHeight, isMove)
 	{
 		ShowProgress(screenWidth, screenHeight, "Cleaning up...", 1, 1);
 
-		for i = 1 to len(sourcesToDelete)
+		for sourceIndex = 1 to len(sourcesToDelete)
 		{
-			var path = sourcesToDelete[i];
+			var path = sourcesToDelete[sourceIndex];
 			var displayName = BFTruncateMiddle(Basename(path), DIALOGNAMEMAX);
 
 			var result = RemovePath(path);
@@ -492,9 +492,9 @@ func DeleteFiles(paths, screenWidth, screenHeight)
 	# Check if any directories are being deleted
 	var hasDir = false;
 
-	for i = 1 to total
+	for pathIndex = 1 to total
 	{
-		if IsDir(paths[i])
+		if IsDir(paths[pathIndex])
 		{
 			hasDir = true;
 
@@ -529,12 +529,12 @@ func DeleteFiles(paths, screenWidth, screenHeight)
 		if iserr(confirmed) or not confirmed { return err; }
 	}
 
-	for i = 1 to total
+	for pathIndex = 1 to total
 	{
-		var path = paths[i];
+		var path = paths[pathIndex];
 		var displayName = BFTruncateMiddle(Basename(path), DIALOGNAMEMAX);
 
-		ShowProgress(screenWidth, screenHeight, "Deleting...", i, total);
+		ShowProgress(screenWidth, screenHeight, "Deleting...", pathIndex, total);
 
 		var result = RemovePath(path);
 
@@ -562,9 +562,9 @@ func CompressFiles(files, destDir, archiveName, format, screenWidth, screenHeigh
 	# directory, but guard against it anyway.
 	var workDir = Dirname(files[1]);
 
-	for i = 2 to total
+	for fileIndex = 2 to total
 	{
-		if Dirname(files[i]) != workDir
+		if Dirname(files[fileIndex]) != workDir
 		{
 			ShowError(screenWidth, screenHeight,
 				"Cannot compress files from different directories");
@@ -575,7 +575,7 @@ func CompressFiles(files, destDir, archiveName, format, screenWidth, screenHeigh
 
 	if format < 1 or format > len(COMPRESSFORMATS) { return err; }
 
-	var archivePath = JoinPath(destDir, archiveName + COMPRESSFORMATS[format]);
+	var archivePath = JoinPath(destDir, archiveName + COMPRESSFORMATS[format]["extension"]);
 
 	if PathExists(archivePath)
 	{
@@ -586,10 +586,13 @@ func CompressFiles(files, destDir, archiveName, format, screenWidth, screenHeigh
 
 	ShowProgress(screenWidth, screenHeight, "Compressing...", 0, 1);
 
-	var cmd = COMPRESSCOMMANDS[format] + " " + ShellEscape(archivePath);
+	var cmd = COMPRESSFORMATS[format]["command"] + " " + ShellEscape(archivePath);
 
 	# Add all files
-	for i = 1 to total { cmd = cmd + " " + ShellEscape(Basename(files[i])); }
+	for fileIndex = 1 to total
+	{
+		cmd = cmd + " " + ShellEscape(Basename(files[fileIndex]));
+	}
 
 	var result = RunCheck(cmd);
 

@@ -15,6 +15,7 @@ load("libgregorian.chh");
 load("libsubprocess.chh");
 load("libprint.chh");
 load("libsignals.chh");
+load("libquery.chh");
 
 # ---
 

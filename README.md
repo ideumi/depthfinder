@@ -76,7 +76,7 @@ dfn
 
 ## Requirements
 
-- [Chippy](https://codeberg.org/ideumi/chippy) >= 1.1.0
+- [Chippy](https://codeberg.org/ideumi/chippy) >= 1.1.1
 - make
 - git
 
@@ -124,6 +124,8 @@ ogg;vlc
 - `~/.dfn-lastdir` -- Last visited directory for session restore
 	- This is saved automatically, no need to edit this manually
 
+- You may want to change the **accent color**, by default it is a pure blue (because i like it). If you don't like it or it doesn't match the theme you are going for, you can set your own RGB color: change `DFNCOLORACCENT` in [`constants.chh`](src/constants.chh) and [build](#building) again.
+	
 > Unconfigured file endings just run via `xdg-open`.
 
 ### Foreground Programs

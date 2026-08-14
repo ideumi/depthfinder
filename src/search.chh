@@ -14,15 +14,15 @@ func FilterFiles(files, query)
 	var results = [];
 	var lowerQuery = lower(query);
 
-	for i = 1 to len(files)
+	for fileIndex = 1 to len(files)
 	{
-		var entry = files[i];
+		var entry = files[fileIndex];
 		var name = lower(entry["name"]);
 
 		if has(name, lowerQuery)
 		{
 			var result = copy(entry);
-			result["origIndex"] = i;
+			result["origIndex"] = fileIndex;
 
 			append(results, result);
 		}

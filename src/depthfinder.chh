@@ -6,16 +6,6 @@
 # Set timezone offset in libgregorian.chh
 SetLocalTimezoneOffset();
 
-#@ <ConfirmExit()>
-#@ The exit confirmation dialog.
-
-func ConfirmExit()
-{
-	var confirmed = ShowConfirm(screenWidth, screenHeight, "Do you really want to exit?");
-
-	return not iserr(confirmed) and confirmed;
-}
-
 #@ <StopMovingBookmark()>
 #@ Leaves bookmark move mode and saves the new bookmark order.
 
@@ -199,6 +189,10 @@ func HandleBrowserInput(key)
 	# TAB
 	elseif key == BFKEYTAB
 	{
+		# The sidebar cursor starts at the very top on startup, if we are at a
+		# bookmarked directory, move the cursor to that bookmarked directory
+		SyncBookmarkSelection();
+
 		focusPanel = FOCUSSIDEBAR;
 	}
 	elseif key == BFKEYUP
@@ -379,6 +373,7 @@ func CurrentState()
 	return m[
 		"bookmarks": bookmarks,
 		"selectedBookmark": selectedBookmark,
+		"bookmarkScrollOffset": bookmarkScrollOffset,
 		"files": files,
 		"selectedIndex": selectedIndex,
 		"scrollOffset": scrollOffset,
@@ -392,27 +387,6 @@ func CurrentState()
 		"showKeybinds": showKeybinds,
 		"inDialog": inDialog
 	];
-}
-
-#@ <EnterDialog()>
-#@ Sets the in-dialog flag and tells the winsize actor to suppress repaints
-#@ until the dialog returns.
-
-func EnterDialog()
-{
-	inDialog = true;
-
-	if not iserr(winsizeHandle) { send(winsizeHandle, CurrentState()); }
-}
-
-#@ <ExitDialog()>
-#@ Clears the in-dialog flag.
-
-func ExitDialog()
-{
-	inDialog = false;
-
-	if not iserr(winsizeHandle) { send(winsizeHandle, CurrentState()); }
 }
 
 #@ <WinChangeActor()>
@@ -453,7 +427,9 @@ func WinChActor()
 		selectedIndex = state["selectedIndex"];
 		scrollOffset = state["scrollOffset"];
 		showKeybinds = state["showKeybinds"];
+		bookmarkScrollOffset = state["bookmarkScrollOffset"];
 
+		AdjustBookmarkScroll();
 		AdjustScrollOffset();
 
 		ClearScreen();
@@ -462,6 +438,7 @@ func WinChActor()
 			screenHeight,
 			state["bookmarks"],
 			state["selectedBookmark"],
+			state["bookmarkScrollOffset"],
 			files,
 			selectedIndex,
 			scrollOffset,
@@ -515,6 +492,7 @@ func MainLoop()
 
 		# Viewport size may have changed while getch() was blocked. Re-clamp so
 		# the selection stays visible.
+		AdjustBookmarkScroll();
 		AdjustScrollOffset();
 
 		if skipFullRedraw
@@ -529,6 +507,7 @@ func MainLoop()
 				screenHeight,
 				bookmarks,
 				selectedBookmark,
+				bookmarkScrollOffset,
 				files,
 				selectedIndex,
 				scrollOffset,
@@ -542,7 +521,7 @@ func MainLoop()
 				sortDirection);
 		}
 
-		send(winsizeHandle, CurrentState());
+		if not iserr(winsizeHandle) { send(winsizeHandle, CurrentState()); }
 
 		var key = getch();
 
@@ -556,6 +535,7 @@ func MainLoop()
 
 		# Re-clamp before input handlers run so they compute against the
 		# same scrollOffset the actor used to redraw.
+		AdjustBookmarkScroll();
 		AdjustScrollOffset();
 
 		# Handling KEYDOT must be here since the keybinds bar toggle should work
@@ -565,12 +545,22 @@ func MainLoop()
 			showKeybinds = not showKeybinds;
 
 			ClearScreen();
-
-			continue;
+		}
+		elseif focusPanel == FOCUSSIDEBAR
+		{
+			running = HandleSidebarInput(key);
+		}
+		else
+		{
+			running = HandleBrowserInput(key);
 		}
 
-		if focusPanel == FOCUSSIDEBAR { running = HandleSidebarInput(key); }
-		else { running = HandleBrowserInput(key); }
+		# A winch arriving after the handler ran but before the next iteration
+		# would have the actor draw its pre keypress state, so send it now.
+
+		# NOTE: This is more theoretical and less a practical issue, if it causes
+		# perf issues (shouldn't), get rid of it
+		if not iserr(winsizeHandle) { send(winsizeHandle, CurrentState()); }
 	}
 }
 

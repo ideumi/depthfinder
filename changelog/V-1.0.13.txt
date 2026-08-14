@@ -1,0 +1,11 @@
+What's New:
+
+	- introduced a simple accent color system
+		- the bookmark of the directory you are in is now highlighted
+		- sort and clipboard state in the browser header are now highlighted while active
+		- changed the color of marked files in the browser to the accent color
+
+	- minimum terminal height is now 16 rows [due to the omelette not fitting in the oven x)]
+	- the sidebar now scrolls when all bookmarks don't fit on the screen
+	- some other minor code quality improvements and streamlining
+	- file sorting has been reworked and improved / cleaned up

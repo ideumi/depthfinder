@@ -9,11 +9,11 @@
 
 func ZeroPad(number, width)
 {
-	var s = str(int(number));
+	var padded = str(int(number));
 
-	while len(s) < width { s = "0" + s; }
+	while len(padded) < width { padded = "0" + padded; }
 
-	return s;
+	return padded;
 }
 
 #@ <OwnerPermBits(mode)>
@@ -30,6 +30,49 @@ func OwnerPermBits(mode)
 func IsExecutableMode(mode, isDir)
 {
 	return not isDir and OwnerPermBits(mode) % 2 == 1;
+}
+
+#@ <FormatPermissions(mode)>
+#@ Formats permission ''mode'' as human readable string.
+
+func FormatPermissions(mode)
+{
+	var ownerPerm = OwnerPermBits(mode);
+	var parts = [];
+
+	if int(ownerPerm / 4) % 2 == 1 { append(parts, "read"); }
+	if int(ownerPerm / 2) % 2 == 1 { append(parts, "write"); }
+	if ownerPerm % 2 == 1 { append(parts, "execute"); }
+
+	if len(parts) == 0 { return "no access"; }
+
+	return join(parts, ", ");
+}
+
+#@ <GetUsernameByUID(uid)>
+#@ Looks up username from ''/etc/passwd'' by ''uid''. Returns ''uid'' as string
+#@ if not found.
+
+func GetUsernameByUID(uid)
+{
+	var content = ReadFile("/etc/passwd", true);
+
+	if iserr(content) { return str(uid); }
+
+	var lines = split(content, "\n");
+
+	for lineIndex = 1 to len(lines)
+	{
+		var line = lines[lineIndex];
+
+		if line == "" { continue; }
+
+		var parts = split(line, ":");
+
+		if len(parts) >= 3 and parts[3] == str(uid) { return parts[1]; }
+	}
+
+	return str(uid);
 }
 
 #@ <IsSingleByteKey(key)>
@@ -63,12 +106,12 @@ func IsTextKey(key)
 	return key[1] >= 32;
 }
 
-#@ <ShellEscape(s)>
+#@ <ShellEscape(text)>
 #@ Escapes a string for safe use in shell commands.
 
-func ShellEscape(s)
+func ShellEscape(text)
 {
-	var escaped = replace(s, "'", "'\\''");
+	var escaped = replace(text, "'", "'\\''");
 
 	return "'" + escaped + "'";
 }

@@ -54,6 +54,23 @@ func RefreshDirectory()
 	AdjustScrollOffset();
 }
 
+#@ <SyncBookmarkSelection()>
+#@ Moves the sidebar cursor to the bookmark that points to ''currentPath'' if one
+#@ exists.
+
+func SyncBookmarkSelection()
+{
+	for bookmarkIndex = 1 to len(bookmarks)
+	{
+		if bookmarks[bookmarkIndex]["path"] == currentPath
+		{
+			selectedBookmark = bookmarkIndex;
+
+			break;
+		}
+	}
+}
+
 #@ <NavigateTo(path)>
 #@ Changes to the specified directory.
 
@@ -99,11 +116,11 @@ func NavigateUp()
 		NavigateTo(parent);
 
 		# Try to select the directory we came from
-		for i = 1 to len(files)
+		for fileIndex = 1 to len(files)
 		{
-			if files[i]["name"] == oldName
+			if files[fileIndex]["name"] == oldName
 			{
-				selectedIndex = i;
+				selectedIndex = fileIndex;
 
 				AdjustScrollOffset();
 
@@ -126,7 +143,10 @@ func NavigateInto()
 
 	if len(selectedFiles) > 1
 	{
-		for i = 1 to len(selectedFiles) { OpenFile(selectedFiles[i]); }
+		for fileIndex = 1 to len(selectedFiles)
+		{
+			OpenFile(selectedFiles[fileIndex]);
+		}
 
 		files = ClearAllMarks(files);
 
@@ -166,6 +186,41 @@ func GetVisibleFileCount()
 	var region = GetBrowserRegion(screenWidth, screenHeight);
 
 	return int((region[4] - 2) / FILEROWHEIGHT);
+}
+
+#@ <GetVisibleBookmarkCount()>
+#@ Returns how many bookmarks can be displayed at once.
+
+func GetVisibleBookmarkCount()
+{
+	var region = GetBrowserRegion(screenWidth, screenHeight);
+
+	return region[4] - 1;
+}
+
+#@ <AdjustBookmarkScroll()>
+#@ Adjusts the sidebar scroll offset to keep the selected bookmark visible.
+
+func AdjustBookmarkScroll()
+{
+	var visibleBookmarks = GetVisibleBookmarkCount();
+
+	if selectedBookmark < bookmarkScrollOffset
+	{
+		bookmarkScrollOffset = selectedBookmark;
+	}
+
+	if selectedBookmark >= bookmarkScrollOffset + visibleBookmarks
+	{
+		bookmarkScrollOffset = selectedBookmark - visibleBookmarks + 1;
+	}
+
+	# Avoid empty rows below the last bookmark when bookmarks fit the viewport.
+	var maxOffset = len(bookmarks) - visibleBookmarks + 1;
+
+	if maxOffset < 1 { maxOffset = 1; }
+	if bookmarkScrollOffset > maxOffset { bookmarkScrollOffset = maxOffset; }
+	if bookmarkScrollOffset < 1 { bookmarkScrollOffset = 1; }
 }
 
 #@ <AdjustScrollOffset()>
