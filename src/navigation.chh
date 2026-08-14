@@ -54,6 +54,23 @@ func RefreshDirectory()
 	AdjustScrollOffset();
 }
 
+#@ <SyncBookmarkSelection()>
+#@ Moves the sidebar cursor to the bookmark that points to ''currentPath'' if one
+#@ exists.
+
+func SyncBookmarkSelection()
+{
+	for bookmarkIndex = 1 to len(bookmarks)
+	{
+		if bookmarks[bookmarkIndex]["path"] == currentPath
+		{
+			selectedBookmark = bookmarkIndex;
+
+			break;
+		}
+	}
+}
+
 #@ <NavigateTo(path)>
 #@ Changes to the specified directory.
 

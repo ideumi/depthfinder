@@ -189,6 +189,10 @@ func HandleBrowserInput(key)
 	# TAB
 	elseif key == BFKEYTAB
 	{
+		# The sidebar cursor starts at the very top on startup, if we are at a
+		# bookmarked directory, move the cursor to that bookmarked directory
+		SyncBookmarkSelection();
+
 		focusPanel = FOCUSSIDEBAR;
 	}
 	elseif key == BFKEYUP
