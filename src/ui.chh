@@ -72,8 +72,10 @@ func FormatCompactDate(timestamp)
 
 func DrawSidebar(x, y, width, height, bookmarks, selected, offset, currentPath, hasFocus, isMoving)
 {
-	var contentY = y + 1;
-	var contentHeight = height - 1;
+	# One row is reserved at the top of the panel (aesthetics). The rest holds
+	# the bookmark list
+	var contentY = y + SIDEBARHEADERROWS;
+	var contentHeight = height - SIDEBARHEADERROWS;
 
 	for row = 1 to contentHeight
 	{
@@ -97,11 +99,18 @@ func DrawSidebar(x, y, width, height, bookmarks, selected, offset, currentPath, 
 
 			var nameText = indicator + str(name);
 
-			nameText = BFClipText(nameText, width - 4);
-			nameText = BFPadText(nameText, width - 4, BFALIGNLEFT);
+			# Name field: everything after the number column and its gap. It stops
+			# short of the padding and separator columns on the right edge of the
+			# panel
+			var nameWidth = width - 4;
 
-			if idx <= 9
+			nameText = BFClipText(nameText, nameWidth);
+			nameText = BFPadText(nameText, nameWidth, BFALIGNLEFT);
+
+			# Numbered jump targets for the 1-9 keys
+			if idx <= SIDEBARJUMPMAX
 			{
+				# Draw the sidebar numbers 1-9
 				SetAttribute(COLORBOLD);
 				BFDrawText(x, contentY + row - 1, str(idx));
 				SetAttribute(COLORRESET);
@@ -111,13 +120,14 @@ func DrawSidebar(x, y, width, height, bookmarks, selected, offset, currentPath, 
 				BFDrawText(x, contentY + row - 1, " ");
 			}
 
+			# Selected (hover)
 			if isSelected
 			{
 				SetAttribute(COLORBGWHITE);
 				SetAttribute(COLORBOLD);
 				SetAttribute(COLORBLACK);
 			}
-			elseif isActive
+			elseif isActive # active (currently at directory that is also the bm)
 			{
 				SetAttribute(COLORWHITE);
 				SetAttribute(COLORBOLD);
@@ -130,6 +140,8 @@ func DrawSidebar(x, y, width, height, bookmarks, selected, offset, currentPath, 
 		}
 		else
 		{
+			# Clean up any leftover text below the current sidebar text set width
+			# - 1: the separator column is drawn by DrawScreen
 			BFClearRegion(x, contentY + row - 1, width - 1, 1);
 		}
 	}
@@ -158,7 +170,10 @@ func BrowserColumnWidths(width)
 {
 	var sizeColWidth = 10;
 	var dateColWidth = 13;
-	var nameColWidth = width - sizeColWidth - dateColWidth - 2;
+
+	# The name column gets whatever width is left after the filesize and date
+	# columns took theirs
+	var nameColWidth = width - sizeColWidth - dateColWidth;
 
 	return [nameColWidth, dateColWidth, sizeColWidth];
 }
@@ -168,9 +183,41 @@ func BrowserColumnWidths(width)
 
 func GetBrowserRegion(screenWidth, screenHeight)
 {
+	# The sidebar takes columns 1 to SIDEBARWIDTH, and the separator line is on
+	# column SIDEBARWIDTH. The browser starts two columns to the right of it,
+	# with one blank column in between.
 	var x = SIDEBARWIDTH + 2;
 	var y = 1;
 	var width = screenWidth - SIDEBARWIDTH - 2;
+
+	# Keybinds bar state is taken into account in BottomReserve()
+	var height = screenHeight - BottomReserve();
+
+	return [x, y, width, height];
+}
+
+#@ <GetBrowserListRegion(screenWidth, screenHeight)>
+#@ Returns the region of the actual file list below the browser header bar as
+#@ ''[x, listY, width, height]''.
+
+func GetBrowserListRegion(screenWidth, screenHeight)
+{
+	var region = GetBrowserRegion(screenWidth, screenHeight);
+
+	# The list starts below the BROWSERHEADERROWS header rows
+	var listY = region[2] + BROWSERHEADERROWS;
+
+	return [region[1], listY, region[3], region[4] - BROWSERHEADERROWS];
+}
+
+#@ <GetSidebarRegion(screenHeight)>
+#@ Returns the region of the bookmarks sidebar: ''[x, y, width, height]''.
+
+func GetSidebarRegion(screenHeight)
+{
+	var x = 1;
+	var y = 1;
+	var width = SIDEBARWIDTH;
 	var height = screenHeight - BottomReserve();
 
 	return [x, y, width, height];
@@ -217,9 +264,9 @@ func DrawBrowserRow(x, baseY, contentWidth, nameColWidth, dateColWidth, sizeColW
 		}
 
 		# Format name with prefix
-		var prefix = "  ";
+		var prefix = BROWSERNAMEPREFIX;
 
-		if isMarked { prefix = "> "; }
+		if isMarked { prefix = BROWSERMARKEDPREFIX; }
 
 		if isDir
 		{
@@ -231,10 +278,9 @@ func DrawBrowserRow(x, baseY, contentWidth, nameColWidth, dateColWidth, sizeColW
 			name = "~" + str(name);
 		}
 
-		var displayName = prefix + str(name);
-		displayName = BFClipText(displayName, nameColWidth);
-		var displayNameText = displayName;
-		displayName = BFPadText(displayName, nameColWidth, BFALIGNLEFT);
+		# The name column holds the prefix plus the name once rendered, so the
+		# name is clipped to nameColWidth - len(prefix) to account for it
+		var nameText = BFClipText(str(name), nameColWidth - len(prefix));
 
 		# Format date
 		var dateStr = "";
@@ -251,17 +297,16 @@ func DrawBrowserRow(x, baseY, contentWidth, nameColWidth, dateColWidth, sizeColW
 
 		sizeStr = BFPadText(sizeStr, sizeColWidth, BFALIGNRIGHT);
 
-		var rowText = displayName + " " + dateStr + " " + sizeStr;
+		var rowText = BFPadText(prefix + nameText, nameColWidth, BFALIGNLEFT) + dateStr + sizeStr;
 
-		# Content
+		# Underline the name for special entries (executables, dirs and symlinks)
 		if not isSelected and not isMarked and rawName != ".." and (isSymlink or isDir or isExecutable)
 		{
-			var nameText = slice(displayNameText, 3, len(displayNameText));
 			BFDrawText(x, baseY, prefix);
 			SetAttribute(COLORUNDERLINE);
-			BFDrawText(x + 2, baseY, nameText);
+			BFDrawText(x + len(prefix), baseY, nameText);
 			SetAttribute(COLORUNDERLINEOFF);
-			BFDrawText(x + lenv(displayNameText), baseY, BFPadText("", nameColWidth - lenv(displayNameText), BFALIGNLEFT) + " " + dateStr + " " + sizeStr);
+			BFDrawText(x + len(prefix) + lenv(nameText), baseY, BFPadText("", nameColWidth - len(prefix) - lenv(nameText), BFALIGNLEFT) + dateStr + sizeStr);
 		}
 		else
 		{
@@ -280,10 +325,10 @@ func DrawBrowserRow(x, baseY, contentWidth, nameColWidth, dateColWidth, sizeColW
 	SetAttribute(COLORRESET);
 }
 
-#@ <DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, markedCount, clipboardMode, showHidden, sortMode, sortDirection)>
-#@ Draws the file browser panel.
+#@ <DrawBrowserHeaderBar(x, y, width, path, hasFocus, markedCount, clipboardMode, showHidden, sortMode, sortDirection)>
+#@ Draws the path title and status bar above the actual file list.
 
-func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, markedCount, clipboardMode, showHidden, sortMode, sortDirection)
+func DrawBrowserHeaderBar(x, y, width, path, hasFocus, markedCount, clipboardMode, showHidden, sortMode, sortDirection)
 {
 	var segments = [];
 
@@ -318,8 +363,10 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 		statusWidth = statusWidth + lenv(segments[segmentIndex]["text"]) + 1;
 	}
 
-	BFClearRegion(x, y, width, 1);
+	# The header is the path /status bar and one blank padding line below it
+	BFClearRegion(x, y, width, BROWSERHEADERROWS);
 
+	# The extra column keeps a gap between the path and the status segments
 	var titleWidth = width - statusWidth - 1;
 
 	var title = BFTruncateMiddle(path, titleWidth);
@@ -348,67 +395,70 @@ func DrawBrowser(x, y, width, height, files, selected, offset, path, hasFocus, m
 		BFDrawText(statusX, y, segmentText);
 		SetAttribute(COLORRESET);
 
+		# One-column gap after each segment (counted into statusWidth)
 		statusX = statusX + lenv(segmentText) + 1;
 	}
+}
 
-	# File list below path with one blank line after path
-	var contentY = y + 2;
-	var contentHeight = height - 2;
-	var contentWidth = width;
+#@ <DrawBrowserList(x, y, width, height, files, selected, offset, hasFocus)>
+#@ Draws the file list at row ''y''. ''offset'' is the index of the first visible
+#@ entry.
 
-	var cols = BrowserColumnWidths(contentWidth);
+func DrawBrowserList(x, y, width, height, files, selected, offset, hasFocus)
+{
+	var cols = BrowserColumnWidths(width);
 	var nameColWidth = cols[1];
 	var dateColWidth = cols[2];
 	var sizeColWidth = cols[3];
 
 	# Calculate how many files can fit
-	var visibleFiles = int(contentHeight / FILEROWHEIGHT);
+	var visibleFiles = int(height / FILEROWHEIGHT);
 
 	for fileRow = 1 to visibleFiles
 	{
 		var idx = offset + fileRow - 1;
-		var baseY = contentY + (fileRow - 1) * FILEROWHEIGHT;
+		var baseY = y + (fileRow - 1) * FILEROWHEIGHT;
 
 		var isSelected = idx == selected and hasFocus;
 
-		DrawBrowserRow(x, baseY, contentWidth, nameColWidth, dateColWidth, sizeColWidth, files, idx, isSelected);
+		DrawBrowserRow(x, baseY, width, nameColWidth, dateColWidth, sizeColWidth, files, idx, isSelected);
 	}
 
 	var painted = visibleFiles * FILEROWHEIGHT;
 
-	if painted < contentHeight
+	if painted < height
 	{
-		BFClearRegion(x, contentY + painted, contentWidth, contentHeight - painted);
+		BFClearRegion(x, y + painted, width, height - painted);
 	}
 }
 
 #@ <RedrawBrowserRow(idx)>
-#@ Redraws the browser row for file ''idx'' in place if it is within the visible
-#@ viewport.
+#@ Redraws the browser row for file ''idx'' in place if it is within the file
+#@ list.
 
 func RedrawBrowserRow(idx)
 {
-	var region = GetBrowserRegion(screenWidth, screenHeight);
+	var region = GetBrowserListRegion(screenWidth, screenHeight);
 
-	var browserX = region[1];
-	var contentWidth = region[3];
+	var listX = region[1];
+	var listWidth = region[3];
 
-	var contentHeight = region[4] - 2;
-	var visibleFiles = int(contentHeight / FILEROWHEIGHT);
+	var visibleFiles = int(region[4] / FILEROWHEIGHT);
 
+	# Position of the entry within the file list
 	var fileRow = idx - scrollOffset + 1;
 
 	if fileRow < 1 or fileRow > visibleFiles { return; }
 
-	var cols = BrowserColumnWidths(contentWidth);
+	var cols = BrowserColumnWidths(listWidth);
 	var nameColWidth = cols[1];
 	var dateColWidth = cols[2];
 	var sizeColWidth = cols[3];
 
-	var baseY = region[2] + 2 + (fileRow - 1) * FILEROWHEIGHT;
+	var baseY = region[2] + (fileRow - 1) * FILEROWHEIGHT;
 	var isSelected = idx == selectedIndex and focusPanel == FOCUSBROWSER;
 
-	DrawBrowserRow(browserX, baseY, contentWidth, nameColWidth, dateColWidth, sizeColWidth, files, idx, isSelected);
+	DrawBrowserRow(listX, baseY, listWidth, nameColWidth, dateColWidth, sizeColWidth, files, idx, isSelected);
 }
 
 #@ <DrawVerticalSeparator(x, y, height)>
@@ -437,6 +487,7 @@ func BottomReserve()
 
 func DrawBottomHint(y, sidebarWidth)
 {
+	# width stops before the separator column
 	BFClearRegion(1, y, sidebarWidth - 1, 1);
 
 	SetFGColor256(DFNCOLORDIM);
@@ -504,7 +555,10 @@ func DrawKeybindsBar(y, width, focusPanel)
 			]);
 	}
 
-	BFKeybindsBar(1, y - 2, width, rows);
+	# y is the screen height, not the bar's position, the bar is KEYBINDSBARHEIGHT
+	# rows tall and sits at the bottom of the screen, so its top row is:
+	# y - KEYBINDSBARHEIGHT + 1
+	BFKeybindsBar(1, y - KEYBINDSBARHEIGHT + 1, width, rows);
 }
 
 #@ <DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, bookmarkOffset, files, selectedFile, fileOffset, currentPath, focusPanel, markedCount, clipboardMode, showHidden, movingBookmark, sortMode, sortDirection)>
@@ -512,18 +566,18 @@ func DrawKeybindsBar(y, width, focusPanel)
 
 func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, bookmarkOffset, files, selectedFile, fileOffset, currentPath, focusPanel, markedCount, clipboardMode, showHidden, movingBookmark, sortMode, sortDirection)
 {
-	var region = GetBrowserRegion(screenWidth, screenHeight);
+	var sidebar = GetSidebarRegion(screenHeight);
+	var panel = GetBrowserRegion(screenWidth, screenHeight);
+	var list = GetBrowserListRegion(screenWidth, screenHeight);
 
-	var sidebarWidth = SIDEBARWIDTH;
-	var separatorX = sidebarWidth;
-	var browserX = region[1];
-	var browserWidth = region[3];
-	var contentHeight = region[4];
+	var separatorHeight = screenHeight;
 
-	DrawSidebar(1,
-		1,
-		sidebarWidth,
-		contentHeight,
+	if showKeybinds { separatorHeight = screenHeight - KEYBINDSBARHEIGHT; }
+
+	DrawSidebar(sidebar[1],
+		sidebar[2],
+		sidebar[3],
+		sidebar[4],
 		bookmarks,
 		selectedBookmark,
 		bookmarkOffset,
@@ -531,19 +585,11 @@ func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, bookmark
 		focusPanel == FOCUSSIDEBAR,
 		movingBookmark);
 
-	var separatorHeight = screenHeight;
+	DrawVerticalSeparator(SIDEBARWIDTH, 1, separatorHeight);
 
-	if showKeybinds { separatorHeight = contentHeight; }
-
-	DrawVerticalSeparator(separatorX, 1, separatorHeight);
-
-	DrawBrowser(browserX,
-		1,
-		browserWidth,
-		contentHeight,
-		files,
-		selectedFile,
-		fileOffset,
+	DrawBrowserHeaderBar(panel[1],
+		panel[2],
+		panel[3],
 		currentPath,
 		focusPanel == FOCUSBROWSER,
 		markedCount,
@@ -552,6 +598,15 @@ func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, bookmark
 		sortMode,
 		sortDirection);
 
+	DrawBrowserList(list[1],
+		list[2],
+		list[3],
+		list[4],
+		files,
+		selectedFile,
+		fileOffset,
+		focusPanel == FOCUSBROWSER);
+
 	if showKeybinds { DrawKeybindsBar(screenHeight, screenWidth, focusPanel); }
-	else { DrawBottomHint(screenHeight, sidebarWidth); }
+	else { DrawBottomHint(screenHeight, SIDEBARWIDTH); }
 }
