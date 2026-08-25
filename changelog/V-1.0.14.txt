@@ -1,0 +1,4 @@
+What's New:
+
+	- the file search dialog now supports clearing text with CTRL+U
+	- code quality improvements
