@@ -600,7 +600,7 @@ func ShowAbout(screenWidth, screenHeight)
 	var desc = "A simple TUI file manager";
 	desc = BFPadText(desc, contentWidth, BFALIGNCENTER);
 
-	var quote = "I'm the stat(path), I speak for the files";
+	var quote = "Into an ocean of stat(path)s";
 	quote = BFPadText(quote, contentWidth, BFALIGNCENTER);
 
 	var copyright = "Copyright (c) 2026 ideumi";

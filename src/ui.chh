@@ -473,7 +473,7 @@ func DrawVerticalSeparator(x, y, height)
 
 #@ <BottomReserve()>
 #@ Returns the number of rows reserved at the bottom of the screen. If not
-#@ KEYBINDSBARHEIGHT then 1 is returned for the ". binds" hint.
+#@ ''KEYBINDSBARHEIGHT'' then ''1'' is returned for the ". binds" hint.
 
 func BottomReserve()
 {
