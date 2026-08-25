@@ -167,7 +167,7 @@ func SearchMode(x, y, width, height, files)
 				offset = 1;
 			}
 		}
-		elseif key == BFKEYDELETE
+		elseif key == BFKEYDELETE or key == BFKEYCTRLU
 		{
 			query = "";
 

@@ -8,7 +8,7 @@
 #@ <VERSION>
 #@ Program version string
 
-var VERSION = "1.0.13";
+var VERSION = "1.0.14";
 
 #@ <PROGRAMNAME>
 #@ Program display name
@@ -61,6 +61,11 @@ var DEFAULTRUNNER = "xdg-open";
 
 var SIDEBARWIDTH = 20;
 
+#@ <SIDEBARJUMPMAX>
+#@ Number of bookmarks reachable with number keys 1-9
+
+var SIDEBARJUMPMAX = 9;
+
 #@ <DIALOGWIDTH>
 #@ Standard width for dialog boxes
 
@@ -77,9 +82,30 @@ var DIALOGNAMEMAX = 50;
 var KEYBINDSBARHEIGHT = 3;
 
 #@ <FILEROWHEIGHT>
-#@ Height of each file entry
+#@ Height of each file entry (entry itself + one padding row)
 
 var FILEROWHEIGHT = 2;
+
+#@ <SIDEBARHEADERROWS>
+#@ Rows reserved at the top of the sidebar, above the actual bookmark list.
+
+var SIDEBARHEADERROWS = 1;
+
+#@ <BROWSERHEADERROWS>
+#@ Rows reserved at the top of the browser, above the file list (path / status bar
+#@ + one padding row)
+
+var BROWSERHEADERROWS = 2;
+
+#@ <BROWSERNAMEPREFIX>
+#@ Prefix drawn before the name in a browser row
+
+var BROWSERNAMEPREFIX = "  ";
+
+#@ <BROWSERMARKEDPREFIX>
+#@ Prefix drawn before the name of a marked row in the browser
+
+var BROWSERMARKEDPREFIX = "> ";
 
 #@ <MINTERMWIDTH>
 #@ Minimum required terminal width

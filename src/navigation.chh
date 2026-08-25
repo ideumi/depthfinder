@@ -85,6 +85,7 @@ func NavigateTo(path)
 	{
 		append(dirHistory, currentPath);
 
+		# Drop the oldest entry at index 1 when we reach the limit
 		if len(dirHistory) > DIRHISTORYMAX { dirHistory = dirHistory - 1; }
 	}
 
@@ -94,9 +95,13 @@ func NavigateTo(path)
 
 	RefreshDirectory();
 
+	# Row 1 is the ".." parent entry (absent at "/"), so land on the first real
+	# entry at row 2, or on row 1 when the listing holds nothing but the parent
+	# entry
 	if path != "/" and len(files) > 1 { selectedIndex = 2; }
 	else { selectedIndex = 1; }
 
+	# Scroll back to the top of the new listing
 	scrollOffset = 1;
 
 	UpdateTitle();
@@ -183,9 +188,10 @@ func NavigateInto()
 
 func GetVisibleFileCount()
 {
-	var region = GetBrowserRegion(screenWidth, screenHeight);
+	var region = GetBrowserListRegion(screenWidth, screenHeight);
 
-	return int((region[4] - 2) / FILEROWHEIGHT);
+	# Each entry occupies FILEROWHEIGHT rows on screen
+	return int(region[4] / FILEROWHEIGHT);
 }
 
 #@ <GetVisibleBookmarkCount()>
@@ -193,29 +199,42 @@ func GetVisibleFileCount()
 
 func GetVisibleBookmarkCount()
 {
-	var region = GetBrowserRegion(screenWidth, screenHeight);
+	var region = GetSidebarRegion(screenHeight);
 
-	return region[4] - 1;
+	# One row is reserved at the top of the panel, above the bookmark list
+	return region[4] - SIDEBARHEADERROWS;
 }
 
 #@ <AdjustBookmarkScroll()>
-#@ Adjusts the sidebar scroll offset to keep the selected bookmark visible.
+#@ Keeps the selected bookmark visible in the sidebar.
 
 func AdjustBookmarkScroll()
 {
 	var visibleBookmarks = GetVisibleBookmarkCount();
 
+	# ''bookmarkScrollOffset'' is the index of the first visible bookmark.
+
+	# The sidebar shows rows from bookmarkScrollOffset to
+	# bookmarkScrollOffset + visibleBookmarks - 1, one row per bookmark
+
+	# Selection above the sidebar: start the sidebar at the selection
 	if selectedBookmark < bookmarkScrollOffset
 	{
 		bookmarkScrollOffset = selectedBookmark;
 	}
 
+	# Selection below the sidebar: slide the sidebar down until the selection is
+	# its last visible row
 	if selectedBookmark >= bookmarkScrollOffset + visibleBookmarks
 	{
 		bookmarkScrollOffset = selectedBookmark - visibleBookmarks + 1;
 	}
 
-	# Avoid empty rows below the last bookmark when bookmarks fit the viewport.
+	# After this, the panel is in one of two states. If the list is longer than
+	# the panel, every row holds a real entry, the selection is one of them, and
+	# the furthest top row is the one where the last visible entry is the last
+	# entry in the list. If the list is shorter, the entries sit on the top rows,
+	# the rest is blank, and the top row stays at 1
 	var maxOffset = len(bookmarks) - visibleBookmarks + 1;
 
 	if maxOffset < 1 { maxOffset = 1; }
@@ -224,20 +243,32 @@ func AdjustBookmarkScroll()
 }
 
 #@ <AdjustScrollOffset()>
-#@ Adjusts scroll offset to keep selection visible.
+#@ Keeps the selection visible in the file list.
 
 func AdjustScrollOffset()
 {
 	var visibleFiles = GetVisibleFileCount();
 
+	# ''scrollOffset'' is the index of the first visible row.
+
+	# The file list shows rows from scrollOffset to scrollOffset + visibleFiles - 1,
+	# each entry takes FILEROWHEIGHT rows on screen
+
+	# Selection above the file list: start the file list at the selection
 	if selectedIndex < scrollOffset { scrollOffset = selectedIndex; }
 
+	# Selection below the file list: slide the file list down until the
+	# selection is its last visible row
 	if selectedIndex >= scrollOffset + visibleFiles
 	{
 		scrollOffset = selectedIndex - visibleFiles + 1;
 	}
 
-	# Avoid empty rows below the last file when files fit the viewport.
+	# After this, the panel is in one of two states. If the list is longer than
+	# the panel, every row holds a real entry, the selection is one of them, and
+	# the furthest top row is the one where the last visible entry is the last
+	# entry in the list. If the list is shorter, the entries sit on the top rows,
+	# the rest is blank, and the top row stays at 1
 	var maxOffset = len(files) - visibleFiles + 1;
 
 	if maxOffset < 1 { maxOffset = 1; }
