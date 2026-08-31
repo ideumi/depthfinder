@@ -35,8 +35,8 @@ func OpenDialog(screenWidth, screenHeight, width, height, title)
 	var region = GetBrowserRegion(screenWidth, screenHeight);
 	var origin = BFCenterRect(region, width, height);
 
-	var x = origin[1];
-	var y = origin[2];
+	var x = origin["x"];
+	var y = origin["y"];
 
 	BFClearRegion(x, y, width, height);
 	BFDrawFrame(x, y, width, height, title, BFBOXROUNDED);
