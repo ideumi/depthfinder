@@ -17,6 +17,10 @@ func GetConfigPath(configFile)
 
 #@ <LoadBookmarks()>
 #@ Loads bookmarks.
+#@
+#@ Map fields:
+#@ - ''"name"'' (String): bookmark name
+#@ - ''"path"'' (String): bookmark target path
 
 func LoadBookmarks()
 {
@@ -93,6 +97,8 @@ func SaveBookmarks(bookmarks)
 
 #@ <AddBookmark(bookmarks, name, path)>
 #@ Adds a new bookmark and saves.
+#@
+#@ Map fields: the bookmark map fields from ''LoadBookmarks()''.
 
 func AddBookmark(bookmarks, name, path)
 {
@@ -112,6 +118,8 @@ func AddBookmark(bookmarks, name, path)
 
 #@ <RemoveBookmark(bookmarks, index)>
 #@ Removes a bookmark at ''index'' and saves.
+#@
+#@ Map fields: the bookmark map fields from ''LoadBookmarks()''.
 
 func RemoveBookmark(bookmarks, index)
 {
@@ -127,7 +135,12 @@ func RemoveBookmark(bookmarks, index)
 }
 
 #@ <LoadFileAssoc()>
-#@ Loads file associations.
+#@ Loads file associations. Returns a map with the file extension and the command
+#@ that opens it, or ''err'' on failure.
+#@
+#@ Map fields:
+#@ - ''key'' (String): lowercase file extension
+#@ - ''value'' (String): command that opens the extension
 
 func LoadFileAssoc()
 {

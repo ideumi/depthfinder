@@ -211,7 +211,7 @@ func ActionOpenWith()
 
 	# TUI prefix for foreground TUI programs
 	var parsed = StripTuiPrefix(cmd);
-	var fullCmd = parsed[1];
+	var fullCmd = parsed["command"];
 
 	# NOTE: Otherwise programs like VLC etc. open files in the wrong order
 	sort(filesToOpen);
@@ -221,7 +221,7 @@ func ActionOpenWith()
 		fullCmd = fullCmd + " " + ShellEscape(filesToOpen[fileIndex]);
 	}
 
-	RunCommand(fullCmd, parsed[2]);
+	RunCommand(fullCmd, parsed["isTui"]);
 
 	files = ClearAllMarks(files);
 }
@@ -332,8 +332,8 @@ func ActionSort()
 
 	if not iserr(result)
 	{
-		sortMode = result[1];
-		sortDirection = result[2];
+		sortMode = result["mode"];
+		sortDirection = result["direction"];
 
 		RefreshDirectory();
 	}

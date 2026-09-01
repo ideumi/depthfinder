@@ -38,13 +38,20 @@ func RunCommand(command, isTui)
 
 #@ <StripTuiPrefix(command)>
 #@ Strips a leading ''"!"'' from ''command'' and determines if ''command'' should
-#@ be run in foreground mode. Returns ''[command, isTui]''.
+#@ be run in foreground mode.
+#@
+#@ Map fields:
+#@ - ''"command"'' (String): the command without the ''"!"'' prefix
+#@ - ''"isTui"'' (Bool): whether the command should run in foreground mode
 
 func StripTuiPrefix(command)
 {
-	if not StartsWith(command, "!") { return [command, false]; }
+	if not StartsWith(command, "!")
+	{
+		return m["command": command, "isTui": false];
+	}
 
-	return [slice(command, 2, len(command)), true];
+	return m["command": slice(command, 2, len(command)), "isTui": true];
 }
 
 #@ <OpenFile(path)>
@@ -63,7 +70,7 @@ func OpenFile(path)
 	# Prefix handling
 	var parsed = StripTuiPrefix(cmd);
 
-	RunCommand(parsed[1] + " " + ShellEscape(path), parsed[2]);
+	RunCommand(parsed["command"] + " " + ShellEscape(path), parsed["isTui"]);
 }
 
 #@ <CheckTerminal()>

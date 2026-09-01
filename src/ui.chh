@@ -163,8 +163,12 @@ func FormatSortIndicator(mode, direction)
 }
 
 #@ <BrowserColumnWidths(width)>
-#@ Returns the browser column widths ''[nameColWidth, dateColWidth, sizeColWidth]''
-#@ for a content area of ''width'' columns.
+#@ Returns the browser column widths for a content area of ''width'' columns.
+#@
+#@ Map fields:
+#@ - ''"name"'' (Number): width of the name column
+#@ - ''"date"'' (Number): width of the date column
+#@ - ''"size"'' (Number): width of the size column
 
 func BrowserColumnWidths(width)
 {
@@ -175,11 +179,17 @@ func BrowserColumnWidths(width)
 	# columns took theirs
 	var nameColWidth = width - sizeColWidth - dateColWidth;
 
-	return [nameColWidth, dateColWidth, sizeColWidth];
+	return m["name": nameColWidth, "date": dateColWidth, "size": sizeColWidth];
 }
 
 #@ <GetBrowserRegion(screenWidth, screenHeight)>
 #@ Returns the browser region as a region map.
+#@
+#@ Map fields:
+#@ - ''"x"'' (Number): column where the region begins
+#@ - ''"y"'' (Number): row where the region begins
+#@ - ''"width"'' (Number): width of the region in columns
+#@ - ''"height"'' (Number): height of the region in rows
 
 func GetBrowserRegion(screenWidth, screenHeight)
 {
@@ -197,8 +207,14 @@ func GetBrowserRegion(screenWidth, screenHeight)
 }
 
 #@ <GetBrowserListRegion(screenWidth, screenHeight)>
-#@ Returns the region of the actual file list below the browser header bar as
-#@ a region map.
+#@ Returns the region of the actual file list below the browser header bar as a
+#@ region map.
+#@
+#@ Map fields:
+#@ - ''"x"'' (Number): column where the region begins
+#@ - ''"y"'' (Number): row where the region begins
+#@ - ''"width"'' (Number): width of the region in columns
+#@ - ''"height"'' (Number): height of the region in rows
 
 func GetBrowserListRegion(screenWidth, screenHeight)
 {
@@ -212,6 +228,12 @@ func GetBrowserListRegion(screenWidth, screenHeight)
 
 #@ <GetSidebarRegion(screenHeight)>
 #@ Returns the region of the bookmarks sidebar as a region map.
+#@
+#@ Map fields:
+#@ - ''"x"'' (Number): column where the region begins
+#@ - ''"y"'' (Number): row where the region begins
+#@ - ''"width"'' (Number): width of the region in columns
+#@ - ''"height"'' (Number): height of the region in rows
 
 func GetSidebarRegion(screenHeight)
 {
@@ -407,9 +429,9 @@ func DrawBrowserHeaderBar(x, y, width, path, hasFocus, markedCount, clipboardMod
 func DrawBrowserList(x, y, width, height, files, selected, offset, hasFocus)
 {
 	var cols = BrowserColumnWidths(width);
-	var nameColWidth = cols[1];
-	var dateColWidth = cols[2];
-	var sizeColWidth = cols[3];
+	var nameColWidth = cols["name"];
+	var dateColWidth = cols["date"];
+	var sizeColWidth = cols["size"];
 
 	# Calculate how many files can fit
 	var visibleFiles = int(height / FILEROWHEIGHT);
@@ -451,9 +473,9 @@ func RedrawBrowserRow(idx)
 	if fileRow < 1 or fileRow > visibleFiles { return; }
 
 	var cols = BrowserColumnWidths(listWidth);
-	var nameColWidth = cols[1];
-	var dateColWidth = cols[2];
-	var sizeColWidth = cols[3];
+	var nameColWidth = cols["name"];
+	var dateColWidth = cols["date"];
+	var sizeColWidth = cols["size"];
 
 	var baseY = region["y"] + (fileRow - 1) * FILEROWHEIGHT;
 	var isSelected = idx == selectedIndex and focusPanel == FOCUSBROWSER;
