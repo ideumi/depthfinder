@@ -191,7 +191,7 @@ func GetVisibleFileCount()
 	var region = GetBrowserListRegion(screenWidth, screenHeight);
 
 	# Each entry occupies FILEROWHEIGHT rows on screen
-	return int(region[4] / FILEROWHEIGHT);
+	return int(region["height"] / FILEROWHEIGHT);
 }
 
 #@ <GetVisibleBookmarkCount()>
@@ -202,7 +202,7 @@ func GetVisibleBookmarkCount()
 	var region = GetSidebarRegion(screenHeight);
 
 	# One row is reserved at the top of the panel, above the bookmark list
-	return region[4] - SIDEBARHEADERROWS;
+	return region["height"] - SIDEBARHEADERROWS;
 }
 
 #@ <AdjustBookmarkScroll()>

@@ -5,6 +5,15 @@
 
 #@ <CreateFileEntry(name, size, isDir, isSymlink, isExecutable, marked, mtime)>
 #@ Creates a file entry map.
+#@
+#@ Map fields:
+#@ - ''"name"'' (String): file or directory name
+#@ - ''"size"'' (Number): file size in bytes
+#@ - ''"isDir"'' (Bool): whether the entry is a directory
+#@ - ''"isSymlink"'' (Bool): whether the entry is a symlink
+#@ - ''"isExecutable"'' (Bool): whether the entry is executable
+#@ - ''"marked"'' (Bool): whether the entry is marked for a bulk operation
+#@ - ''"mtime"'' (Number): last modification time as a timestamp
 
 # We have constructors at home
 
@@ -24,6 +33,8 @@ func CreateFileEntry(name, size, isDir, isSymlink, isExecutable, marked, mtime)
 #@ <LoadDirectory(path, showHidden, sortMode, sortDirection)>
 #@ Loads and returns a sorted list of file entries for ''path''. Directories are
 #@ listed first. ''..'' is always added except in root.
+#@
+#@ Map fields: the file entry map fields from ''CreateFileEntry()''.
 
 func LoadDirectory(path, showHidden, sortMode, sortDirection)
 {
@@ -95,6 +106,8 @@ func LoadDirectory(path, showHidden, sortMode, sortDirection)
 
 #@ <SortFileEntries(entries, mode, direction)>
 #@ Sorts file entries by ''mode'' and ''direction''.
+#@
+#@ Map fields: the file entry map fields from ''CreateFileEntry()''.
 
 func SortFileEntries(entries, mode, direction)
 {
@@ -128,6 +141,8 @@ func SortFileEntries(entries, mode, direction)
 #@ <ToggleFileMark(files, index)>
 #@ Toggles the ''marked'' flag for the file at the given ''index''. Returns the
 #@ updated files list.
+#@
+#@ Map fields: the file entry map fields from ''CreateFileEntry()''.
 
 func ToggleFileMark(files, index)
 {
@@ -162,6 +177,8 @@ func GetMarkedFiles(files, currentPath)
 
 #@ <ClearAllMarks(files)>
 #@ Clears all file marks. Returns the updated files list.
+#@
+#@ Map fields: the file entry map fields from ''CreateFileEntry()''.
 
 func ClearAllMarks(files)
 {
@@ -209,6 +226,8 @@ func GetSelectedFiles(files, currentPath, selectedIndex)
 
 #@ <ToggleSelectAll(files)>
 #@ Toggles selection on all files except ''..''. Returns updated files list.
+#@
+#@ Map fields: the file entry map fields from ''CreateFileEntry()''.
 
 func ToggleSelectAll(files)
 {

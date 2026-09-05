@@ -367,6 +367,23 @@ func HandleBrowserInput(key)
 #@ <CurrentState()>
 #@ Packs the render-relevant globals into a single map so the winsize actor can
 #@ repaint with up-to-date state.
+#@
+#@ Map fields:
+#@ - ''"bookmarks"'' (List): the bookmark maps from ''LoadBookmarks()''
+#@ - ''"selectedBookmark"'' (Number): index of the selected bookmark
+#@ - ''"bookmarkScrollOffset"'' (Number): index of the first visible bookmark
+#@ - ''"files"'' (List): the file entry maps from ''LoadDirectory()''
+#@ - ''"selectedIndex"'' (Number): index of the selected file row
+#@ - ''"scrollOffset"'' (Number): index of the first visible file row
+#@ - ''"currentPath"'' (String): the current directory path
+#@ - ''"focusPanel"'' (Number): ''FOCUSSIDEBAR'' or ''FOCUSBROWSER''
+#@ - ''"clipboardMode"'' (Number): ''CLIPBOARDNONE'', ''CLIPBOARDCOPY'' or ''CLIPBOARDCUT''
+#@ - ''"showHidden"'' (Bool): whether hidden files are shown
+#@ - ''"movingBookmark"'' (Bool): whether a bookmark move is in progress
+#@ - ''"sortMode"'' (Number): ''SORTNAME'', ''SORTSIZE'' or ''SORTMTIME''
+#@ - ''"sortDirection"'' (Number): ''SORTASC'' or ''SORTDESC''
+#@ - ''"showKeybinds"'' (Bool): whether the keybinds bar is shown
+#@ - ''"inDialog"'' (Bool): whether a dialog is currently open
 
 func CurrentState()
 {

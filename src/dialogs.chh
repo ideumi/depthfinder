@@ -26,7 +26,13 @@ func ExitDialog()
 
 #@ <OpenDialog(screenWidth, screenHeight, width, height, title)>
 #@ Enters dialog mode and draws the frame for a ''width'' x ''height'' dialog
-#@ centered in the browser region. Returns ''[x, y, contentX, contentWidth]''.
+#@ centered in the browser region.
+#@
+#@ Map fields:
+#@ - ''"x"'' (Number): column where the dialog frame begins
+#@ - ''"y"'' (Number): row where the dialog frame begins
+#@ - ''"contentX"'' (Number): column where the dialog content begins
+#@ - ''"contentWidth"'' (Number): width of the dialog content area in columns
 
 func OpenDialog(screenWidth, screenHeight, width, height, title)
 {
@@ -35,13 +41,13 @@ func OpenDialog(screenWidth, screenHeight, width, height, title)
 	var region = GetBrowserRegion(screenWidth, screenHeight);
 	var origin = BFCenterRect(region, width, height);
 
-	var x = origin[1];
-	var y = origin[2];
+	var x = origin["x"];
+	var y = origin["y"];
 
 	BFClearRegion(x, y, width, height);
 	BFDrawFrame(x, y, width, height, title, BFBOXROUNDED);
 
-	return [x, y, x + 2, width - 4];
+	return m["x": x, "y": y, "contentX": x + 2, "contentWidth": width - 4];
 }
 
 #@ <CloseDialog()>
@@ -60,9 +66,9 @@ func ShowProgress(screenWidth, screenHeight, title, current, total)
 {
 	var dialog = OpenDialog(screenWidth, screenHeight, DIALOGWIDTH, 8, title);
 
-	var y = dialog[2];
-	var contentX = dialog[3];
-	var contentWidth = dialog[4];
+	var y = dialog["y"];
+	var contentX = dialog["contentX"];
+	var contentWidth = dialog["contentWidth"];
 	var barY = y + 3;
 
 	BFDrawProgressBar(contentX, barY, contentWidth, current, total, BFBOXROUNDED);
@@ -146,9 +152,9 @@ func ShowConflictDialog(screenWidth, screenHeight, filename)
 {
 	var dialog = OpenDialog(screenWidth, screenHeight, DIALOGWIDTH, 12, "File Exists");
 
-	var y = dialog[2];
-	var contentX = dialog[3];
-	var contentWidth = dialog[4];
+	var y = dialog["y"];
+	var contentX = dialog["contentX"];
+	var contentWidth = dialog["contentWidth"];
 
 	var displayName = BFTruncateMiddle(filename, contentWidth - 2);
 	BFDrawText(contentX, y + 2, "'" + displayName + "' already exists.");
@@ -179,7 +185,7 @@ func ShowCompressMenu(screenWidth, screenHeight)
 		append(extensions, COMPRESSFORMATS[formatIndex]["extension"]);
 	}
 
-	var format = BFMenu(dialog[3], dialog[2] + 2, extensions, 1);
+	var format = BFMenu(dialog["contentX"], dialog["y"] + 2, extensions, 1);
 
 	CloseDialog();
 
@@ -209,9 +215,9 @@ func ShowInputDialog(screenWidth, screenHeight, title, prompt, defaultValue, pat
 {
 	var dialog = OpenDialog(screenWidth, screenHeight, DIALOGWIDTH, 8, title);
 
-	var y = dialog[2];
-	var contentX = dialog[3];
-	var contentWidth = dialog[4];
+	var y = dialog["y"];
+	var contentX = dialog["contentX"];
+	var contentWidth = dialog["contentWidth"];
 
 	if patternHint { DrawRenamePatternHint(contentX, y + 6); }
 
@@ -260,11 +266,11 @@ func ShowFileInfo(screenWidth, screenHeight, paths)
 
 	var dialog = OpenDialog(screenWidth, screenHeight, width, height, "File Info");
 
-	var x = dialog[1];
-	var y = dialog[2];
+	var x = dialog["x"];
+	var y = dialog["y"];
 
-	var contentX = dialog[3];
-	var contentWidth = dialog[4];
+	var contentX = dialog["contentX"];
+	var contentWidth = dialog["contentWidth"];
 	var row = y + 1;
 
 	if isMulti
@@ -374,7 +380,7 @@ func ShowFileInfo(screenWidth, screenHeight, paths)
 	if not iserr(info) { isExecutable = IsExecutableMode(info["mode"], isDir); }
 
 	height = 11;
-	y = dialog[2] - 2;
+	y = dialog["y"] - 2;
 
 	BFClearRegion(x, y, width, height);
 	BFDrawFrame(x, y, width, height, "File Info", BFBOXROUNDED);
@@ -484,6 +490,10 @@ func DrawSortMenuRow(contentX, row, contentWidth, label, highlighted)
 
 #@ <ShowSortMenu(screenWidth, screenHeight, currentMode, currentDirection)>
 #@ Shows the sort options menu.
+#@
+#@ Map fields:
+#@ - ''"mode"'' (Number): the selected sort mode (''SORTNAME'', ''SORTSIZE'' or ''SORTMTIME'')
+#@ - ''"direction"'' (Number): the selected sort direction (''SORTASC'' or ''SORTDESC'')
 
 func ShowSortMenu(screenWidth, screenHeight, currentMode, currentDirection)
 {
@@ -491,16 +501,16 @@ func ShowSortMenu(screenWidth, screenHeight, currentMode, currentDirection)
 	var height = 11;
 
 	var dialog = OpenDialog(screenWidth, screenHeight, width, height, "Sort");
-	var x = dialog[1];
-	var y = dialog[2];
+	var x = dialog["x"];
+	var y = dialog["y"];
 
 	var mode = currentMode;
 	var direction = currentDirection;
 	var selected = 1;
 	var running = true;
 
-	var contentX = dialog[3];
-	var contentWidth = dialog[4];
+	var contentX = dialog["contentX"];
+	var contentWidth = dialog["contentWidth"];
 
 	# Indexes 1-3 pick the mode, 4-5 pick the direction.
 	var modes = [SORTNAME, SORTSIZE, SORTMTIME];
@@ -580,7 +590,7 @@ func ShowSortMenu(screenWidth, screenHeight, currentMode, currentDirection)
 
 	CloseDialog();
 
-	return [mode, direction];
+	return m["mode": mode, "direction": direction];
 }
 
 #@ <ShowAbout(screenWidth, screenHeight)>
@@ -590,9 +600,9 @@ func ShowAbout(screenWidth, screenHeight)
 {
 	var dialog = OpenDialog(screenWidth, screenHeight, DIALOGWIDTH, 13, "About");
 
-	var y = dialog[2];
-	var contentX = dialog[3];
-	var contentWidth = dialog[4];
+	var y = dialog["y"];
+	var contentX = dialog["contentX"];
+	var contentWidth = dialog["contentWidth"];
 
 	var title = PROGRAMNAME + " V-" + VERSION;
 	title = BFPadText(title, contentWidth, BFALIGNCENTER);

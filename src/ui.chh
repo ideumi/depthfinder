@@ -163,8 +163,12 @@ func FormatSortIndicator(mode, direction)
 }
 
 #@ <BrowserColumnWidths(width)>
-#@ Returns the browser column widths ''[nameColWidth, dateColWidth, sizeColWidth]''
-#@ for a content area of ''width'' columns.
+#@ Returns the browser column widths for a content area of ''width'' columns.
+#@
+#@ Map fields:
+#@ - ''"name"'' (Number): width of the name column
+#@ - ''"date"'' (Number): width of the date column
+#@ - ''"size"'' (Number): width of the size column
 
 func BrowserColumnWidths(width)
 {
@@ -175,11 +179,17 @@ func BrowserColumnWidths(width)
 	# columns took theirs
 	var nameColWidth = width - sizeColWidth - dateColWidth;
 
-	return [nameColWidth, dateColWidth, sizeColWidth];
+	return m["name": nameColWidth, "date": dateColWidth, "size": sizeColWidth];
 }
 
 #@ <GetBrowserRegion(screenWidth, screenHeight)>
-#@ Returns the browser region: ''[x, y, width, height]''.
+#@ Returns the browser region as a region map.
+#@
+#@ Map fields:
+#@ - ''"x"'' (Number): column where the region begins
+#@ - ''"y"'' (Number): row where the region begins
+#@ - ''"width"'' (Number): width of the region in columns
+#@ - ''"height"'' (Number): height of the region in rows
 
 func GetBrowserRegion(screenWidth, screenHeight)
 {
@@ -193,25 +203,37 @@ func GetBrowserRegion(screenWidth, screenHeight)
 	# Keybinds bar state is taken into account in BottomReserve()
 	var height = screenHeight - BottomReserve();
 
-	return [x, y, width, height];
+	return BFMakeRegion(x, y, width, height);
 }
 
 #@ <GetBrowserListRegion(screenWidth, screenHeight)>
-#@ Returns the region of the actual file list below the browser header bar as
-#@ ''[x, listY, width, height]''.
+#@ Returns the region of the actual file list below the browser header bar as a
+#@ region map.
+#@
+#@ Map fields:
+#@ - ''"x"'' (Number): column where the region begins
+#@ - ''"y"'' (Number): row where the region begins
+#@ - ''"width"'' (Number): width of the region in columns
+#@ - ''"height"'' (Number): height of the region in rows
 
 func GetBrowserListRegion(screenWidth, screenHeight)
 {
 	var region = GetBrowserRegion(screenWidth, screenHeight);
 
 	# The list starts below the BROWSERHEADERROWS header rows
-	var listY = region[2] + BROWSERHEADERROWS;
+	var listY = region["y"] + BROWSERHEADERROWS;
 
-	return [region[1], listY, region[3], region[4] - BROWSERHEADERROWS];
+	return BFMakeRegion(region["x"], listY, region["width"], region["height"] - BROWSERHEADERROWS);
 }
 
 #@ <GetSidebarRegion(screenHeight)>
-#@ Returns the region of the bookmarks sidebar: ''[x, y, width, height]''.
+#@ Returns the region of the bookmarks sidebar as a region map.
+#@
+#@ Map fields:
+#@ - ''"x"'' (Number): column where the region begins
+#@ - ''"y"'' (Number): row where the region begins
+#@ - ''"width"'' (Number): width of the region in columns
+#@ - ''"height"'' (Number): height of the region in rows
 
 func GetSidebarRegion(screenHeight)
 {
@@ -220,7 +242,7 @@ func GetSidebarRegion(screenHeight)
 	var width = SIDEBARWIDTH;
 	var height = screenHeight - BottomReserve();
 
-	return [x, y, width, height];
+	return BFMakeRegion(x, y, width, height);
 }
 
 #@ <DrawBrowserRow(x, baseY, contentWidth, nameColWidth, dateColWidth, sizeColWidth, files, idx, isSelected)>
@@ -407,9 +429,9 @@ func DrawBrowserHeaderBar(x, y, width, path, hasFocus, markedCount, clipboardMod
 func DrawBrowserList(x, y, width, height, files, selected, offset, hasFocus)
 {
 	var cols = BrowserColumnWidths(width);
-	var nameColWidth = cols[1];
-	var dateColWidth = cols[2];
-	var sizeColWidth = cols[3];
+	var nameColWidth = cols["name"];
+	var dateColWidth = cols["date"];
+	var sizeColWidth = cols["size"];
 
 	# Calculate how many files can fit
 	var visibleFiles = int(height / FILEROWHEIGHT);
@@ -440,10 +462,10 @@ func RedrawBrowserRow(idx)
 {
 	var region = GetBrowserListRegion(screenWidth, screenHeight);
 
-	var listX = region[1];
-	var listWidth = region[3];
+	var listX = region["x"];
+	var listWidth = region["width"];
 
-	var visibleFiles = int(region[4] / FILEROWHEIGHT);
+	var visibleFiles = int(region["height"] / FILEROWHEIGHT);
 
 	# Position of the entry within the file list
 	var fileRow = idx - scrollOffset + 1;
@@ -451,11 +473,11 @@ func RedrawBrowserRow(idx)
 	if fileRow < 1 or fileRow > visibleFiles { return; }
 
 	var cols = BrowserColumnWidths(listWidth);
-	var nameColWidth = cols[1];
-	var dateColWidth = cols[2];
-	var sizeColWidth = cols[3];
+	var nameColWidth = cols["name"];
+	var dateColWidth = cols["date"];
+	var sizeColWidth = cols["size"];
 
-	var baseY = region[2] + (fileRow - 1) * FILEROWHEIGHT;
+	var baseY = region["y"] + (fileRow - 1) * FILEROWHEIGHT;
 	var isSelected = idx == selectedIndex and focusPanel == FOCUSBROWSER;
 
 	DrawBrowserRow(listX, baseY, listWidth, nameColWidth, dateColWidth, sizeColWidth, files, idx, isSelected);
@@ -507,13 +529,13 @@ func DrawKeybindsBar(y, width, focusPanel)
 		append(rows, []);
 
 		append(rows, [
-				["Up/Down", "Navigate"],
-				["Enter", "Go"],
-				["Space", "Move"],
-				["Del", "Remove"],
-				["Tab", "Browser"],
-				["1-9", "Jump"],
-				["Esc", "Quit"]
+				m["key": "Up/Down", "action": "Navigate"],
+				m["key": "Enter", "action": "Go"],
+				m["key": "Space", "action": "Move"],
+				m["key": "Del", "action": "Remove"],
+				m["key": "Tab", "action": "Browser"],
+				m["key": "1-9", "action": "Jump"],
+				m["key": "Esc", "action": "Quit"]
 			]);
 
 		append(rows, []);
@@ -521,37 +543,37 @@ func DrawKeybindsBar(y, width, focusPanel)
 	else
 	{
 		append(rows, [
-				["↑↓←→", "Navigate"],
-				["Alt+←", "Back"],
-				["Enter", "Open"],
-				["Tab", "Sidebar"],
-				["Space", "Mark"],
-				["a", "All"],
-				["s", "Search"],
-				["r", "Refresh"],
-				["Esc", "Quit"]
+				m["key": "↑↓←→", "action": "Navigate"],
+				m["key": "Alt+←", "action": "Back"],
+				m["key": "Enter", "action": "Open"],
+				m["key": "Tab", "action": "Sidebar"],
+				m["key": "Space", "action": "Mark"],
+				m["key": "a", "action": "All"],
+				m["key": "s", "action": "Search"],
+				m["key": "r", "action": "Refresh"],
+				m["key": "Esc", "action": "Quit"]
 			]);
 
 		append(rows, [
-				["Ctrl+C", "Copy"],
-				["Ctrl+X", "Cut"],
-				["Ctrl+V", "Paste"],
-				["Del", "Delete"],
-				["F2", "Rename"],
-				["o", "Open"],
-				["n", "New"],
-				["d", "Mkdir"]
+				m["key": "Ctrl+C", "action": "Copy"],
+				m["key": "Ctrl+X", "action": "Cut"],
+				m["key": "Ctrl+V", "action": "Paste"],
+				m["key": "Del", "action": "Delete"],
+				m["key": "F2", "action": "Rename"],
+				m["key": "o", "action": "Open"],
+				m["key": "n", "action": "New"],
+				m["key": "d", "action": "Mkdir"]
 			]);
 
 		append(rows, [
-				["F1", "Term"],
-				["#", "Run"],
-				["h", "Hidden"],
-				["i", "Info"],
-				["c", "Compress"],
-				["t", "Sort"],
-				["p", "Path"],
-				["b", "Bookmark"]
+				m["key": "F1", "action": "Term"],
+				m["key": "#", "action": "Run"],
+				m["key": "h", "action": "Hidden"],
+				m["key": "i", "action": "Info"],
+				m["key": "c", "action": "Compress"],
+				m["key": "t", "action": "Sort"],
+				m["key": "p", "action": "Path"],
+				m["key": "b", "action": "Bookmark"]
 			]);
 	}
 
@@ -574,10 +596,10 @@ func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, bookmark
 
 	if showKeybinds { separatorHeight = screenHeight - KEYBINDSBARHEIGHT; }
 
-	DrawSidebar(sidebar[1],
-		sidebar[2],
-		sidebar[3],
-		sidebar[4],
+	DrawSidebar(sidebar["x"],
+		sidebar["y"],
+		sidebar["width"],
+		sidebar["height"],
 		bookmarks,
 		selectedBookmark,
 		bookmarkOffset,
@@ -587,9 +609,9 @@ func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, bookmark
 
 	DrawVerticalSeparator(SIDEBARWIDTH, 1, separatorHeight);
 
-	DrawBrowserHeaderBar(panel[1],
-		panel[2],
-		panel[3],
+	DrawBrowserHeaderBar(panel["x"],
+		panel["y"],
+		panel["width"],
 		currentPath,
 		focusPanel == FOCUSBROWSER,
 		markedCount,
@@ -598,10 +620,10 @@ func DrawScreen(screenWidth, screenHeight, bookmarks, selectedBookmark, bookmark
 		sortMode,
 		sortDirection);
 
-	DrawBrowserList(list[1],
-		list[2],
-		list[3],
-		list[4],
+	DrawBrowserList(list["x"],
+		list["y"],
+		list["width"],
+		list["height"],
 		files,
 		selectedFile,
 		fileOffset,

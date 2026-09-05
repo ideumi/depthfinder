@@ -6,6 +6,9 @@
 #@ <FilterFiles(files, query)>
 #@ Filters ''files'' by name substring. Returns filtered list with original indices
 #@ preserved in ''origIndex''.
+#@
+#@ Map fields: the file entry map fields from ''CreateFileEntry()'', and:
+#@ - ''"origIndex"'' (Number): index of the entry in the original unfiltered list
 
 func FilterFiles(files, query)
 {
