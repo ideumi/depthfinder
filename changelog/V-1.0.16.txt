@@ -1,0 +1,3 @@
+What's New:
+
+	- bug: WinChActor drew over other programs on resize when they were run in foreground mode

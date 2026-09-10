@@ -8,6 +8,9 @@
 
 func RunForeground(command)
 {
+	# Stop the winch actor, otherwise it will draw over other TUIs on resize
+	EnterDialog();
+
 	ShowCursor();
 	ClearScreen();
 	CursorTo(1, 1);
@@ -24,6 +27,7 @@ func RunForeground(command)
 	getch();
 
 	ClearScreen();
+	ExitDialog();
 }
 
 #@ <RunCommand(command, isTui)>
